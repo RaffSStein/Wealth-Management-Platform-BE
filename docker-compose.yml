@@ -200,10 +200,42 @@ services:
     depends_on:
       - splunk
 
+  # MinIO is used as an S3-compatible object storage service
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+
+  # Fake GCS server for GCS compatibility
+  fake-gcs:
+    image: fsouza/fake-gcs-server:latest
+    container_name: fake-gcs
+    ports:
+      - "7000:7000" # REST API
+    environment:
+      - STORAGE_DIR=/data
+      - SCHEME=http
+    volumes:
+      - fakegcs-data:/data
+    command: -scheme http -external-url http://localhost:7000 -port 7000
+
+
 networks:
   dockernet:
     name: ica-network
 
 volumes:
   splunk-data:
+    driver: local
+  minio-data:
+    driver: local
+  fakegcs-data:
     driver: local

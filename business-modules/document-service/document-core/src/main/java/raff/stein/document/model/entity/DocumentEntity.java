@@ -27,26 +27,30 @@ public class DocumentEntity extends BaseDateEntity<UUID> {
 
     // Relationships
 
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
+    @Setter
     private List<DocumentVersionEntity> versions;
 
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
+    @Setter
     private List<DocumentAccessLogEntity> accessLogs;
 
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
+    @Setter
     private List<DocumentMetadataEntity> metadata;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "document_type_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @Setter
+    @JoinColumn(name = "document_type_id", nullable = false)
     private DocumentTypeEntity documentType;
 
     // Fields
@@ -64,6 +68,13 @@ public class DocumentEntity extends BaseDateEntity<UUID> {
      */
     @Column(nullable = false)
     private UUID customerId;
+
+    /**
+     * The initial version number of the document, generated before the file validation.
+     * just a placeholder to track the initial version before the validated file is uploaded.
+     */
+    @Column(nullable = false)
+    private UUID initialFileUuid;
 
 
 }

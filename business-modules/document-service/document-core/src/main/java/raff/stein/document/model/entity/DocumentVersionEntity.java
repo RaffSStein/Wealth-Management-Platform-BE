@@ -1,11 +1,10 @@
 package raff.stein.document.model.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+
+import java.time.OffsetDateTime;
 
 /**
  * Represents a version of a document in the system.
@@ -29,6 +28,7 @@ public class DocumentVersionEntity extends BaseDateEntity<Long> {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)
+    @Setter
     private DocumentEntity document;
 
     // Fields
@@ -55,7 +55,7 @@ public class DocumentVersionEntity extends BaseDateEntity<Long> {
      * Date and time when the file was uploaded.
      */
     @Column(nullable = false)
-    private java.time.OffsetDateTime uploadDate;
+    private OffsetDateTime uploadDate;
 
     /**
      * Email or identifier of the user who uploaded the file.
@@ -66,7 +66,7 @@ public class DocumentVersionEntity extends BaseDateEntity<Long> {
     /**
      * Hash of the file content for integrity check.
      */
-    @Column(length = 128, nullable = false)
+    @Column(length = 128)
     private String contentHash;
 
     /**
@@ -74,6 +74,13 @@ public class DocumentVersionEntity extends BaseDateEntity<Long> {
      */
     @Column(length = 100, nullable = false)
     private String mimeType;
+
+    /**
+     * Indicates whether the version is currently active.
+     * Only one version can be active at a time for a given document.
+     */
+    @Column(nullable = false)
+    private boolean isActive;
 
 
 }

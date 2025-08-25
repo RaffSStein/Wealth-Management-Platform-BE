@@ -30,6 +30,9 @@
         <logstash.logback.encoder.version>7.4</logstash.logback.encoder.version>
         <cloudevent.version>2.5.0</cloudevent.version>
         <hibernate.version>7.0.8.Final</hibernate.version>
+        <micrometer.version>1.15.2</micrometer.version>
+        <micrometer.tracing.version>1.5.3</micrometer.tracing.version>
+        <micrometer.tracing.bridge.brave.version>1.5.2</micrometer.tracing.bridge.brave.version>
     </properties>
 
     <dependencyManagement>
@@ -141,6 +144,21 @@
                 <groupId>org.hibernate.orm</groupId>
                 <artifactId>hibernate-core</artifactId>
                 <version>${hibernate.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-observation</artifactId>
+                <version>${micrometer.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-tracing</artifactId>
+                <version>${micrometer.tracing.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-tracing-bridge-brave</artifactId>
+                <version>${micrometer.tracing.bridge.brave.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

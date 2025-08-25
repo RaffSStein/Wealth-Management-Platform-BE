@@ -3,9 +3,9 @@ package raff.stein.customer.model.entity.mifid;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+import raff.stein.platformcore.model.audit.entity.BaseEntity;
 
-import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "mifid_section")
@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MifidSectionEntity extends BaseDateEntity<Long> {
+public class MifidSectionEntity extends BaseEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,14 +25,18 @@ public class MifidSectionEntity extends BaseDateEntity<Long> {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
-    private List<MifidQuestionEntity> questions;
+    private Set<MifidQuestionEntity> questions;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "questionnaire_id", nullable = false)
+    @JoinColumn(name = "questionnaire_id", nullable = false, insertable = false, updatable = false, referencedColumnName = "id")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
     private MifidQuestionnaireEntity questionnaire;
+
+    @Column(name = "questionnaire_id", nullable = false)
+    @Setter
+    private Long questionnaireId;
 
     // Fields
 

@@ -1,13 +1,12 @@
 package raff.stein.document.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 import raff.stein.platformcore.model.converter.entity.StringSetConverter;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -30,8 +29,11 @@ public class DocumentTypeEntity extends BaseDateEntity<Integer> {
 
     // Relationships
 
-    @OneToOne(mappedBy = "documentType")
-    private DocumentEntity document;
+    @OneToMany(mappedBy = "documentType")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @JsonIgnore
+    private List<DocumentEntity> documents;
 
     // Fields
 

@@ -54,7 +54,7 @@ public class RequestResponseLoggingFilter implements Filter {
         }
         String payload = getPayload(request.getContentAsByteArray());
         if (!payload.isEmpty()) {
-            msg.append(" | Payload: ").append(payload);
+            msg.append(" | Payload: ").append(payload.replaceAll("\\s+", ""));
         }
         String msgString = msg.toString();
         log.info(msgString);

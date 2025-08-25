@@ -1,3 +1,10 @@
 kafka:
   topics:
-    customer-domain: customer-service
+    customer-service: customer-service
+    # produced topics
+    document-service:
+      domain: document-service
+      file-validated:
+        enabled: true
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.document-service.domain}.file-validated"
+        groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${kafka.topics.document-service.domain}.file-validated.sa.${kafka.broker.serviceAccount}"

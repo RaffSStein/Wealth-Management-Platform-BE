@@ -14,7 +14,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 /**
  * Base entity class for audit information.
@@ -52,7 +52,7 @@ public abstract class BaseDateEntity<I> extends BaseEntity<I> {
     @CreatedDate
     @Column(name = "creation_date", updatable = false, nullable = false)
     @JsonIgnore
-    private OffsetDateTime createdDate;
+    private Instant createdDate;
 
     /**
      * The username or identifier of the user who last modified the entity.
@@ -70,7 +70,7 @@ public abstract class BaseDateEntity<I> extends BaseEntity<I> {
     @LastModifiedDate
     @Column(name = "last_modified_date")
     @JsonIgnore
-    private OffsetDateTime lastModifiedDate;
+    private Instant lastModifiedDate;
 
     /**
      * Version field for optimistic locking, managed by Hibernate.

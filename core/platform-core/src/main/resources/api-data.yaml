@@ -1,0 +1,39 @@
+openapi: 3.1.0
+info:
+  title: General API data models
+  version: 1.0.0
+  description: General API data models for general error handling
+
+paths: {}
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        errorCode:
+          type: string
+          description: Error code
+        errorMessage:
+          type: string
+          description: Error message
+        traceId:
+          type: string
+          description: Unique identifier for tracing the request
+        category:
+          $ref: '#/components/schemas/ErrorCategory'
+
+    ErrorCategory:
+      type: string
+      enum:
+        - INTERNAL_ERROR
+        - DATABASE_ERROR
+        - EVENT_ERROR
+        - INSUFFICIENT_DATA_ERROR
+        - GENERIC_ERROR
+        - SERVER_ERROR
+        - VALIDATION_ERROR
+        - AUTHENTICATION_ERROR
+        - AUTHORIZATION_ERROR
+        - NOT_FOUND_ERROR
+      description: A string representing the category of the error
