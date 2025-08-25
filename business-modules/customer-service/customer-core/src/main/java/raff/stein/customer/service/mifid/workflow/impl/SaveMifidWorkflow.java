@@ -1,4 +1,4 @@
-package raff.stein.customer.service.mifid.workflow.step.impl;
+package raff.stein.customer.service.mifid.workflow.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

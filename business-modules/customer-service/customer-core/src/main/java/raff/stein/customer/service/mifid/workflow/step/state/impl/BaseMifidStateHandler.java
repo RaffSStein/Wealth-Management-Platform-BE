@@ -1,25 +1,29 @@
 package raff.stein.customer.service.mifid.workflow.step.state.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
 import raff.stein.customer.model.entity.mifid.MifidFillingEntity;
 import raff.stein.customer.model.entity.mifid.enumeration.MifidFillingStatus;
 import raff.stein.customer.repository.mifid.MifidFillingRepository;
 import raff.stein.customer.repository.mifid.MifidQuestionnaireRepository;
 import raff.stein.customer.service.mifid.enumeration.MifidActionType;
-import raff.stein.customer.service.mifid.workflow.step.state.MifidStateValidator;
+import raff.stein.customer.service.mifid.workflow.step.state.MifidStateHandler;
 
 import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-public abstract class BaseMifidStateValidator implements MifidStateValidator {
+public abstract class BaseMifidStateHandler implements MifidStateHandler {
 
-    @Autowired
     protected MifidFillingRepository mifidFillingRepository;
-    @Autowired
     protected MifidQuestionnaireRepository mifidQuestionnaireRepository;
+
+    protected BaseMifidStateHandler(
+            MifidFillingRepository mifidFillingRepository,
+            MifidQuestionnaireRepository mifidQuestionnaireRepository) {
+        this.mifidFillingRepository = mifidFillingRepository;
+        this.mifidQuestionnaireRepository = mifidQuestionnaireRepository;
+    }
 
     public abstract void validateStatus(MifidFillingStatus currentStatus, MifidActionType actionType);
 

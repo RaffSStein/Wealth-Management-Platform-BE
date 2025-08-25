@@ -1,13 +1,13 @@
-package raff.stein.customer.service.mifid.workflow.step.impl;
+package raff.stein.customer.service.mifid.workflow.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
-import raff.stein.customer.service.mifid.enumeration.MifidActionType;
 import raff.stein.customer.service.mifid.command.impl.UpdateMifidCommand;
+import raff.stein.customer.service.mifid.enumeration.MifidActionType;
 import raff.stein.customer.service.mifid.workflow.MifidWorkflow;
 import raff.stein.customer.service.mifid.workflow.step.MifidWorkflowStep;
-import raff.stein.customer.service.mifid.workflow.step.state.impl.UpdateMifidStateValidator;
+import raff.stein.customer.service.mifid.workflow.step.state.impl.UpdateMifidStateHandler;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import java.util.List;
 public class UpdateMifidWorkflow implements MifidWorkflow {
 
     private final UpdateMifidCommand updateCommand;
-    private final UpdateMifidStateValidator updateMifidStateValidator;
+    private final UpdateMifidStateHandler updateMifidStateHandler;
 
     @Override
     public MifidActionType getActionType() {
@@ -45,14 +45,14 @@ public class UpdateMifidWorkflow implements MifidWorkflow {
 
     private MifidWorkflowStep validateStep() {
         return context -> {
-            updateMifidStateValidator.validate(context.getInputBo(), context.getCustomerId(), MifidActionType.UPDATE);
+            updateMifidStateHandler.validate(context.getInputBo(), context.getCustomerId(), MifidActionType.UPDATE);
             return context;
         };
     }
 
     private MifidWorkflowStep calculateStatusStep() {
         return context -> {
-            updateMifidStateValidator.calculateAndSetNewStatus(context.getInputBo(), context.getCustomerId());
+            updateMifidStateHandler.calculateAndSetNewStatus(context.getInputBo(), context.getCustomerId());
             return context;
         };
     }

@@ -5,7 +5,7 @@ import raff.stein.customer.service.mifid.enumeration.MifidActionType;
 
 import java.util.UUID;
 
-public interface MifidStateValidator {
+public interface MifidStateHandler {
 
     void validate(
             MifidFilling mifidFilling,

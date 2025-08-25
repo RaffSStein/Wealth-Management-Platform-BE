@@ -5,8 +5,8 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
-import raff.stein.customer.service.mifid.enumeration.MifidActionType;
 import raff.stein.customer.service.mifid.command.MifidCommand;
+import raff.stein.customer.service.mifid.enumeration.MifidActionType;
 
 import java.util.UUID;
 
@@ -21,6 +21,10 @@ public class SubmitMifidCommand implements MifidCommand {
 
     @Override
     public MifidFilling execute(@NonNull UUID customerId, @Nullable MifidFilling mifidFilling) {
-        return null;
+        // answers are checked in pre hook of SubmitMifidWorkflow
+        // mifid filling status is set in post hook of SubmitMifidWorkflow
+        // just calculate customer risk profile here
+        // TODO implement risk profile calculation
+        return mifidFilling;
     }
 }

@@ -1,7 +1,9 @@
-package raff.stein.customer.service.mifid.workflow.step.impl;
+package raff.stein.customer.service.mifid.workflow.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
+import raff.stein.customer.service.mifid.command.impl.GetMifidCommand;
 import raff.stein.customer.service.mifid.enumeration.MifidActionType;
 import raff.stein.customer.service.mifid.workflow.MifidWorkflow;
 import raff.stein.customer.service.mifid.workflow.step.MifidWorkflowStep;
@@ -10,13 +12,13 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class SubmitMifidWorkflow implements MifidWorkflow {
+public class GetMifidWorkflow implements MifidWorkflow {
 
-    //TODO: implement
+    private final GetMifidCommand getCommand;
 
     @Override
     public MifidActionType getActionType() {
-        return MifidActionType.SUBMIT;
+        return MifidActionType.GET;
     }
 
     @Override
@@ -26,7 +28,11 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
 
     @Override
     public MifidWorkflowStep command() {
-        return null;
+        return context -> {
+            MifidFilling result = getCommand.execute(context.getCustomerId(), context.getInputBo());
+            context.setResultBo(result);
+            return context;
+        };
     }
 
     @Override
