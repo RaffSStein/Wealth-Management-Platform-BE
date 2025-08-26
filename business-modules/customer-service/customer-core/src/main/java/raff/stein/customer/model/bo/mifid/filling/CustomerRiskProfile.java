@@ -7,6 +7,7 @@ import lombok.Data;
 @Builder
 public class CustomerRiskProfile {
 
-    private String calculatedRiskProfile;
+    private String profile;
+    private Integer score;
 
 }

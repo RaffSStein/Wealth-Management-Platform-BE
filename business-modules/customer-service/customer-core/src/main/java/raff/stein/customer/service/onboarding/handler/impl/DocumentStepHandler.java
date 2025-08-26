@@ -34,7 +34,7 @@ public class DocumentStepHandler extends BaseOnboardingStepHandler {
     }
 
     @Override
-    public void updatedCustomerOnboardingEntity(
+    public void updateCustomerOnboardingEntity(
             CustomerOnboardingEntity customerOnboarding,
             OnboardingStepContext context) {
         final UUID customerId = context.getCustomerId();
@@ -49,7 +49,7 @@ public class DocumentStepHandler extends BaseOnboardingStepHandler {
         } else {
             log.warn("File with ID: [{}] is not valid. Marking onboarding as failed for customer ID: [{}].", fileId, customerId);
             // Mark the onboarding as failed
-            customerOnboarding.setOnboardingStatus(OnboardingStatus.FAILED);
+            customerOnboarding.setOnboardingStatus(OnboardingStatus.DOCUMENTS_REJECTED);
             customerOnboarding.setReason("Document validation failed");
         }
     }

@@ -18,6 +18,6 @@ public interface MifidFillingEntityToMifidFillingMapper {
     MifidFilling toMifidFilling(MifidFillingEntity mifidFillingEntity);
 
     @Mapping(target = "responses", ignore = true)
-    @Mapping(target = "calculatedRiskProfile", source = "customerRiskProfile.calculatedRiskProfile")
+    @Mapping(target = "calculatedRiskProfile", source = "customerRiskProfile.profile")
     MifidFillingEntity toMifidFillingEntity(MifidFilling mifidFilling);
 }

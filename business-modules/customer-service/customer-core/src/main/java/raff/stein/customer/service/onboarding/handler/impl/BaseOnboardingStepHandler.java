@@ -40,7 +40,7 @@ public abstract class BaseOnboardingStepHandler implements OnboardingStepHandler
      * This method should update some fields of the customer onboarding entity
      * based on the context.
      */
-    public abstract void updatedCustomerOnboardingEntity(
+    public abstract void updateCustomerOnboardingEntity(
             CustomerOnboardingEntity customerOnboarding,
             OnboardingStepContext context);
 
@@ -106,6 +106,6 @@ public abstract class BaseOnboardingStepHandler implements OnboardingStepHandler
         }
 
         // 3. update the onboarding status
-        updatedCustomerOnboardingEntity(customerOnboarding, context);
+        updateCustomerOnboardingEntity(customerOnboarding, context);
     }
 }

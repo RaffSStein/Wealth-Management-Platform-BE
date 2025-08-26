@@ -562,9 +562,10 @@ components:
 
     CustomerRiskProfileDTO:
       type: object
-      required:
-        - calculatedRiskProfile
       properties:
-        calculatedRiskProfile:
+        profile:
           type: string
           description: Calculated risk profile for the customer
+        score:
+          type: integer
+          description: Total score from the questionnaire responses
