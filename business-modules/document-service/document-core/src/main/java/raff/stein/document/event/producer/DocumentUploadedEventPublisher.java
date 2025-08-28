@@ -2,7 +2,6 @@ package raff.stein.document.event.producer;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import raff.stein.document.event.producer.mapper.DocumentToDocumentUploadedEventMapper;
 import raff.stein.document.model.Document;
@@ -11,7 +10,6 @@ import raff.stein.platformcore.messaging.publisher.model.EventData;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "kafka.topics.document-service.document-uploaded.enabled", havingValue = "true")
 public class DocumentUploadedEventPublisher {
 
     private final WMPBaseEventPublisher wmpBaseEventPublisher;

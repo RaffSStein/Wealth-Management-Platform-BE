@@ -1,10 +1,17 @@
 kafka:
   topics:
-    customer-service: customer-service
-    # produced topics
-    document-service:
+    customer-service:
+      domain: customer-service
+      # produced topics
+      customer-onboarded:
+        # in case of customer service, this topic is also consumed
+        consuming-enabled: true
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.customer-service.domain}.customer-onboarded"
+        groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${kafka.topics.customer-service.domain}.customer-onboarded.sa.${kafka.broker.serviceAccount}"
+    # consumed topics
+    document:
       domain: document-service
       file-validated:
         enabled: true
-        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.document-service.domain}.file-validated"
-        groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${kafka.topics.document-service.domain}.file-validated.sa.${kafka.broker.serviceAccount}"
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.customer-service.document.domain}.file-validated"
+        groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${kafka.topics.customer-service.document.domain}.file-validated.sa.${kafka.broker.serviceAccount}"

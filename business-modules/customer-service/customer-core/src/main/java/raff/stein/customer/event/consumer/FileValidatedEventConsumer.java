@@ -19,16 +19,16 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "kafka.topics.document-service.file-validated.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "kafka.topics.customer-service.document.file-validated.enabled", havingValue = "true")
 public class FileValidatedEventConsumer extends WMPBaseEventConsumer {
 
     private final CustomerRepository customerRepository;
     private final OnboardingService onboardingService;
 
     @KafkaListener(
-            topics = "${kafka.topics.document-service.file-validated.name}",
+            topics = "${kafka.topics.customer-service.document.file-validated.name}",
             containerFactory = "kafkaListenerFactory",
-            groupId = "${kafka.topics.document-service.file-validated.groupId}")
+            groupId = "${kafka.topics.customer-service.document.file-validated.groupId}")
     public void consume(CloudEvent cloudEvent) {
         withEventPayload(
                 cloudEvent,

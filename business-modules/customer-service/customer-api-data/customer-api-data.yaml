@@ -329,6 +329,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CustomerGoalDTO'
+        riskProfile:
+          $ref: '#/components/schemas/CustomerRiskProfileDTO'
 
     CustomerType:
       type: string

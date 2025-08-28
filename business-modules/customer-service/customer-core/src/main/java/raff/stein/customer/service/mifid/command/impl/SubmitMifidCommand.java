@@ -61,6 +61,8 @@ public class SubmitMifidCommand implements MifidCommand {
                         .profile(riskProfile)
                         .score(totalScore)
                         .build());
+        // 5. save customer risk profile
+        //TODO
         return mifidFilling;
     }
 }

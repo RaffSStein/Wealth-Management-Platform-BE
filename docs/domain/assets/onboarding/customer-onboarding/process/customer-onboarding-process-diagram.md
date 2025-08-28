@@ -4,6 +4,7 @@ participant "customer-service" as Customer
 participant "document-service" as Document
 queue "document-validated-topic" as documentValidationTopic
 queue "document-created-topic" as documentCreatedTopic
+queue "customer-onboarded-topic" as customerOnboardedTopic
 participant "aml-external-systems" as ExternalSystems
 
 
@@ -112,6 +113,7 @@ activate Customer
 Customer -> Customer: Validate MiFID answers
 Customer -> Customer: Save MiFID answers to DB
 Customer -> Customer: Calculate customer risk profile
+Customer -> customerOnboardedTopic: publish customer\nonboarding completed
 Customer -> FE: 200 OK\n(customer profiling data results)
 deactivate Customer
 activate FE
@@ -121,9 +123,9 @@ FE -> FE: return to Home page
 deactivate FE
 
 
-
 == Step 5 - AML verification ==
 activate Customer
+customerOnboardedTopic -->  Customer: consume customer\nonboarding completed event
 Customer -> ExternalSystems: Start AML verification
 deactivate Customer
 activate ExternalSystems

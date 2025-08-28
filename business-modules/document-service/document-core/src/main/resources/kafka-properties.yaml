@@ -4,10 +4,8 @@ kafka:
       domain: document-service
       # produced topics
       file-validated:
-        enabled: true
         name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.document-service.domain}.file-validated"
         groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${kafka.topics.document-service.domain}.file-validated.sa.${kafka.broker.serviceAccount}"
       document-uploaded:
-        enabled: true
         name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.document-service.domain}.document-uploaded"
         groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${kafka.topics.document-service.domain}.document-uploaded.sa.${kafka.broker.serviceAccount}"

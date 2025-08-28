@@ -4,11 +4,9 @@ kafka:
       domain: user-service
       # produced topics
       user-created:
-        enabled: true
         name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.user-service.domain}.user-created"
         groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${kafka.topics.user-service.domain}.user-created.sa.${kafka.broker.serviceAccount}"
       user-updated:
-        enabled: true
         name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.user-service.domain}.user-updated"
         groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${kafka.topics.user-service.domain}.user-updated.sa.${kafka.broker.serviceAccount}"
 

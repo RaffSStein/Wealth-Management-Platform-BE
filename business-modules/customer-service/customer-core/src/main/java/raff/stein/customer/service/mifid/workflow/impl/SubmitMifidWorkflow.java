@@ -2,6 +2,7 @@ package raff.stein.customer.service.mifid.workflow.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import raff.stein.customer.event.producer.CustomerOnboardedEventPublisher;
 import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
 import raff.stein.customer.repository.mifid.MifidQuestionnaireRepository;
@@ -24,6 +25,7 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
     private final SubmitMifidStateHandler submitMifidStateHandler;
     private final MifidQuestionnaireRepository mifidQuestionnaireRepository;
     private final OnboardingService onboardingService;
+    private final CustomerOnboardedEventPublisher customerOnboardedEventPublisher;
 
 
     @Override
@@ -50,8 +52,9 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
     @Override
     public List<MifidWorkflowStep> postHooks() {
         return List.of(
-                calculateNextStatus(),
-                updateOnboardingStatus());
+                calculateNextStatus(),              // set and save status on MifidFilling
+                updateOnboardingStatus(),           // update onboarding step status
+                publishCustomerOnboardedEvent());
     }
 
 
@@ -102,6 +105,15 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
                                     "mifidStatus", context.getResultBo().getStatus().name()
                             ))
                             .build());
+            return context;
+        };
+    }
+
+    private MifidWorkflowStep publishCustomerOnboardedEvent() {
+        return context -> {
+            customerOnboardedEventPublisher.publishCustomerOnboardedEvent(
+                    context.getResultBo(),
+                    context.getCustomerId());
             return context;
         };
     }

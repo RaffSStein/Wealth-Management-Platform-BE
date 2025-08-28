@@ -4,8 +4,198 @@ info:
   version: 1.0.0
   description: OpenAPI definition for customer event payloads (async communication)
 
-
 paths: {}
 
 components:
-  schemas: {}
+  schemas:
+    CustomerCreatedEvent:
+      type: object
+      description: Event emitted when a new customer is created.
+      required: [userId, customerType, taxId, customerStatus]
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        customerType:
+          $ref: '#/components/schemas/CustomerType'
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          $ref: '#/components/schemas/Gender'
+        nationality:
+          type: string
+          maxLength: 2
+          pattern: '^[A-Z]{2}$'
+          description: ISO 3166-1 alpha-2
+        companyName:
+          type: string
+        taxId:
+          type: string
+        phoneNumber:
+          type: string
+        addressLine1:
+          type: string
+        addressLine2:
+          type: string
+        city:
+          type: string
+        zipCode:
+          type: string
+        country:
+          type: string
+          maxLength: 2
+          pattern: '^[A-Z]{2}$'
+          description: ISO 3166-1 alpha-2
+        customerStatus:
+          $ref: '#/components/schemas/CustomerStatus'
+        onboardingDate:
+          type: string
+          format: date
+        customerFinancials:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerFinancial'
+        customerGoals:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerGoal'
+
+    CustomerOnboardedEvent:
+      type: object
+      description: Event emitted when a customer onboarding (MIFID) is completed.
+      required: [customerId, questionnaireId, fillingDate, responses]
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        questionnaireId:
+          type: integer
+          format: int64
+        fillingId:
+          type: integer
+          format: int64
+          nullable: true
+        fillingDate:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/MifidFillingStatus'
+        responses:
+          type: array
+          items:
+            $ref: '#/components/schemas/MifidResponse'
+        customerRiskProfile:
+          $ref: '#/components/schemas/CustomerRiskProfile'
+
+
+    CustomerType:
+      type: string
+      enum: [INDIVIDUAL, CORPORATE]
+
+    CustomerStatus:
+      type: string
+      enum: [DRAFT, PENDING_VERIFICATION, ACTIVE, REJECTED]
+
+    Gender:
+      type: string
+      enum: [MALE, FEMALE, OTHER, UNSPECIFIED]
+
+    FinancialType:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        description:
+          type: string
+      additionalProperties: false
+
+    GoalType:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        description:
+          type: string
+      additionalProperties: false
+
+    CustomerFinancial:
+      type: object
+      required: [financialType, amount]
+      properties:
+        financialType:
+          $ref: '#/components/schemas/FinancialType'
+        amount:
+          type: number
+        description:
+          type: string
+          maxLength: 500
+      additionalProperties: false
+
+    CustomerGoal:
+      type: object
+      required: [goalType, targetAmount, targetDate]
+      properties:
+        goalType:
+          $ref: '#/components/schemas/GoalType'
+        targetAmount:
+          type: number
+        targetDate:
+          type: string
+          format: date
+        description:
+          type: string
+      additionalProperties: false
+
+    MifidResponse:
+      type: object
+      required: [questionId]
+      properties:
+        questionId:
+          type: integer
+          format: int64
+        answerOptionId:
+          type: integer
+          format: int64
+          nullable: true
+        freeText:
+          type: string
+          nullable: true
+        numericValue:
+          type: number
+          format: double
+          nullable: true
+        dateValue:
+          type: string
+          format: date
+          nullable: true
+      additionalProperties: false
+
+    CustomerRiskProfile:
+      type: object
+      properties:
+        profileCode:
+          type: string
+        profileLabel:
+          type: string
+        score:
+          type: integer
+          format: int32
+      additionalProperties: false
+
+    MifidFillingStatus:
+      type: string
+      enum: [DRAFT, COMPLETED, SUBMITTED, DEPRECATED]
