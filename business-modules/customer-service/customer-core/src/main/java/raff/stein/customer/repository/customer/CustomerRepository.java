@@ -22,4 +22,5 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID> 
             "customerOnboardingStatuses"
     })
     Optional<CustomerEntity> findById(@NonNull UUID id);
+
 }

@@ -5,6 +5,14 @@ server:
 spring:
   application:
     name: customer-service
+    rest:
+      client:
+        sanction:
+          host: http://localhost:8082
+          token:
+            url: http://localhost:8082/oauth/token
+            client-id: client-id
+            client-secret: client-secret
   jpa:
     generate-ddl: true
     defer-datasource-initialization: true
@@ -24,3 +32,85 @@ spring:
       - classpath:platform-shared-properties.yaml
       - classpath:kafka-properties.yaml
 
+
+# AML configuration
+aml:
+  jurisdictions:
+    EU:
+      steps:
+        - name: verifyIdentityStep
+          enabled: true
+        - name: beneficialOwnershipStep
+          enabled: true
+        - name: sanctionsScreeningStep
+          enabled: true
+        - name: pepScreeningStep
+          enabled: true
+        - name: adverseMediaStep
+          enabled: true
+        - name: riskAlignmentStep
+          enabled: true
+        - name: sourceOfFundsStep
+          enabled: true
+        - name: eddTriggerStep
+          enabled: true
+        - name: transactionBaselineStep
+          enabled: true
+        - name: ongoingMonitoringStep
+          enabled: true
+        - name: finalDecisionStep
+          enabled: true
+#      thresholds:
+#        edd-risk-score: 70
+#        high-risk-countries:
+#          - IR
+#          - KP
+#      step-conditions:
+#        adverseMediaStep: "#root['riskScore'] > 40"
+#        sourceOfFundsStep: "#root['riskScore'] > 60"
+    UK:
+      steps:
+        - name: verifyIdentityStep
+          enabled: true
+        - name: ukSanctionsScreeningStep
+          enabled: true
+        - name: pepScreeningStep
+          enabled: true
+        - name: adverseMediaStep
+          enabled: true
+        - name: riskAlignmentStep
+          enabled: true
+        - name: sourceOfFundsStep
+          enabled: true
+        - name: eddTriggerStep
+          enabled: true
+        - name: transactionBaselineStep
+          enabled: true
+        - name: ongoingMonitoringStep
+          enabled: true
+        - name: finalDecisionStep
+          enabled: true
+#      thresholds:
+#        edd-risk-score: 65
+    USA:
+      steps:
+        - name: verifyIdentityStep
+          enabled: true
+        - name: ofacSanctionsScreeningStep
+          enabled: true
+        - name: pepScreeningStep
+          enabled: true
+        - name: adverseMediaStep
+          enabled: true
+        - name: cddRuleStep
+          enabled: true
+        - name: sourceOfFundsStep
+          enabled: true
+        - name: eddTriggerStep
+          enabled: true
+        - name: transactionBaselineStep
+          enabled: true
+        - name: finalDecisionStep
+          enabled: true
+#      thresholds:
+#        edd-risk-score: 75

@@ -7,6 +7,7 @@ import raff.stein.customer.service.mifid.workflow.step.MifidWorkflowStep;
 
 import java.util.List;
 import java.util.UUID;
+
 public interface MifidWorkflow {
 
     MifidActionType getActionType();

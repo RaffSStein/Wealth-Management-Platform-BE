@@ -7,6 +7,7 @@ import org.openapitools.model.CustomerOnboardedEvent;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import raff.stein.customer.service.aml.AmlService;
 import raff.stein.platformcore.messaging.consumer.WMPBaseEventConsumer;
 
 @Slf4j
@@ -15,6 +16,7 @@ import raff.stein.platformcore.messaging.consumer.WMPBaseEventConsumer;
 @ConditionalOnProperty(name = "kafka.topics.customer-service.customer-onboarded.consuming-enabled", havingValue = "true")
 public class CustomerOnboardedEventConsumer extends WMPBaseEventConsumer {
 
+    private final AmlService amlService;
 
     @KafkaListener(
             topics = "${kafka.topics.customer-service.customer-onboarded.name}",
@@ -28,7 +30,8 @@ public class CustomerOnboardedEventConsumer extends WMPBaseEventConsumer {
     }
 
     private void processFileValidatedEvent(CustomerOnboardedEvent customerOnboardedEvent, String eventId) {
-        // TODO: trigger AML verification
+        // TODO: parse event to customer data
+        amlService.triggerAmlCheck(null);
 
     }
 

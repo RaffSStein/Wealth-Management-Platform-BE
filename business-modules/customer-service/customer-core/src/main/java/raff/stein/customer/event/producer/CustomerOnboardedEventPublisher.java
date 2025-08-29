@@ -4,8 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.CustomerOnboardedEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import raff.stein.customer.event.producer.mapper.MifidFillingToCustomerOnboardedMapper;
-import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
+import raff.stein.customer.event.producer.mapper.CustomerOnboardedMapper;
+import raff.stein.customer.model.bo.mifid.filling.CustomerRiskProfile;
+import raff.stein.customer.model.entity.customer.CustomerEntity;
+import raff.stein.customer.repository.customer.CustomerRepository;
 import raff.stein.platformcore.messaging.publisher.WMPBaseEventPublisher;
 import raff.stein.platformcore.messaging.publisher.model.EventData;
 
@@ -17,18 +19,23 @@ public class CustomerOnboardedEventPublisher {
 
     private final WMPBaseEventPublisher wmpBaseEventPublisher;
     private final String customerOnboardedTopic;
-    private static final MifidFillingToCustomerOnboardedMapper documentToDocumentUploadedEventMapper = MifidFillingToCustomerOnboardedMapper.MAPPER;
+    private final CustomerRepository customerRepository;
+    private static final CustomerOnboardedMapper customerOnboardedMapper = CustomerOnboardedMapper.MAPPER;
 
     public CustomerOnboardedEventPublisher(
             WMPBaseEventPublisher wmpBaseEventPublisher,
-            @Value("${kafka.topics.customer-service.customer-onboarded.name}") String customerOnboardedTopic) {
+            @Value("${kafka.topics.customer-service.customer-onboarded.name}") String customerOnboardedTopic,
+            CustomerRepository customerRepository) {
         this.wmpBaseEventPublisher = wmpBaseEventPublisher;
         this.customerOnboardedTopic = customerOnboardedTopic;
+        this.customerRepository = customerRepository;
     }
 
-    public void publishCustomerOnboardedEvent(MifidFilling mifidFilling, UUID customerId) {
+    public void publishCustomerOnboardedEvent(CustomerRiskProfile customerRiskProfile, UUID customerId) {
+        final CustomerEntity customerEntity = customerRepository.findById(customerId)
+                .orElseThrow(() -> new IllegalArgumentException("Customer with ID " + customerId + " not found"));
         CustomerOnboardedEvent documentUploadedEvent =
-                documentToDocumentUploadedEventMapper.toCustomerOnboardedEvent(mifidFilling, customerId);
+                customerOnboardedMapper.toCustomerOnboardedEvent(customerRiskProfile, customerEntity);
         EventData eventData = new EventData(documentUploadedEvent);
         wmpBaseEventPublisher.publishCloudEvent(customerOnboardedTopic, eventData);
     }

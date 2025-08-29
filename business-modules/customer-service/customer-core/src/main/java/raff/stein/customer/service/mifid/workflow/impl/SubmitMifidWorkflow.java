@@ -112,7 +112,7 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
     private MifidWorkflowStep publishCustomerOnboardedEvent() {
         return context -> {
             customerOnboardedEventPublisher.publishCustomerOnboardedEvent(
-                    context.getResultBo(),
+                    context.getResultBo().getCustomerRiskProfile(),
                     context.getCustomerId());
             return context;
         };

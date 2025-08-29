@@ -11,7 +11,36 @@ components:
     CustomerCreatedEvent:
       type: object
       description: Event emitted when a new customer is created.
-      required: [userId, customerType, taxId, customerStatus]
+      required: [customer]
+      properties:
+        customer:
+          $ref: '#/components/schemas/Customer'
+
+
+    CustomerOnboardedEvent:
+      type: object
+      description: Event emitted when a customer onboarding (MIFID) is completed.
+      required: [customer, questionnaireId, fillingDate, customerRiskProfile]
+      properties:
+        customer:
+          $ref: '#/components/schemas/Customer'
+        questionnaireId:
+          type: integer
+          format: int64
+        fillingId:
+          type: integer
+          format: int64
+          nullable: true
+        fillingDate:
+          type: string
+          format: date
+        customerRiskProfile:
+          $ref: '#/components/schemas/CustomerRiskProfile'
+
+
+    Customer:
+      type: object
+      required: [ id, userId, customerType, taxId, customerStatus ]
       properties:
         id:
           type: string
@@ -66,43 +95,16 @@ components:
         customerGoals:
           type: array
           items:
-            $ref: '#/components/schemas/CustomerGoal'
-
-    CustomerOnboardedEvent:
-      type: object
-      description: Event emitted when a customer onboarding (MIFID) is completed.
-      required: [customerId, questionnaireId, fillingDate, responses]
-      properties:
-        customerId:
-          type: string
-          format: uuid
-        questionnaireId:
-          type: integer
-          format: int64
-        fillingId:
-          type: integer
-          format: int64
-          nullable: true
-        fillingDate:
-          type: string
-          format: date
-        status:
-          $ref: '#/components/schemas/MifidFillingStatus'
-        responses:
-          type: array
-          items:
-            $ref: '#/components/schemas/MifidResponse'
-        customerRiskProfile:
-          $ref: '#/components/schemas/CustomerRiskProfile'
+              $ref: '#/components/schemas/CustomerGoal'
 
 
     CustomerType:
       type: string
-      enum: [INDIVIDUAL, CORPORATE]
+      enum: [INDIVIDUAL, LEGAL_ENTITY, SOLE_PROPRIETOR, JOINT_ACCOUNT, OTHER]
 
     CustomerStatus:
       type: string
-      enum: [DRAFT, PENDING_VERIFICATION, ACTIVE, REJECTED]
+      enum: [DRAFT, PENDING_VERIFICATION, ACTIVE, REJECTED, CLOSED, DELETED]
 
     Gender:
       type: string
