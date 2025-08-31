@@ -66,6 +66,12 @@
             <artifactId>spring-boot-starter-oauth2-client</artifactId>
             <version>3.4.1</version>
         </dependency>
+        <!-- ICU4J: CLDR-backed regions and locale data (avoid hardcoded EU/UK/US lists) -->
+        <dependency>
+            <groupId>com.ibm.icu</groupId>
+            <artifactId>icu4j</artifactId>
+            <version>77.1</version>
+        </dependency>
         <!-- Dependency for the customer modules -->
         <dependency>
             <groupId>raff.stein</groupId>

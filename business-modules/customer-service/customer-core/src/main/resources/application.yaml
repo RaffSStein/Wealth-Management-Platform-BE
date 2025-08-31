@@ -38,79 +38,70 @@ aml:
   jurisdictions:
     EU:
       steps:
-        - name: verifyIdentityStep
+        - name: verify-identity-step
           enabled: true
-        - name: beneficialOwnershipStep
+        - name: beneficial-ownership-step
           enabled: true
-        - name: sanctionsScreeningStep
+        - name: sanctions-screening-step
           enabled: true
-        - name: pepScreeningStep
+        - name: pep-screening-step
           enabled: true
-        - name: adverseMediaStep
+        - name: adverse-media-step
           enabled: true
-        - name: riskAlignmentStep
+        - name: risk-alignment-step
           enabled: true
-        - name: sourceOfFundsStep
+        - name: source-of-funds-step
           enabled: true
-        - name: eddTriggerStep
+        - name: edd-trigger-step
           enabled: true
-        - name: transactionBaselineStep
+        - name: transaction-baseline-step
           enabled: true
-        - name: ongoingMonitoringStep
+        - name: ongoing-monitoring-step
           enabled: true
-        - name: finalDecisionStep
+        - name: final-decision-step
           enabled: true
-#      thresholds:
-#        edd-risk-score: 70
-#        high-risk-countries:
-#          - IR
-#          - KP
-#      step-conditions:
-#        adverseMediaStep: "#root['riskScore'] > 40"
-#        sourceOfFundsStep: "#root['riskScore'] > 60"
     UK:
       steps:
-        - name: verifyIdentityStep
+        - name: verify-identity-step
           enabled: true
-        - name: ukSanctionsScreeningStep
+        - name: uk-sanctions-screening-step
           enabled: true
-        - name: pepScreeningStep
+        - name: pep-screening-step
           enabled: true
-        - name: adverseMediaStep
+        - name: adverse-media-step
           enabled: true
-        - name: riskAlignmentStep
+        - name: risk-alignment-step
           enabled: true
-        - name: sourceOfFundsStep
+        - name: source-of-funds-step
           enabled: true
-        - name: eddTriggerStep
+        - name: edd-trigger-step
           enabled: true
-        - name: transactionBaselineStep
+        - name: transaction-baseline-step
           enabled: true
-        - name: ongoingMonitoringStep
+        - name: ongoing-monitoring-step
           enabled: true
-        - name: finalDecisionStep
+        - name: final-decision-step
           enabled: true
-#      thresholds:
-#        edd-risk-score: 65
     USA:
       steps:
-        - name: verifyIdentityStep
+        - name: verify-identity-step
           enabled: true
-        - name: ofacSanctionsScreeningStep
+        - name: ofac-sanctions-screening-step
           enabled: true
-        - name: pepScreeningStep
+        - name: pep-screening-step
           enabled: true
-        - name: adverseMediaStep
+        - name: adverse-media-step
           enabled: true
-        - name: cddRuleStep
+        - name: cdd-rule-step
           enabled: true
-        - name: sourceOfFundsStep
+        - name: source-of-funds-step
           enabled: true
-        - name: eddTriggerStep
+        - name: edd-trigger-step
           enabled: true
-        - name: transactionBaselineStep
+        - name: transaction-baseline-step
           enabled: true
-        - name: finalDecisionStep
+        - name: final-decision-step
           enabled: true
-#      thresholds:
-#        edd-risk-score: 75
+    OTHER:
+      steps:
+        # no AML steps for OTHER jurisdiction

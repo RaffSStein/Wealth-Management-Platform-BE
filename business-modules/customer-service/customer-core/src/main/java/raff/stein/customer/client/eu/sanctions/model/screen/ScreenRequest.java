@@ -24,6 +24,9 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ScreenRequest {
 
+    // IMPORTANT: This is a mock implementation. Replace with real sanction screening logic.
+
+
     // Identity
     /** Primary/legal first name of the subject to screen. */
     @NotBlank

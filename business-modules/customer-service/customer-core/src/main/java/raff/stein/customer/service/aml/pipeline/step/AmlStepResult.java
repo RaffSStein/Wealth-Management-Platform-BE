@@ -15,6 +15,17 @@ public record AmlStepResult(
         Instant startedAt,
         Instant finishedAt) {
 
-    public enum StepStatus { PASSED, FAILED, REVIEW, WAITING_EXTERNAL }
-    public enum Decision { PASS, FAIL, MANUAL_REVIEW, PENDING }
+    public enum StepStatus {
+        PASSED,
+        FAILED,
+        REVIEW,
+        WAITING_EXTERNAL
+    }
+
+    public enum Decision {
+        PASS,
+        FAIL,
+        MANUAL_REVIEW,
+        PENDING
+    }
 }

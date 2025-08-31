@@ -8,6 +8,7 @@ import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 
 import java.time.OffsetDateTime;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "aml_verification")
@@ -20,6 +21,9 @@ public class AmlVerificationEntity extends BaseDateEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
+    private UUID amlCaseId;
 
     // Relationships
 
@@ -46,6 +50,9 @@ public class AmlVerificationEntity extends BaseDateEntity<Long> {
 
     @Column(nullable = false)
     private String status;
+
+    @Column(nullable = false)
+    private String jurisdiction;
 
     @Column
     private String providerName;

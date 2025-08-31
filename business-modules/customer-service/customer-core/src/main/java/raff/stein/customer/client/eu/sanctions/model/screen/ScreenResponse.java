@@ -22,6 +22,8 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ScreenResponse {
 
+    // IMPORTANT: This is a mock implementation. Replace with real sanction screening logic.
+
     // Correlation / audit
     /** Correlation id echoed back by the engine. */
     private String correlationId;

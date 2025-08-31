@@ -7,6 +7,7 @@ public enum OnboardingStatus {
     IN_PROGRESS,
     DOCUMENTS_REQUIRED,
     DOCUMENTS_REJECTED,
+    AML_REJECTED,
     DONE,
     FAILED;
 }

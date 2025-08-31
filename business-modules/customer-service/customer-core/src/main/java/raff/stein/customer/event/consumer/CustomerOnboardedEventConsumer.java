@@ -7,6 +7,7 @@ import org.openapitools.model.CustomerOnboardedEvent;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import raff.stein.customer.event.consumer.mapper.CustomerOnboardedMapper;
 import raff.stein.customer.service.aml.AmlService;
 import raff.stein.platformcore.messaging.consumer.WMPBaseEventConsumer;
 
@@ -17,6 +18,7 @@ import raff.stein.platformcore.messaging.consumer.WMPBaseEventConsumer;
 public class CustomerOnboardedEventConsumer extends WMPBaseEventConsumer {
 
     private final AmlService amlService;
+    private static final CustomerOnboardedMapper customerOnboardedMapper = CustomerOnboardedMapper.MAPPER;
 
     @KafkaListener(
             topics = "${kafka.topics.customer-service.customer-onboarded.name}",
@@ -30,8 +32,10 @@ public class CustomerOnboardedEventConsumer extends WMPBaseEventConsumer {
     }
 
     private void processFileValidatedEvent(CustomerOnboardedEvent customerOnboardedEvent, String eventId) {
-        // TODO: parse event to customer data
-        amlService.triggerAmlCheck(null);
+        log.info("Received CustomerOnboardedEvent with id: {} and eventId: {}",
+                customerOnboardedEvent.getCustomer().getId(),
+                eventId);
+        amlService.triggerAmlCheck(customerOnboardedMapper.toCustomer(customerOnboardedEvent.getCustomer()));
 
     }
 

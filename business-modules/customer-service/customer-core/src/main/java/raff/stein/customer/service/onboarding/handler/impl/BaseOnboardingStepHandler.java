@@ -58,7 +58,7 @@ public abstract class BaseOnboardingStepHandler implements OnboardingStepHandler
     public void handle(@NonNull OnboardingStepContext context) {
         // 1. check and get the last valid customer onboarding instance
         UUID customerId = context.getCustomerId();
-        if( customerId == null) {
+        if (customerId == null) {
             throw new CustomerException("Customer ID must not be null");
         }
 
