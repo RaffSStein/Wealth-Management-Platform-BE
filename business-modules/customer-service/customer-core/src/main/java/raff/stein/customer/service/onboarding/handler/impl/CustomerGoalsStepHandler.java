@@ -28,8 +28,14 @@ public class CustomerGoalsStepHandler extends BaseOnboardingStepHandler {
     }
 
     @Override
-    public void updateCustomerOnboardingEntity(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
-        // do nothing, this step does not update the main onboarding entity
+    public void updateCustomerOnboardingStatus(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
+        // do nothing, this step does not update the status of the onboarding entity
+    }
+
+    @Override
+    public void updateCustomerOnboardingReason(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
+        customerOnboarding.setReason("Goals step completed successfully");
+
     }
 
 }

@@ -31,7 +31,10 @@ public class AmlPipelineExecutor {
             log.info("Executing AML step: {} for case {}", step.name(), context.getAmlCaseId());
             AmlStepResult result = step.execute(context);
             executed.add(result);
-            log.info("Completed AML step: {} for case {} with result: {}", step.name(), context.getAmlCaseId(), result);
+            log.info("Completed AML step: {} for case {} with result: {}",
+                    step.name(),
+                    context.getAmlCaseId(),
+                    result.status());
 
             // Precedence: FAILED > WAITING_EXTERNAL > REVIEW > PASSED
             if (result.status() == AmlStepResult.StepStatus.FAILED) {

@@ -38,9 +38,14 @@ public class MifidStepHandler extends BaseOnboardingStepHandler {
     }
 
     @Override
-    public void updateCustomerOnboardingEntity(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
-        // do nothing, this step does not require any updates to the onboarding entity
+    public void updateCustomerOnboardingStatus(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
+        // do nothing, this step does not require any updates of the onboarding status
         // the MIFID status does not affect the onboarding status, it will remain IN_PROGRESS until the final step is completed
+    }
+
+    @Override
+    public void updateCustomerOnboardingReason(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
+        customerOnboarding.setReason("MIFID step completed");
     }
 
 }

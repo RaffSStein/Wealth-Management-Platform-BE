@@ -34,7 +34,7 @@ public class DocumentStepHandler extends BaseOnboardingStepHandler {
     }
 
     @Override
-    public void updateCustomerOnboardingEntity(
+    public void updateCustomerOnboardingStatus(
             CustomerOnboardingEntity customerOnboarding,
             OnboardingStepContext context) {
         final UUID customerId = context.getCustomerId();
@@ -45,12 +45,21 @@ public class DocumentStepHandler extends BaseOnboardingStepHandler {
             log.info("File with ID: [{}] is valid. Proceeding to next onboarding step for customer ID: [{}].", fileId, customerId);
             // Proceed to the next step in the onboarding process
             customerOnboarding.setOnboardingStatus(OnboardingStatus.IN_PROGRESS);
-            customerOnboarding.setReason("Document validated successfully");
         } else {
             log.warn("File with ID: [{}] is not valid. Marking onboarding as failed for customer ID: [{}].", fileId, customerId);
             // Mark the onboarding as failed
-            customerOnboarding.setOnboardingStatus(OnboardingStatus.DOCUMENTS_REJECTED);
+            customerOnboarding.setOnboardingStatus(OnboardingStatus.FAILED);
+        }
+    }
+
+    @Override
+    public void updateCustomerOnboardingReason(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
+        final Boolean isValid = (Boolean) context.getMetadata("isValid");
+        if (Boolean.TRUE.equals(isValid)) {
+            customerOnboarding.setReason("Document validated successfully");
+        } else {
             customerOnboarding.setReason("Document validation failed");
         }
+
     }
 }

@@ -41,7 +41,7 @@ public class AmlStepHandler extends BaseOnboardingStepHandler {
     }
 
     @Override
-    public void updateCustomerOnboardingEntity(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
+    public void updateCustomerOnboardingStatus(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
         final UUID customerId = context.getCustomerId();
         final AmlResult amlResult = (AmlResult) context.getMetadata("AmlResult");
         if (amlResult != null) {
@@ -49,20 +49,32 @@ public class AmlStepHandler extends BaseOnboardingStepHandler {
                 log.info("AML check passed for customer ID: [{}]. Proceeding to next onboarding step.", customerId);
                 // Proceed to the next step in the onboarding process
                 customerOnboarding.setOnboardingStatus(OnboardingStatus.IN_PROGRESS);
-                customerOnboarding.setReason("AML check passed successfully");
             } else {
                 log.warn("AML check failed for customer ID: [{}]. Marking onboarding as failed.", customerId);
                 // Mark the onboarding as failed
-                customerOnboarding.setOnboardingStatus(OnboardingStatus.AML_REJECTED);
-                customerOnboarding.setReason("AML check failed");
+                customerOnboarding.setOnboardingStatus(OnboardingStatus.FAILED);
             }
         } else {
             log.error("AML result data is missing for customer ID: [{}]. Marking onboarding as failed.", customerId);
             // Mark the onboarding as failed due to missing AML result
-            customerOnboarding.setOnboardingStatus(OnboardingStatus.AML_REJECTED);
-            customerOnboarding.setReason("AML result data is missing");
+            customerOnboarding.setOnboardingStatus(OnboardingStatus.FAILED);
         }
 
 
+    }
+
+    @Override
+    public void updateCustomerOnboardingReason(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
+        final AmlResult amlResult = (AmlResult) context.getMetadata("AmlResult");
+        if (amlResult != null) {
+            if (amlResult.overallStatus().equals(AmlStepResult.StepStatus.PASSED)) {
+                customerOnboarding.setReason("AML check passed successfully");
+            } else {
+                customerOnboarding.setReason("AML check failed");
+            }
+        } else {
+            customerOnboarding.setReason("AML result data is missing");
+
+        }
     }
 }

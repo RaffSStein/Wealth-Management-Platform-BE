@@ -28,8 +28,13 @@ public class CustomerFinancialsStepHandler extends BaseOnboardingStepHandler {
     }
 
     @Override
-    public void updateCustomerOnboardingEntity(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
-        // do nothing, this step does not require any updates to the onboarding entity
+    public void updateCustomerOnboardingStatus(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
+        // do nothing, this step does not update the status of the onboarding entity
+    }
+
+    @Override
+    public void updateCustomerOnboardingReason(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
+        customerOnboarding.setReason("Financials step completed successfully");
     }
 
 }

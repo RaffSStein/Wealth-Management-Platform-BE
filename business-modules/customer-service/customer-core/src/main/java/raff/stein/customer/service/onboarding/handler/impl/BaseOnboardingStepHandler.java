@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import raff.stein.customer.exception.CustomerException;
 import raff.stein.customer.model.entity.customer.CustomerOnboardingEntity;
 import raff.stein.customer.model.entity.customer.CustomerOnboardingStepEntity;
+import raff.stein.customer.model.entity.customer.enumeration.OnboardingStatus;
 import raff.stein.customer.repository.onboarding.CustomerOnboardingRepository;
 import raff.stein.customer.repository.onboarding.CustomerOnboardingStepRepository;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
@@ -37,10 +38,18 @@ public abstract class BaseOnboardingStepHandler implements OnboardingStepHandler
     public abstract String buildStepStatus(OnboardingStepContext context);
 
     /**
-     * This method should update some fields of the customer onboarding entity
+     * This method should update the status of the customer onboarding entity
      * based on the context.
      */
-    public abstract void updateCustomerOnboardingEntity(
+    public abstract void updateCustomerOnboardingStatus(
+            CustomerOnboardingEntity customerOnboarding,
+            OnboardingStepContext context);
+
+    /**
+     * This method should update the reason of the customer onboarding entity
+     * based on the context.
+     */
+    public abstract void updateCustomerOnboardingReason(
             CustomerOnboardingEntity customerOnboarding,
             OnboardingStepContext context);
 
@@ -104,8 +113,21 @@ public abstract class BaseOnboardingStepHandler implements OnboardingStepHandler
                     customerId,
                     customerOnboarding.getId());
         }
-
         // 3. update the onboarding status
-        updateCustomerOnboardingEntity(customerOnboarding, context);
+        // allow updates only if the onboarding current status is "IN_PROGRESS"
+        // this prevents overwriting a "COMPLETED" or "FAILED" status
+        if (customerOnboarding.getOnboardingStatus() != null &&
+                customerOnboarding.getOnboardingStatus().equals(OnboardingStatus.IN_PROGRESS)) {
+            log.info("Updating onboarding status for customer ID: [{}] and onboarding ID: [{}].",
+                    customerId,
+                    customerOnboarding.getId());
+            updateCustomerOnboardingStatus(customerOnboarding, context);
+        }
+        // 4. update the onboarding reason
+        // always allow updating the reason
+        log.info("Updating onboarding reason for customer ID: [{}] and onboarding ID: [{}].",
+                customerId,
+                customerOnboarding.getId());
+        updateCustomerOnboardingReason(customerOnboarding, context);
     }
 }
