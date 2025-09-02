@@ -38,16 +38,17 @@ import java.util.Base64;
 @RequiredArgsConstructor
 @Profile("gcs")
 public class GCSStorageService implements CloudStorageService {
+
     /**
      * The name of the GCS bucket where files will be stored.
-     * Configured via the property 'bucket.gcs.storage.bucket-name'.
+     * Configured via the property 'gcp.cloud.storage.bucket-name'.
      */
     @Value("${gcp.cloud.storage.bucket-name}")
     private String bucketName;
 
     /**
      * The base directory inside the bucket where files will be uploaded.
-     * Configured via the property 'bucket.gcs.storage.base-directory-name'.
+     * Configured via the property 'gcp.cloud.storage.base-directory-name'.
      */
     @Value("${gcp.cloud.storage.base-directory-name}")
     private String baseDirectoryName;

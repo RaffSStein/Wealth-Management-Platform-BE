@@ -29,7 +29,7 @@ public class GCSConfig {
      * It is meant to be used in production or other environments where GCS is not local.
      */
     @Bean
-    @Profile("!gcs & !local")
+    @Profile("!gcs & !local & !s3")
     public Storage getStorage() {
         log.info("Initializing GCS Storage with projectId: {}, bucketName: {}, host: {}", projectId, bucketName, host);
         return StorageOptions.newBuilder()

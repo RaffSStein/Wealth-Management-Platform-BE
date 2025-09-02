@@ -65,8 +65,6 @@ public class WMPBaseEventPublisher implements EventPublisher {
 
     private CloudEvent createCloudEvent(@NonNull EventData eventData) {
 
-        final WMPContext wmpContext = SecurityContextHolder.getContext();
-
         Object data = eventData.data();
         CloudEventBuilder cloudEventBuilder = CloudEventBuilder.v1()
                 .withDataContentType("application/json")
@@ -75,12 +73,18 @@ public class WMPBaseEventPublisher implements EventPublisher {
                 .withData(PojoCloudEventData.wrap(data, objectMapper::writeValueAsBytes))
                 .withTime(OffsetDateTime.now(ZoneOffset.UTC))
                 .withId(UUID.randomUUID().toString())
-                .withSubject("")
-                // forward user information from the security context
-                .withExtension("userid", wmpContext.getUserId())
-                .withExtension("email", wmpContext.getEmail())
-                .withExtension("bankcode", wmpContext.getBankCode())
-                .withExtension("correlationid", wmpContext.getCorrelationId());
+                .withSubject("");
+
+        // forward user information from the security context
+        final WMPContext wmpContext = SecurityContextHolder.getContext();
+
+        if (wmpContext != null) {
+            cloudEventBuilder
+                    .withExtension("userid", wmpContext.getUserId())
+                    .withExtension("email", wmpContext.getEmail())
+                    .withExtension("bankcode", wmpContext.getBankCode())
+                    .withExtension("correlationid", wmpContext.getCorrelationId());
+        }
         return cloudEventBuilder.build();
     }
 }
