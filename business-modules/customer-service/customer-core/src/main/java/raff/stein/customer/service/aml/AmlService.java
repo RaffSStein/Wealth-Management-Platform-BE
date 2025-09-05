@@ -42,6 +42,7 @@ public class AmlService {
     private static final AmlVerificationToAmlVerificationEntityMapper amlVerificationMapper = AmlVerificationToAmlVerificationEntityMapper.MAPPER;
     private static final CustomerToCustomerEntityMapper customerMapper = CustomerToCustomerEntityMapper.MAPPER;
 
+    //TODO: add API for AML retrigger
     public void triggerAmlCheck(@NonNull UUID customerId) {
         final CustomerEntity customerEntity = customerRepository.findById(customerId)
                 .orElseThrow(() -> new IllegalArgumentException("Customer with ID " + customerId + " not found"));

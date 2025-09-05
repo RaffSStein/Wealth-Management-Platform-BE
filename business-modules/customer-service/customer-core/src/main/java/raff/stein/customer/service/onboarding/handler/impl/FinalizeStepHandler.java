@@ -11,6 +11,7 @@ import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
 @RequiredArgsConstructor
 @Slf4j
 public class FinalizeStepHandler extends BaseOnboardingStepHandler {
+    //TODO
 
     @Override
     public String buildStepReason(OnboardingStepContext context) {
