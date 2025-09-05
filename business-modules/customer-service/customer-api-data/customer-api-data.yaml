@@ -264,6 +264,80 @@ paths:
       tags:
         - Mifid
 
+  # Onboarding APIs
+  /customer/{customerId}/onboarding/getActiveOnboarding:
+    get:
+      summary: Get the active onboarding instance for a customer
+      description: Returns the current active onboarding instance for the provided customer.
+      operationId: getActiveOnboarding
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Active onboarding instance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerOnboardingDTO'
+      tags:
+        - Onboarding
+
+  /customer/{customerId}/onboarding/{onboardingId}:
+    get:
+      summary: Get a specific onboarding instance by ID
+      description: Returns the onboarding instance by ID for the provided customer.
+      operationId: getOnboardingById
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: onboardingId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Onboarding instance found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerOnboardingDTO'
+      tags:
+        - Onboarding
+
+  /customer/{customerId}/onboarding/getOnboardingInstances:
+    get:
+      summary: Get all onboarding instances for a customer
+      description: Returns the list of all onboarding instances for the specified customer (active and historical).
+      operationId: getOnboardingInstances
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of onboarding instances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomerOnboardingDTO'
+      tags:
+        - Onboarding
 
 components:
   schemas:
@@ -422,7 +496,6 @@ components:
             - LONG_TERM
           description: Duration of the goal in months or years
 
-
     MifidQuestionnaireConfigDTO:
       type: object
       properties:
@@ -571,3 +644,63 @@ components:
         score:
           type: integer
           description: Total score from the questionnaire responses
+
+    CustomerOnboardingDTO:
+      type: object
+      description: Represents a customer onboarding process instance.
+      properties:
+        id:
+          type: integer
+          format: int64
+        customerId:
+          type: string
+          format: uuid
+        onboardingStatus:
+          $ref: '#/components/schemas/OnboardingStatus'
+        reason:
+          type: string
+          maxLength: 1000
+        valid:
+          type: boolean
+          description: Indicates if this onboarding instance is the active one
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerOnboardingStepDTO'
+
+    CustomerOnboardingStepDTO:
+      type: object
+      description: Represents a single step in the onboarding process.
+      properties:
+        id:
+          type: integer
+          format: int64
+        customerOnboardingId:
+          type: integer
+          format: int64
+        step:
+          $ref: '#/components/schemas/OnboardingStep'
+        status:
+          type: string
+        reason:
+          type: string
+        stepOrder:
+          type: integer
+
+    OnboardingStatus:
+      type: string
+      enum:
+        - IN_PROGRESS
+        - DONE
+        - FAILED
+
+    OnboardingStep:
+      type: string
+      enum:
+        - INIT
+        - DOCUMENTS
+        - FINANCIALS
+        - GOALS
+        - MIFID
+        - AML
+        - FINALIZE
