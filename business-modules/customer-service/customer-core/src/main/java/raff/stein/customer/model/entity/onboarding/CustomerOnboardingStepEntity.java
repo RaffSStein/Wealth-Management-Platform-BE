@@ -1,4 +1,4 @@
-package raff.stein.customer.model.entity.customer;
+package raff.stein.customer.model.entity.onboarding;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

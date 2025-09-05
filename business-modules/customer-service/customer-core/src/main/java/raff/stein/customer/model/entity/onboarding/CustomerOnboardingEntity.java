@@ -1,8 +1,9 @@
-package raff.stein.customer.model.entity.customer;
+package raff.stein.customer.model.entity.onboarding;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStatus;
 import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 

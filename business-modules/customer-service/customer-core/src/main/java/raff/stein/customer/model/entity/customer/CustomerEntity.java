@@ -7,6 +7,7 @@ import raff.stein.customer.model.entity.aml.AmlVerificationEntity;
 import raff.stein.customer.model.entity.customer.enumeration.CustomerStatus;
 import raff.stein.customer.model.entity.customer.enumeration.CustomerType;
 import raff.stein.customer.model.entity.mifid.MifidFillingEntity;
+import raff.stein.customer.model.entity.onboarding.CustomerOnboardingEntity;
 import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 
 import java.time.LocalDate;
