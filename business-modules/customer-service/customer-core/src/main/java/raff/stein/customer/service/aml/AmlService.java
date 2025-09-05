@@ -4,14 +4,20 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import raff.stein.customer.event.producer.CustomerCreatedEventPublisher;
+import raff.stein.customer.event.producer.CustomerRejectedEventPublisher;
 import raff.stein.customer.model.bo.aml.AmlVerification;
 import raff.stein.customer.model.bo.customer.Customer;
 import raff.stein.customer.model.entity.aml.mapper.AmlVerificationToAmlVerificationEntityMapper;
+import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
+import raff.stein.customer.model.entity.customer.mapper.CustomerToCustomerEntityMapper;
 import raff.stein.customer.repository.aml.AmlVerificationRepository;
+import raff.stein.customer.repository.customer.CustomerRepository;
 import raff.stein.customer.service.aml.pipeline.AmlPipelineExecutor;
 import raff.stein.customer.service.aml.pipeline.AmlResult;
 import raff.stein.customer.service.aml.pipeline.step.AmlContext;
+import raff.stein.customer.service.aml.pipeline.step.AmlStepResult;
 import raff.stein.customer.service.aml.utils.JurisdictionUtils;
 import raff.stein.customer.service.onboarding.OnboardingService;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
@@ -29,8 +35,19 @@ public class AmlService {
     private final AmlPipelineExecutor amlPipelineExecutor;
     private final AmlVerificationRepository amlVerificationRepository;
     private final OnboardingService onboardingService;
+    private final CustomerCreatedEventPublisher customerCreatedEventPublisher;
+    private final CustomerRejectedEventPublisher customerRejectedEventPublisher;
+    private final CustomerRepository customerRepository;
 
     private static final AmlVerificationToAmlVerificationEntityMapper amlVerificationMapper = AmlVerificationToAmlVerificationEntityMapper.MAPPER;
+    private static final CustomerToCustomerEntityMapper customerMapper = CustomerToCustomerEntityMapper.MAPPER;
+
+    public void triggerAmlCheck(@NonNull UUID customerId) {
+        final CustomerEntity customerEntity = customerRepository.findById(customerId)
+                .orElseThrow(() -> new IllegalArgumentException("Customer with ID " + customerId + " not found"));
+        Customer customer = customerMapper.toCustomer(customerEntity);
+        triggerAmlCheck(customer);
+    }
 
     public void triggerAmlCheck(@NonNull Customer customer) {
         log.info("Triggering AML check for customer {} ", customer.getId());
@@ -74,6 +91,15 @@ public class AmlService {
                                 "amlCaseId", amlVerification.getAmlCaseId(),
                                 "AmlResult", amlVerification.getAmlResult()))
                         .build());
+
+        // if AML verification is passed, publish CustomerCreatedEvent, otherwise publish CustomerRejectedEvent
+        if(amlVerification.getAmlResult().overallStatus().equals(AmlStepResult.StepStatus.PASSED)) {
+            log.info("AML check passed for customer {}. Proceeding with onboarding.", customer.getId());
+            customerCreatedEventPublisher.publishCustomerCreatedEvent(customer.getId());
+        } else {
+            log.warn("AML check did not pass for customer {}. Further action may be required.", customer.getId());
+            customerRejectedEventPublisher.publishCustomerRejectedEvent(customer.getId());
+        }
 
     }
 

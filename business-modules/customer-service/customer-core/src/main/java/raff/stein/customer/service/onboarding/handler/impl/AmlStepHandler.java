@@ -74,7 +74,6 @@ public class AmlStepHandler extends BaseOnboardingStepHandler {
             }
         } else {
             customerOnboarding.setReason("AML result data is missing");
-
         }
     }
 }

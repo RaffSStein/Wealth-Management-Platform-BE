@@ -8,6 +8,16 @@ kafka:
         consuming-enabled: true
         name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.customer-service.domain}.customer-onboarded"
         groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${kafka.topics.customer-service.domain}.customer-onboarded.sa.${kafka.broker.serviceAccount}"
+      customer-created:
+        # in case of customer service, this topic is also consumed
+        consuming-enabled: true
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.customer-service.domain}.customer-created"
+        groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${kafka.topics.customer-service.domain}.customer-created.sa.${kafka.broker.serviceAccount}"
+      customer-rejected:
+        # in case of customer service, this topic is also consumed
+        consuming-enabled: true
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.customer-service.domain}.customer-rejected"
+        groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${kafka.topics.customer-service.domain}.customer-rejected.sa.${kafka.broker.serviceAccount}"
     # consumed topics
     document:
       domain: document-service

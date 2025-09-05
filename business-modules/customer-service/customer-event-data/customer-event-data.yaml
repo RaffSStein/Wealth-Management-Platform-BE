@@ -16,6 +16,13 @@ components:
         customer:
           $ref: '#/components/schemas/Customer'
 
+    CustomerRejectedEvent:
+      type: object
+      description: Event emitted when a new customer is rejected.
+      required: [ customer ]
+      properties:
+        customer:
+          $ref: '#/components/schemas/Customer'
 
     CustomerOnboardedEvent:
       type: object
@@ -36,7 +43,6 @@ components:
           format: date
         customerRiskProfile:
           $ref: '#/components/schemas/CustomerRiskProfile'
-
 
     Customer:
       type: object
@@ -96,7 +102,6 @@ components:
           type: array
           items:
               $ref: '#/components/schemas/CustomerGoal'
-
 
     CustomerType:
       type: string
