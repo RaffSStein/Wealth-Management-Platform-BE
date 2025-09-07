@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.UserCreatedEvent;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import raff.stein.platformcore.messaging.publisher.WMPBaseEventPublisher;
 import raff.stein.platformcore.messaging.publisher.model.EventData;
@@ -13,7 +12,6 @@ import raff.stein.user.model.User;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "kafka.topics.user-service.user-created.enabled", havingValue = "true")
 public class UserCreatedEventPublisher {
 
     private final WMPBaseEventPublisher wmpBaseEventPublisher;

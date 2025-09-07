@@ -1,10 +1,7 @@
 package raff.stein.document.model.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 
 /**
@@ -27,8 +24,9 @@ public class DocumentMetadataEntity extends BaseDateEntity<Long> {
 
     // Relationships
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)
+    @Setter
     private DocumentEntity document;
 
     // Fields

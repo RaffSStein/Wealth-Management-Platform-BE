@@ -7,7 +7,8 @@ import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 
 import java.time.OffsetDateTime;
-import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "aml_verification")
@@ -21,6 +22,9 @@ public class AmlVerificationEntity extends BaseDateEntity<Long> {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private UUID amlCaseId;
+
     // Relationships
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -31,13 +35,13 @@ public class AmlVerificationEntity extends BaseDateEntity<Long> {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
-    private List<AmlMatchEntity> matches;
+    private Set<AmlMatchEntity> matches;
 
     @OneToMany(mappedBy = "amlVerification", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
-    private List<AmlDocumentEntity> documents;
+    private Set<AmlDocumentEntity> documents;
 
     // Fields
 
@@ -46,6 +50,9 @@ public class AmlVerificationEntity extends BaseDateEntity<Long> {
 
     @Column(nullable = false)
     private String status;
+
+    @Column(nullable = false)
+    private String jurisdiction;
 
     @Column
     private String providerName;

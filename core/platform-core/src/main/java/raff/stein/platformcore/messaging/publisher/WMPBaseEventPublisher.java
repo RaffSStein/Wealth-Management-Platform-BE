@@ -12,12 +12,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import raff.stein.platformcore.messaging.publisher.model.EventData;
+import raff.stein.platformcore.security.context.SecurityContextHolder;
+import raff.stein.platformcore.security.context.WMPContext;
 
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @Component
@@ -45,36 +46,21 @@ public class WMPBaseEventPublisher implements EventPublisher {
                 cloudEvent.getId(),
                 cloudEvent.getType());
 
-        boolean sent = sendCloudEvent(topic, cloudEvent);
-
-        if (sent) {
-            log.info("CloudEvent sent successfully to topic: [{}], eventId: [{}], eventType: [{}]",
-                    topic,
-                    cloudEvent.getId(),
-                    cloudEvent.getType());
-        } else {
-            log.error("Failed to send CloudEvent to topic: [{}], eventId: [{}], eventType: [{}]",
-                    topic,
-                    cloudEvent.getId(),
-                    cloudEvent.getType());
-        }
+        sendCloudEvent(topic, cloudEvent);
 
     }
 
-    private boolean sendCloudEvent(@NonNull String topic, CloudEvent cloudEvent) {
-        AtomicBoolean eventSent = new AtomicBoolean(true);
+    private void sendCloudEvent(@NonNull String topic, CloudEvent cloudEvent) {
         kafkaCloudEventProducer.send(
                 new ProducerRecord<>(topic, cloudEvent), (recordMetadata, e) -> {
                     if (e != null) {
-                        log.error("Failed to send CloudEvent to topic: [{}], error: {}", topic, e.getMessage());
-                        eventSent.set(false);
+                        log.error("Failed to publish CloudEvent to topic: [{}], error: {}", topic, e.getMessage());
                     } else {
-                        log.info("CloudEvent sent to topic: [{}], partition: [{}], offset: [{}]",
+                        log.info("CloudEvent published to topic: [{}], partition: [{}], offset: [{}]",
                                 topic, recordMetadata.partition(), recordMetadata.offset());
                     }
                 }
         );
-        return eventSent.get();
     }
 
     private CloudEvent createCloudEvent(@NonNull EventData eventData) {
@@ -88,6 +74,17 @@ public class WMPBaseEventPublisher implements EventPublisher {
                 .withTime(OffsetDateTime.now(ZoneOffset.UTC))
                 .withId(UUID.randomUUID().toString())
                 .withSubject("");
+
+        // forward user information from the security context
+        final WMPContext wmpContext = SecurityContextHolder.getContext();
+
+        if (wmpContext != null) {
+            cloudEventBuilder
+                    .withExtension("userid", wmpContext.getUserId())
+                    .withExtension("email", wmpContext.getEmail())
+                    .withExtension("bankcode", wmpContext.getBankCode())
+                    .withExtension("correlationid", wmpContext.getCorrelationId());
+        }
         return cloudEventBuilder.build();
     }
 }

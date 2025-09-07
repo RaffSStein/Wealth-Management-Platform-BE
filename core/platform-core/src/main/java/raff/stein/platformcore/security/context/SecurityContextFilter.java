@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.util.StringUtils;
+import raff.stein.platformcore.exception.ErrorCode;
+import raff.stein.platformcore.exception.types.unauthorized.JwtTokenException;
 import raff.stein.platformcore.security.jwt.JwtProperties;
 import raff.stein.platformcore.security.jwt.JwtTokenParser;
 
@@ -47,6 +49,12 @@ public class SecurityContextFilter implements Filter {
                     MDC.put("bankCode", context.getBankCode());
                     MDC.put("correlationId", context.getCorrelationId());
                 });
+            }
+            else {
+                // If no token is present, launch exception
+                // all requests must be authenticated
+                // TODO: find a way to return a standardized error response as done in GlobalControllerExceptionHandler
+                JwtTokenException.of(ErrorCode.MISSING_HEADER_ERROR, jwtProperties.getHeader());
             }
 
             chain.doFilter(request, response);

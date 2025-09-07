@@ -23,4 +23,26 @@ spring:
     import:
       - classpath:platform-shared-properties.yaml
       - classpath:kafka-properties.yaml
+  cloud:
+    aws:
+      credentials:
+        access-key: minioadmin
+        secret-key: minioadmin
+        instance-profile: false
+        profile-name: default
+      region:
+        static: us-east-1
+      s3:
+        endpoint: http://localhost:9000
+      bucket-name: document-service-bucket
+      base-directory-name: customer-documents/
+
+
+gcp:
+  cloud:
+    storage:
+      bucket-name: document-service-bucket
+      project-id: your-gcp-project-id
+      host: http://localhost:7000
+      base-directory-name: customer-documents/
 

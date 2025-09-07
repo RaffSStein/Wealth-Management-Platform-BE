@@ -2,9 +2,8 @@ package raff.stein.platformcore.model.audit;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
-import java.util.Date;
+import java.time.OffsetDateTime;
 
 /**
  * Base class for audit fields (creation and update dates) for DTOs and models.
@@ -12,10 +11,10 @@ import java.util.Date;
  */
 @Getter
 @Setter
-@ToString(of = {"creationDate", "lastUpdateDate"})
 public abstract class BaseDate {
+    //TODO: probably not useful in DTOs, consider removing
     /** Entity creation date. */
-    private Date creationDate;
+    private OffsetDateTime createdDate;
     /** Entity last update date. */
-    private Date lastUpdateDate;
+    private OffsetDateTime lastModifiedDate;
 }

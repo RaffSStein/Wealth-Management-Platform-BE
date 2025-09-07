@@ -6,14 +6,12 @@ import lombok.*;
 import raff.stein.customer.model.entity.aml.AmlVerificationEntity;
 import raff.stein.customer.model.entity.customer.enumeration.CustomerStatus;
 import raff.stein.customer.model.entity.customer.enumeration.CustomerType;
-import raff.stein.customer.model.entity.customer.enumeration.Gender;
-import raff.stein.customer.model.entity.financial.CustomerFinancialsEntity;
-import raff.stein.customer.model.entity.goals.CustomerFinancialGoalsEntity;
 import raff.stein.customer.model.entity.mifid.MifidFillingEntity;
+import raff.stein.customer.model.entity.onboarding.CustomerOnboardingEntity;
 import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -40,25 +38,31 @@ public class CustomerEntity extends BaseDateEntity<UUID> {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
-    private List<CustomerFinancialsEntity> customerFinancials;
+    private Set<CustomerFinancialEntity> customerFinancials;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
-    private List<CustomerFinancialGoalsEntity> customerFinancialGoals;
+    private Set<CustomerFinancialGoalsEntity> customerFinancialGoals;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
-    private List<AmlVerificationEntity> amlVerifications;
+    private Set<AmlVerificationEntity> amlVerifications;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
-    private List<MifidFillingEntity> mifidFillings;
+    private Set<MifidFillingEntity> mifidFillings;
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @JsonIgnore
+    private Set<CustomerOnboardingEntity> customerOnboardingStatuses;
 
     // Fields
 
@@ -75,9 +79,8 @@ public class CustomerEntity extends BaseDateEntity<UUID> {
     @Column
     private LocalDate dateOfBirth;
 
-    @Enumerated(EnumType.STRING)
     @Column
-    private Gender gender;
+    private String gender;
 
     @Column(length = 2)
     private String nationality; // ISO 3166-1 alpha-2

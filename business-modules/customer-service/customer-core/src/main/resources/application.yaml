@@ -5,6 +5,14 @@ server:
 spring:
   application:
     name: customer-service
+    rest:
+      client:
+        sanction:
+          host: http://localhost:8082
+          token:
+            url: http://localhost:8082/oauth/token
+            client-id: client-id
+            client-secret: client-secret
   jpa:
     generate-ddl: true
     defer-datasource-initialization: true
@@ -24,3 +32,76 @@ spring:
       - classpath:platform-shared-properties.yaml
       - classpath:kafka-properties.yaml
 
+
+# AML configuration
+aml:
+  jurisdictions:
+    EU:
+      steps:
+        - name: verify-identity-step
+          enabled: true
+        - name: beneficial-ownership-step
+          enabled: true
+        - name: sanctions-screening-step
+          enabled: true
+        - name: pep-screening-step
+          enabled: true
+        - name: adverse-media-step
+          enabled: true
+        - name: risk-alignment-step
+          enabled: true
+        - name: source-of-funds-step
+          enabled: true
+        - name: edd-trigger-step
+          enabled: true
+        - name: transaction-baseline-step
+          enabled: true
+        - name: ongoing-monitoring-step
+          enabled: true
+        - name: final-decision-step
+          enabled: true
+    UK:
+      steps:
+        - name: verify-identity-step
+          enabled: true
+        - name: uk-sanctions-screening-step
+          enabled: true
+        - name: pep-screening-step
+          enabled: true
+        - name: adverse-media-step
+          enabled: true
+        - name: risk-alignment-step
+          enabled: true
+        - name: source-of-funds-step
+          enabled: true
+        - name: edd-trigger-step
+          enabled: true
+        - name: transaction-baseline-step
+          enabled: true
+        - name: ongoing-monitoring-step
+          enabled: true
+        - name: final-decision-step
+          enabled: true
+    USA:
+      steps:
+        - name: verify-identity-step
+          enabled: true
+        - name: ofac-sanctions-screening-step
+          enabled: true
+        - name: pep-screening-step
+          enabled: true
+        - name: adverse-media-step
+          enabled: true
+        - name: cdd-rule-step
+          enabled: true
+        - name: source-of-funds-step
+          enabled: true
+        - name: edd-trigger-step
+          enabled: true
+        - name: transaction-baseline-step
+          enabled: true
+        - name: final-decision-step
+          enabled: true
+    OTHER:
+      steps:
+        # no AML steps for OTHER jurisdiction

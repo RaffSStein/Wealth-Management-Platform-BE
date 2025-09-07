@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import raff.stein.customer.model.entity.financial.enumeration.FinancialType;
+import raff.stein.customer.model.entity.financial.enumeration.FinancialTypeEnum;
 import raff.stein.platformcore.model.audit.entity.BaseEntity;
 
 @Entity
@@ -28,7 +28,7 @@ public class FinancialTypeEntity extends BaseEntity<Integer> {
     // Type of financial type (e.g. INCOME,EXPENSE)
     @Column(nullable = false, length = 100)
     @Enumerated(EnumType.STRING)
-    private FinancialType type;
+    private FinancialTypeEnum type;
 
     @Column(length = 500)
     private String description;

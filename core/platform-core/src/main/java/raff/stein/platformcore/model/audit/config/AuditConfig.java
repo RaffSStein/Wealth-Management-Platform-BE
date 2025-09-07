@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import raff.stein.platformcore.exception.types.unauthorized.WmpContextException;
 import raff.stein.platformcore.security.context.SecurityContextHolder;
 import raff.stein.platformcore.security.context.WMPContext;
 
@@ -25,8 +26,6 @@ public class AuditConfig {
      * Retrieve the current user's email from the Spring SecurityContext.
      * @return the email of the authenticated user, or null if not available
      */
-
-    //TODO: optimize with exceptions
     private String getCurrentUserEmail() {
         WMPContext wmpContext = SecurityContextHolder.getContext();
         if (wmpContext != null) {
@@ -34,9 +33,10 @@ public class AuditConfig {
             if (userEmail != null && !userEmail.isBlank()) {
                 return userEmail;
             } else {
-                return "";
+                // Throws WmpContextException if userEmail is null or blank
+                throw WmpContextException.forMissingField("userEmail").get();
             }
         }
-        return "anonymous"; // Default value for unauthenticated users
+        throw WmpContextException.forNullContext().get();
     }
 }
