@@ -105,3 +105,16 @@ aml:
     OTHER:
       steps:
         # no AML steps for OTHER jurisdiction
+
+# Enable verbose logging for troubleshooting
+logging:
+  level:
+    root: INFO
+    raff.stein: INFO
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.orm.jdbc.bind: INFO
+    org.hibernate.orm.jdbc.extract: INFO
+# Show auto-configuration debug hints
+debug: true
