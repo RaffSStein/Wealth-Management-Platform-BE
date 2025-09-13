@@ -1,9 +1,9 @@
 package raff.stein.customer.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import raff.stein.customer.model.bo.customer.Customer;
 import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
@@ -51,6 +51,14 @@ public class CustomerService {
         Customer customer = customerToCustomerEntityMapper.toCustomer(customerEntity);
         // Update customer attributes via a visitor pattern
         return customerVisitorDispatcher.dispatchAndVisit(customer, customerAttributesToUpdate);
+    }
+
+    @Transactional(readOnly = true)
+    public Customer getCustomerById(UUID customerId) {
+        log.debug("Retrieving customer by ID: [{}]", customerId);
+        CustomerEntity customerEntity = customerRepository.findById(customerId)
+                .orElseThrow(() -> new IllegalArgumentException("Customer not found with ID: " + customerId));
+        return customerToCustomerEntityMapper.toCustomer(customerEntity);
     }
 
     public void proceedToOnboardingStep(

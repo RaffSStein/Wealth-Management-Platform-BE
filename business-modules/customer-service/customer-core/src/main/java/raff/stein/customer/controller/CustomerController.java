@@ -63,4 +63,11 @@ public class CustomerController implements CustomerApi {
         CustomerDTO responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(customer);
         return ResponseEntity.ok(responseCustomerDTO);
     }
+
+    @Override
+    public ResponseEntity<CustomerDTO> getCustomerById(UUID customerId) {
+        Customer customer = customerService.getCustomerById(customerId);
+        CustomerDTO responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(customer);
+        return ResponseEntity.ok(responseCustomerDTO);
+    }
 }
