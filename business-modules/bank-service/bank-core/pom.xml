@@ -35,8 +35,13 @@
             <artifactId>spring-data-commons</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.openapitools</groupId>
-            <artifactId>openapi-generator-maven-plugin</artifactId>
+            <groupId>io.openapiprocessor</groupId>
+            <artifactId>openapi-processor-maven-plugin</artifactId>
+        </dependency>
+        <!-- Needed since openapiprocessor property inside mapping.xml uses jakarta as a validator -->
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

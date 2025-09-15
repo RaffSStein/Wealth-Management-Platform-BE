@@ -33,6 +33,7 @@
         <micrometer.version>1.15.2</micrometer.version>
         <micrometer.tracing.version>1.5.3</micrometer.tracing.version>
         <micrometer.tracing.bridge.brave.version>1.5.2</micrometer.tracing.bridge.brave.version>
+        <openapi.generator.maven.plugin.version>2024.1</openapi.generator.maven.plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -159,6 +160,11 @@
                 <groupId>io.micrometer</groupId>
                 <artifactId>micrometer-tracing-bridge-brave</artifactId>
                 <version>${micrometer.tracing.bridge.brave.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.openapiprocessor</groupId>
+                <artifactId>openapi-processor-maven-plugin</artifactId>
+                <version>${openapi.generator.maven.plugin.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

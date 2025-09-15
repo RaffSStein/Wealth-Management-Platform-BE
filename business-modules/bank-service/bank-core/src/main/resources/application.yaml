@@ -23,3 +23,15 @@ spring:
     import:
       - classpath:platform-shared-properties.yaml
       - classpath:kafka-properties.yaml
+
+logging:
+  level:
+    root: INFO
+    io.openapiprocessor: INFO
+    raff.stein: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.orm.jdbc.bind: INFO
+    org.hibernate.orm.jdbc.extract: INFO
+# Show auto-configuration debug hints
+debug: true

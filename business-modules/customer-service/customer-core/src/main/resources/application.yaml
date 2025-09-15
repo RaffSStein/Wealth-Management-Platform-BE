@@ -106,7 +106,6 @@ aml:
       steps:
         # no AML steps for OTHER jurisdiction
 
-# Enable verbose logging for troubleshooting
 logging:
   level:
     root: INFO

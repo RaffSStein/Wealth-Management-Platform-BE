@@ -13,14 +13,20 @@
     <artifactId>bank-api-data</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <pluginRepositories>
+
+        <pluginRepository>
+            <id>openapi-processor-snapshots</id>
+            <name>openapi-processor-snapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </pluginRepository>
+
+    </pluginRepositories>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.openapitools</groupId>
-            <artifactId>openapi-generator-maven-plugin</artifactId>
         </dependency>
         <dependency>
             <groupId>org.openapitools</groupId>
@@ -30,47 +36,57 @@
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.openapiprocessor</groupId>
+            <artifactId>openapi-processor-maven-plugin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-commons</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <!-- Open API processor for springframework types inside requests/responses (e.g: Page, Pageable...) -->
+            <!-- https://openapiprocessor.io/spring/index.html-->
             <plugin>
-                <groupId>org.openapitools</groupId>
-                <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>${openapi.generator.version}</version>
+                <groupId>io.openapiprocessor</groupId>
+                <artifactId>openapi-processor-maven-plugin</artifactId>
+                <version>2024.1</version>
+
+                <dependencies>
+                    <dependency>
+                        <groupId>io.openapiprocessor</groupId>
+                        <artifactId>openapi-processor-spring</artifactId>
+                        <version>2025.4</version>
+                    </dependency>
+                </dependencies>
+
+                <configuration>
+                    <id>processor-api</id>
+                    <apiPath>${project.basedir}/bank-api-data.yaml</apiPath>
+                </configuration>
+
                 <executions>
                     <execution>
                         <id>generate-bank-api-data-dto</id>
+                        <phase>generate-sources</phase>
                         <goals>
-                            <goal>generate</goal>
+                            <goal>process</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/bank-api-data.yaml</inputSpec>
-                            <generatorName>spring</generatorName>
-                            <generateApis>true</generateApis>
-                            <generateApiTests>false</generateApiTests>
-                            <generateApiDocumentation>true</generateApiDocumentation>
-                            <generateModels>true</generateModels>
-                            <generateModelTests>false</generateModelTests>
-                            <generateModelDocumentation>true</generateModelDocumentation>
-                            <generateSupportingFiles>false</generateSupportingFiles>
-                            <!-- https://openapi-generator.tech/docs/generators/spring-->
-                            <configOptions>
-                                <useJakartaEe>true</useJakartaEe>
-                                <serializableModel>true</serializableModel>
-                                <dateLibrary>java8</dateLibrary>
-                                <useBeanValidation>true</useBeanValidation>
-                                <useTags>true</useTags>
-                                <requestMappingMode>api_interface</requestMappingMode>
-                                <interfaceOnly>true</interfaceOnly>
-                                <developerEmail>raffaele.princee@gmail.com</developerEmail>
-                                <developerName>Raffaele Prince</developerName>
-                                <openApiNullable>false</openApiNullable>
-                                <useSpringBoot3>true</useSpringBoot3>
-                                <skipDefaultInterface>true</skipDefaultInterface>
-                                <operationNamingConvention>camelCase</operationNamingConvention>
-                                <removeOperationIdPrefix>true</removeOperationIdPrefix>
-                            </configOptions>
+                            <id>spring</id>
+                            <addSourceRoot>true</addSourceRoot>
+                            <apiPath>${project.basedir}/bank-api-data.yaml</apiPath>
+                            <options>
+                                <values>
+                                    <mapping>${project.basedir}/mapping.yaml</mapping>
+                                    <targetDir>${project.basedir}/target/generated-sources/openapi</targetDir>
+                                    <parser>INTERNAL</parser>
+                                    <showWarnings>true</showWarnings>
+                                </values>
+                            </options>
                         </configuration>
                     </execution>
                 </executions>
