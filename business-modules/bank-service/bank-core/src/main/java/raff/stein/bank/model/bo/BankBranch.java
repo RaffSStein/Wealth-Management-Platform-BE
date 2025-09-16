@@ -1,4 +1,4 @@
-package raff.stein.bank.model;
+package raff.stein.bank.model.bo;
 
 import lombok.Builder;
 import lombok.Data;

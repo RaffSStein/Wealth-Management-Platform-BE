@@ -1,15 +1,18 @@
 package raff.stein.bank.model.entity.mapper;
 
 import org.mapstruct.Mapper;
-import raff.stein.bank.model.BankBranch;
-import raff.stein.bank.model.entity.BranchEntity;
-import raff.stein.platformcore.model.mapper.configuration.CommonMapperConfiguration;
+import org.mapstruct.factory.Mappers;
+import raff.stein.bank.model.bo.BankBranch;
+import raff.stein.bank.model.entity.BankBranchEntity;
 
 
-@Mapper(config = CommonMapperConfiguration.class)
+@Mapper(config = BankEntityCommonMapperConfig.class)
 public interface BankBranchToBranchEntityMapper {
 
-    BranchEntity toEntity(BankBranch bankBranch);
+    BankBranchToBranchEntityMapper MAPPER = Mappers.getMapper(BankBranchToBranchEntityMapper.class);
 
-    BankBranch toModel(BranchEntity branchEntity);
+
+    BankBranchEntity toEntity(BankBranch bankBranch);
+
+    BankBranch toModel(BankBranchEntity bankBranchEntity);
 }

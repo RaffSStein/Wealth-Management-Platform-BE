@@ -34,4 +34,4 @@ logging:
     org.hibernate.orm.jdbc.bind: INFO
     org.hibernate.orm.jdbc.extract: INFO
 # Show auto-configuration debug hints
-debug: true
+debug: false

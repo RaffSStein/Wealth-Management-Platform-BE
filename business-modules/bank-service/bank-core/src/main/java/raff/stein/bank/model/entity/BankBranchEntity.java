@@ -20,7 +20,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BranchEntity extends BaseDateEntity<UUID> {
+public class BankBranchEntity extends BaseDateEntity<UUID> {
 
     /**
      * Unique identifier for the bank branch (UUID).
