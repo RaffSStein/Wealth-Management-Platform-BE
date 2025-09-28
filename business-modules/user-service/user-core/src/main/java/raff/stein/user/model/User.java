@@ -2,13 +2,12 @@ package raff.stein.user.model;
 
 import lombok.Builder;
 import lombok.Data;
-import raff.stein.platformcore.model.audit.BaseDate;
 
 import java.util.List;
 
 @Data
 @Builder
-public class User extends BaseDate {
+public class User {
 
     private String id;
     private String firstName;

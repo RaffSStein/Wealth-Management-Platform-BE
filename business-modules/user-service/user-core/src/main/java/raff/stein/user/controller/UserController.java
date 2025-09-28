@@ -2,8 +2,6 @@ package raff.stein.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.openapitools.api.UserApi;
-import org.openapitools.model.CreateUserRequest;
-import org.openapitools.model.UpdateUserRequest;
 import org.openapitools.model.UserDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,9 +18,8 @@ public class UserController implements UserApi {
     //TODO: Implement the methods of UserApi interface
 
     @Override
-    public ResponseEntity<UserDTO> createUser(CreateUserRequest createUserRequest) {
-        UserDTO createdUser = userService.createUser(createUserRequest);
-        return ResponseEntity.status(201).body(createdUser);
+    public ResponseEntity<UserDTO> createUser(UserDTO userDTO) {
+        return null;
     }
 
     @Override
@@ -66,12 +63,9 @@ public class UserController implements UserApi {
     }
 
     @Override
-    public ResponseEntity<UserDTO> updateUserById(UUID id, UpdateUserRequest updateUserRequest) {
-        UserDTO updatedUser = userService.updateUserById(id, updateUserRequest);
-        if (updatedUser != null) {
-            return ResponseEntity.ok(updatedUser);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<UserDTO> updateUserById(UUID id, UserDTO userDTO) {
+        return null;
     }
+
+
 }

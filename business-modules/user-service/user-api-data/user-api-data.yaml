@@ -62,7 +62,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateUserRequest'
+              $ref: '#/components/schemas/UserDTO'
       responses:
         '200':
           description: User updated
@@ -86,7 +86,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateUserRequest'
+              $ref: '#/components/schemas/UserDTO'
       responses:
         '201':
           description: User created
@@ -152,24 +152,46 @@ components:
           type: string
           description: JWT token issued by external Identity Provider
 
-
-
     UserDTO:
       type: object
       properties:
         id:
           type: string
-          format: uuid
-        username:
+        firstName:
+          type: string
+        lastName:
           type: string
         email:
           type: string
           format: email
-        isActive:
-          type: boolean
-        createdAt:
+        phoneNumber:
           type: string
-          format: date-time
+        country:
+          type: string
+        city:
+          type: string
+        address:
+          type: string
+        gender:
+          type: string
+        birthDate:
+          type: string
+        userBranchRoles:
+          type: array
+          items:
+            type: object
+            properties:
+              bankCode:
+                type: string
+              role:
+                type: string
+        userSettings:
+          type: object
+          properties:
+            language:
+              type: string
+            theme:
+              type: string
 
     CreateUserRequest:
       type: object
