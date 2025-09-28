@@ -179,58 +179,22 @@ components:
         userBranchRoles:
           type: array
           items:
-            type: object
-            properties:
-              bankCode:
-                type: string
-              role:
-                type: string
+            $ref: '#/components/schemas/UserBranchRoleDTO'
         userSettings:
-          type: object
-          properties:
-            language:
-              type: string
-            theme:
-              type: string
+          $ref: '#/components/schemas/UserSettingsDTO'
 
-    CreateUserRequest:
+    UserBranchRoleDTO:
       type: object
-      required:
-        - username
-        - email
-        - companyId
-        - roles
       properties:
-        username:
+        bankCode:
           type: string
-        email:
+        role:
           type: string
-          format: email
-        companyId:
-          type: string
-          format: uuid
-        roles:
-          type: array
-          items:
-            type: string
 
-    UpdateUserRequest:
+    UserSettingsDTO:
       type: object
-      required:
-        - username
-        - email
-        - companyId
-        - roles
       properties:
-        username:
+        language:
           type: string
-        email:
+        theme:
           type: string
-          format: email
-        companyId:
-          type: string
-          format: uuid
-        roles:
-          type: array
-          items:
-            type: string

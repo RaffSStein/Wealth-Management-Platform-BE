@@ -19,7 +19,7 @@ public class User {
     private String address;
     private String gender;
     private String birthDate;
-    private List<UserBranchRoles> userBranchRoles;
+    private List<UserBranchRole> userBranchRoles;
     private UserSettings userSettings;
 
     // Additional fields and methods can be added as needed

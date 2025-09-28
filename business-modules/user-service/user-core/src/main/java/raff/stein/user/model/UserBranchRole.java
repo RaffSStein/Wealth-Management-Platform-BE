@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class UserBranchRoles {
+public class UserBranchRole {
 
     private String bankCode;
     private String role;

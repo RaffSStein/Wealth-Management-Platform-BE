@@ -5,6 +5,8 @@ import org.openapitools.api.UserApi;
 import org.openapitools.model.UserDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import raff.stein.user.controller.mapper.UserToUserDTOMapper;
+import raff.stein.user.model.User;
 import raff.stein.user.service.UserService;
 
 import java.util.UUID;
@@ -14,6 +16,8 @@ import java.util.UUID;
 public class UserController implements UserApi {
 
     private final UserService userService;
+
+    private static final UserToUserDTOMapper userToUserDTOMapper = UserToUserDTOMapper.MAPPER;
 
     //TODO: Implement the methods of UserApi interface
 
@@ -44,22 +48,16 @@ public class UserController implements UserApi {
 
     @Override
     public ResponseEntity<UserDTO> getCurrentUser() {
-        UserDTO currentUser = userService.getCurrentUser();
-        if (currentUser != null) {
-            return ResponseEntity.ok(currentUser);
-        } else {
-            return ResponseEntity.status(401).build();
-        }
+        User currentUser = userService.getCurrentUser();
+        UserDTO userDTO = userToUserDTOMapper.toUserDto(currentUser);
+        return ResponseEntity.ok(userDTO);
     }
 
     @Override
     public ResponseEntity<UserDTO> getUserById(UUID id) {
-        UserDTO user = userService.getUserById(id);
-        if (user != null) {
-            return ResponseEntity.ok(user);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        User user = userService.getUserById(id);
+        UserDTO userDTO = userToUserDTOMapper.toUserDto(user);
+        return ResponseEntity.ok(userDTO);
     }
 
     @Override

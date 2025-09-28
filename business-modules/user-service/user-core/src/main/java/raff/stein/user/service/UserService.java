@@ -2,10 +2,9 @@ package raff.stein.user.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openapitools.model.CreateUserRequest;
-import org.openapitools.model.UpdateUserRequest;
 import org.openapitools.model.UserDTO;
 import org.springframework.stereotype.Service;
+import raff.stein.user.model.User;
 
 import java.util.UUID;
 
@@ -15,7 +14,7 @@ import java.util.UUID;
 public class UserService {
 
 
-    public UserDTO createUser(CreateUserRequest createUserRequest) {
+    public User createUser(UserDTO userDTO) {
         // TODO: Implement user creation logic
         return null;
     }
@@ -30,17 +29,17 @@ public class UserService {
         return false;
     }
 
-    public UserDTO getCurrentUser() {
+    public User getCurrentUser() {
         // TODO: Implement logic to retrieve current logged-in user
         return null;
     }
 
-    public UserDTO getUserById(UUID id) {
+    public User getUserById(UUID id) {
         // TODO: Implement logic to retrieve user by ID
         return null;
     }
 
-    public UserDTO updateUserById(UUID id, UpdateUserRequest updateUserRequest) {
+    public User updateUserById(UUID id, UserDTO userDTO) {
         // TODO: Implement user update logic
         return null;
     }

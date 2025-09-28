@@ -31,7 +31,8 @@ This folder contains the core business logic, services, repositories, controller
 - `business-modules/*-service/*-core/src/main/java/raff/stein/*/exception`: this folder contains custom exceptions for the respective microservice.
 - `/core`: Contains shared libraries, utilities, and common configurations used across multiple microservices.
 - `/docs`: Contains documentation for the project process and more to come, including assets or any related document.
-- 
+
+
 ## Ground rules (Required)
 - Use English only for all identifiers and text in the repo: code (class/method/variable names), comments,
 documentation, commit messages, PR titles/descriptions, user-facing strings, and filenames—regardless of the language used in requests or issues.
@@ -48,6 +49,9 @@ clearly justified and widely adopted. If added, pin versions and update the modu
 in business-modules/* and core/*).
 - Maintain null-safety and validation: validate inputs at boundaries (controllers/services/mappers). 
 Use existing validation annotations when available.
+- For controller classes, always use this approach: DTOs (from *-api-data) for request/response needs to be mapped to
+domain models in order to be used in the service layer. Once in the service layer, domain models can be mapped to entity models.
+For mapping, use MapStruct mappers where available or create new ones in a dedicated "mapper" package.
 
 ## Documentation & comments
 - Keep comments accurate and succinct. Update Javadoc/KDoc/README when touching public types or endpoints.
