@@ -5,8 +5,8 @@ import org.mapstruct.factory.Mappers;
 import org.openapitools.model.UserBranchRoleDTO;
 import org.openapitools.model.UserDTO;
 import org.openapitools.model.UserSettingsDTO;
+import raff.stein.user.model.BranchRole;
 import raff.stein.user.model.User;
-import raff.stein.user.model.UserBranchRole;
 import raff.stein.user.model.UserSettings;
 
 @Mapper(config = UserControllerCommonMapperConfig.class)
@@ -20,9 +20,9 @@ public interface UserToUserDTOMapper {
     UserDTO toUserDto(User user);
 
     // Nested mappings for branch roles
-    UserBranchRole toUserBranchRole(UserBranchRoleDTO userBranchRoleDTO);
+    BranchRole toBranchRole(UserBranchRoleDTO userBranchRoleDTO);
 
-    UserBranchRoleDTO toUserBranchRoleDto(UserBranchRole domain);
+    UserBranchRoleDTO toUserBranchRoleDto(BranchRole branchRole);
 
     UserSettings toUserSettings(UserSettingsDTO dto);
 

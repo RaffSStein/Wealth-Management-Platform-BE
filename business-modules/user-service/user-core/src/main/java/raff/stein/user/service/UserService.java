@@ -4,7 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.UserDTO;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import raff.stein.user.model.User;
+import raff.stein.user.model.entity.UserEntity;
+import raff.stein.user.model.entity.mapper.UserToUserEntityMapper;
+import raff.stein.user.repository.UserRepository;
 
 import java.util.UUID;
 
@@ -13,10 +17,15 @@ import java.util.UUID;
 @Slf4j
 public class UserService {
 
+    private final UserRepository userRepository;
+    private static final UserToUserEntityMapper userToUserEntityMapper = UserToUserEntityMapper.MAPPER;
 
-    public User createUser(UserDTO userDTO) {
-        // TODO: Implement user creation logic
-        return null;
+
+    @Transactional
+    public User createUser(User user) {
+        log.debug("Creating user: [{}]", user);
+        UserEntity savedUserEntity = userRepository.save(userToUserEntityMapper.toUserEntity(user));
+        return userToUserEntityMapper.toUser(savedUserEntity);
     }
 
     public boolean disableUser(UUID id) {

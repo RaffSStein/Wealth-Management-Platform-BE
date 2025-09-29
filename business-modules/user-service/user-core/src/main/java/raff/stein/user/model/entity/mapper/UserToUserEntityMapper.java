@@ -2,16 +2,21 @@ package raff.stein.user.model.entity.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
-import raff.stein.platformcore.model.mapper.configuration.CommonMapperConfiguration;
 import raff.stein.user.model.User;
 import raff.stein.user.model.entity.UserEntity;
 
-@Mapper(config = CommonMapperConfiguration.class)
+@Mapper(
+        config = UserEntityCommonMapperConfig.class,
+        uses = {
+                BranchUserToBranchUserEntity.class,
+                UserSettingsToUserSettingsEntityMapper.class
+        }
+)
 public interface UserToUserEntityMapper {
 
     UserToUserEntityMapper MAPPER = Mappers.getMapper(UserToUserEntityMapper.class);
 
-    UserEntity toEntity(User user);
+    UserEntity toUserEntity(User user);
 
-    User toModel(UserEntity userEntity);
+    User toUser(UserEntity userEntity);
 }

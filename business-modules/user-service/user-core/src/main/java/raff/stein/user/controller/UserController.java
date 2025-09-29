@@ -9,6 +9,7 @@ import raff.stein.user.controller.mapper.UserToUserDTOMapper;
 import raff.stein.user.model.User;
 import raff.stein.user.service.UserService;
 
+import java.net.URI;
 import java.util.UUID;
 
 @RestController
@@ -23,7 +24,10 @@ public class UserController implements UserApi {
 
     @Override
     public ResponseEntity<UserDTO> createUser(UserDTO userDTO) {
-        return null;
+        User userInput = userToUserDTOMapper.toUser(userDTO);
+        User createdUser = userService.createUser(userInput);
+        UserDTO responseUserDTO = userToUserDTOMapper.toUserDto(createdUser);
+        return ResponseEntity.created(URI.create("/users/" + responseUserDTO.getId())).body(responseUserDTO);
     }
 
     @Override
