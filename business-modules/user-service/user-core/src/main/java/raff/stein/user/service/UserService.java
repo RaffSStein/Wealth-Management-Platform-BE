@@ -2,7 +2,6 @@ package raff.stein.user.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openapitools.model.UserDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import raff.stein.user.model.User;
@@ -48,8 +47,15 @@ public class UserService {
         return null;
     }
 
-    public User updateUserById(UUID id, UserDTO userDTO) {
-        // TODO: Implement user update logic
-        return null;
+    public User updateUserById(UUID id, User user) {
+        //TODO: to complete
+        UserEntity userEntity = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + id));
+                // Update fields of userEntity with values from user
+        userEntity.setFirstName(user.getFirstName());
+        userEntity.setEmail(user.getEmail());
+        // Add other fields as needed
+        UserEntity savedUserEntity = userRepository.save(userEntity);
+        return userToUserEntityMapper.toUser(savedUserEntity);
     }
 }

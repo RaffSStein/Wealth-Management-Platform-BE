@@ -46,9 +46,11 @@ public class UserEntity extends BaseDateEntity<UUID> {
     // Fields
 
     @Column(nullable = false, unique = true)
+    @Setter
     private String email;
 
     @Column(nullable = false)
+    @Setter
     private String firstName;
 
     @Column(nullable = false)

@@ -66,7 +66,10 @@ public class UserController implements UserApi {
 
     @Override
     public ResponseEntity<UserDTO> updateUserById(UUID id, UserDTO userDTO) {
-        return null;
+        User userInput = userToUserDTOMapper.toUser(userDTO);
+        User updatedUser = userService.updateUserById(id, userInput);
+        UserDTO responseUserDTO = userToUserDTOMapper.toUserDto(updatedUser);
+        return ResponseEntity.ok(responseUserDTO);
     }
 
 
