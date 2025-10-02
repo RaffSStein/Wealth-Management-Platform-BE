@@ -20,8 +20,6 @@ public class UserController implements UserApi {
 
     private static final UserToUserDTOMapper userToUserDTOMapper = UserToUserDTOMapper.MAPPER;
 
-    //TODO: Implement the methods of UserApi interface
-
     @Override
     public ResponseEntity<UserDTO> createUser(UserDTO userDTO) {
         User userInput = userToUserDTOMapper.toUser(userDTO);

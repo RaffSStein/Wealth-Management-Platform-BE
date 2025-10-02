@@ -43,8 +43,9 @@ public class UserService {
     }
 
     public User getUserById(UUID id) {
-        // TODO: Implement logic to retrieve user by ID
-        return null;
+        UserEntity userEntity = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + id));
+        return userToUserEntityMapper.toUser(userEntity);
     }
 
     public User updateUserById(UUID id, User user) {
