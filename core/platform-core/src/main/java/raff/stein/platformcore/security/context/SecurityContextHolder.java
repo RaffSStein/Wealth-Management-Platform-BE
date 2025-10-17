@@ -20,6 +20,14 @@ public class SecurityContextHolder {
         return CONTEXT.get();
     }
 
+    public static WMPContext getContextOrThrow() {
+        WMPContext context = CONTEXT.get();
+        if (context == null) {
+            throw new IllegalStateException("No security context available");
+        }
+        return context;
+    }
+
     public static void clear() {
         CONTEXT.remove();
     }

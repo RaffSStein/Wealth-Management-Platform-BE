@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import raff.stein.platformcore.security.context.SecurityContextHolder;
+import raff.stein.platformcore.security.context.WMPContext;
 import raff.stein.user.model.User;
 import raff.stein.user.model.entity.UserEntity;
 import raff.stein.user.model.entity.mapper.UserToUserEntityMapper;
@@ -38,8 +40,14 @@ public class UserService {
     }
 
     public User getCurrentUser() {
-        // TODO: Implement logic to retrieve current logged-in user
-        return null;
+        // retrieve user data from context
+        final WMPContext context = SecurityContextHolder.getContextOrThrow();
+        final String userEmail = context.getEmail();
+        log.debug("Retrieving current user with email: [{}]", userEmail);
+        final UserEntity userEntity = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + userEmail));
+        log.debug("Found user entity: [{}]", userEntity);
+        return userToUserEntityMapper.toUser(userEntity);
     }
 
     public User getUserById(UUID id) {
