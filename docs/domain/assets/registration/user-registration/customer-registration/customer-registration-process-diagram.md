@@ -4,6 +4,8 @@ participant "bank-service" as Bank
 participant "user-service" as User
 queue "user-created-topic" as userCreatedTopic
 participant "email-service" as Reporting
+participant "profiler-service" as Profiler
+queue "user-permission-created-topic" as userPermissionCreatedTopic
 
 activate FE
 FE -> Bank: GET /branches\nretrieve branches by filters
@@ -19,6 +21,11 @@ User -> userCreatedTopic: publish user-created event
 User -> FE: 201 Created\nuser data
 deactivate FE
 deactivate User
+userCreatedTopic --> Profiler: consume user-created event
+activate Profiler
+Profiler -> Profiler: save profile user data\n(customer/advisor)
+Profiler -> userPermissionCreatedTopic: publish user-permission-created event
+deactivate Profiler
 userCreatedTopic --> Reporting: consume user-created event
 activate Reporting
 Reporting -> Reporting: send onboarding email to user
