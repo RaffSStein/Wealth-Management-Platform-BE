@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import raff.stein.platformcore.security.context.SecurityContextHolder;
 import raff.stein.platformcore.security.context.WMPContext;
+import raff.stein.user.event.producer.UserCreatedEventPublisher;
 import raff.stein.user.model.User;
 import raff.stein.user.model.entity.UserEntity;
 import raff.stein.user.model.entity.mapper.UserToUserEntityMapper;
@@ -19,6 +20,9 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+
+    private final UserCreatedEventPublisher userCreatedEventPublisher;
+
     private static final UserToUserEntityMapper userToUserEntityMapper = UserToUserEntityMapper.MAPPER;
 
 
@@ -26,7 +30,10 @@ public class UserService {
     public User createUser(User user) {
         log.debug("Creating user: [{}]", user);
         UserEntity savedUserEntity = userRepository.save(userToUserEntityMapper.toUserEntity(user));
-        return userToUserEntityMapper.toUser(savedUserEntity);
+        final User savedUser = userToUserEntityMapper.toUser(savedUserEntity);
+        //TODO: fix serialization issue
+        userCreatedEventPublisher.publishUserCreatedEvent(savedUser);
+        return savedUser;
     }
 
     public boolean disableUser(UUID id) {

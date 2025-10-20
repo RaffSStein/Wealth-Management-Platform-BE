@@ -13,7 +13,8 @@
     <property name="APP_NAME" value="${spring.application.name:-application}"/>
     <property name="LOG_PATH" value="./logs" />
     <property name="LOG_FILE_NAME" value="${APP_NAME}" />
-    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{correlationId}] [%X{userId}] [%X{bankCode}] %-5level %logger{36} - %msg%n"/>
+    <!-- Print full stack traces in console when a Throwable is logged -->
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{correlationId}] [%X{userId}] [%X{bankCode}] %-5level %logger{36} - %msg%n%ex{full}"/>
 
     <!-- JSON encoder for Splunk compatibility -->
     <appender name="SPLUNK_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">

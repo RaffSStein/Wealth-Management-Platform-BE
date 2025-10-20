@@ -4,6 +4,7 @@ import io.micrometer.tracing.Span;
 import io.micrometer.tracing.TraceContext;
 import io.micrometer.tracing.Tracer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.ErrorCategory;
 import org.openapitools.model.ErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 @RequiredArgsConstructor
+@Slf4j
 public class GlobalControllerExceptionHandler {
 
     private final Tracer tracer;
@@ -44,6 +46,9 @@ public class GlobalControllerExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining(","));
 
+        // Log with stack trace at WARN level for validation errors
+        log.warn("Validation failed traceId={} errors={}", getTraceId(), errorMessages, ex);
+
         return new ErrorResponse()
                 .errorMessage(errorMessages)
                 .errorCode(getErrorCode(ex))
@@ -61,6 +66,7 @@ public class GlobalControllerExceptionHandler {
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleBadRequestExceptions(GenericException ex) {
+        log.warn("Bad request [code={}, category={}] traceId={}", getErrorCode(ex), getErrorCategory(ex), getTraceId(), ex);
         return getErrorResponse(ex);
     }
 
@@ -73,6 +79,7 @@ public class GlobalControllerExceptionHandler {
     })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundExceptions(GenericException ex) {
+        log.warn("Not found [code={}, category={}] traceId={}", getErrorCode(ex), getErrorCategory(ex), getTraceId(), ex);
         return getErrorResponse(ex);
     }
 
@@ -86,6 +93,7 @@ public class GlobalControllerExceptionHandler {
     })
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse handleForbiddenExceptions(GenericException ex) {
+        log.warn("Forbidden [code={}, category={}] traceId={}", getErrorCode(ex), getErrorCategory(ex), getTraceId(), ex);
         return getErrorResponse(ex);
     }
 
@@ -100,6 +108,7 @@ public class GlobalControllerExceptionHandler {
     })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleUnauthorizedExceptions(GenericException ex) {
+        log.warn("Unauthorized [code={}, category={}] traceId={}", getErrorCode(ex), getErrorCategory(ex), getTraceId(), ex);
         return getErrorResponse(ex);
     }
 
@@ -112,6 +121,7 @@ public class GlobalControllerExceptionHandler {
     })
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleConflictExceptions(GenericException ex) {
+        log.warn("Conflict [code={}, category={}] traceId={}", getErrorCode(ex), getErrorCategory(ex), getTraceId(), ex);
         return getErrorResponse(ex);
     }
 
@@ -124,6 +134,7 @@ public class GlobalControllerExceptionHandler {
     })
     @ResponseStatus(HttpStatus.NOT_IMPLEMENTED)
     public ErrorResponse handleNotImplementedExceptions(GenericException ex) {
+        log.warn("Not implemented [code={}, category={}] traceId={}", getErrorCode(ex), getErrorCategory(ex), getTraceId(), ex);
         return getErrorResponse(ex);
     }
 
@@ -133,6 +144,7 @@ public class GlobalControllerExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleUnhandledExceptions(Exception ex) {
+        log.error("Unhandled exception traceId={}", getTraceId(), ex);
         return getErrorResponse(ex);
     }
 

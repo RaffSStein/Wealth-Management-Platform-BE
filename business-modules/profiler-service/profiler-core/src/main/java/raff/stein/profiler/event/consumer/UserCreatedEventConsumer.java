@@ -27,7 +27,6 @@ public class UserCreatedEventConsumer extends WMPBaseEventConsumer {
         if(eventData.isEmpty()) {
             log.warn("Received empty payload from user-created topic for eventId: [{}]", cloudEvent.getId());
         }
-
         eventData.ifPresent(this::processUserCreatedEvent);
     }
 

@@ -4,6 +4,7 @@ import io.micrometer.tracing.Span;
 import io.micrometer.tracing.TraceContext;
 import io.micrometer.tracing.Tracer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.ErrorCategory;
 import org.openapitools.model.ErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import java.util.Optional;
 
 @ControllerAdvice
 @RequiredArgsConstructor
+@Slf4j
 public class GlobalExceptionHandler {
 
     private final Tracer tracer;
@@ -33,6 +35,17 @@ public class GlobalExceptionHandler {
     })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleUnauthorizedExceptions(GenericException ex) {
+        log.warn("Unauthorized exception [code={}, category={}] traceId={}",
+                getErrorCode(ex), getErrorCategory(ex), getTraceId(), ex);
+        return getErrorResponse(ex);
+    }
+
+    // Catch-all for unhandled exceptions -> 500
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleAllExceptions(Exception ex) {
+        // Log full stack trace with traceId for correlation
+        log.error("Unhandled exception traceId={}", getTraceId(), ex);
         return getErrorResponse(ex);
     }
 

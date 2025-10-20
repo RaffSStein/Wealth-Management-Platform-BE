@@ -55,6 +55,7 @@
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
         </dependency>
+        <!-- Dependency for the user modules -->
         <dependency>
             <groupId>raff.stein</groupId>
             <artifactId>user-api-data</artifactId>
@@ -65,6 +66,7 @@
             <artifactId>user-event-data</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <!-- Dependency for the core module -->
         <dependency>
             <groupId>raff.stein</groupId>
             <artifactId>platform-core</artifactId>
