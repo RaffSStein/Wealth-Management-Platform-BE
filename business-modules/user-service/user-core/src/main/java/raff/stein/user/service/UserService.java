@@ -31,7 +31,6 @@ public class UserService {
         log.debug("Creating user: [{}]", user);
         UserEntity savedUserEntity = userRepository.save(userToUserEntityMapper.toUserEntity(user));
         final User savedUser = userToUserEntityMapper.toUser(savedUserEntity);
-        //TODO: fix serialization issue
         userCreatedEventPublisher.publishUserCreatedEvent(savedUser);
         return savedUser;
     }

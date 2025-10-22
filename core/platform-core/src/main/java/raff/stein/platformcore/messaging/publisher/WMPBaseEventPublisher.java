@@ -79,11 +79,19 @@ public class WMPBaseEventPublisher implements EventPublisher {
         final WMPContext wmpContext = SecurityContextHolder.getContext();
 
         if (wmpContext != null) {
-            cloudEventBuilder
-                    .withExtension("userid", wmpContext.getUserId())
-                    .withExtension("email", wmpContext.getEmail())
-                    .withExtension("bankcode", wmpContext.getBankCode())
-                    .withExtension("correlationid", wmpContext.getCorrelationId());
+            // add extensions only if values are present to avoid builder errors
+            if (StringUtils.hasText(wmpContext.getUserId())) {
+                cloudEventBuilder.withExtension("userid", wmpContext.getUserId());
+            }
+            if (StringUtils.hasText(wmpContext.getEmail())) {
+                cloudEventBuilder.withExtension("email", wmpContext.getEmail());
+            }
+            if (StringUtils.hasText(wmpContext.getBankCode())) {
+                cloudEventBuilder.withExtension("bankcode", wmpContext.getBankCode());
+            }
+            if (StringUtils.hasText(wmpContext.getCorrelationId())) {
+                cloudEventBuilder.withExtension("correlationid", wmpContext.getCorrelationId());
+            }
         }
         return cloudEventBuilder.build();
     }
