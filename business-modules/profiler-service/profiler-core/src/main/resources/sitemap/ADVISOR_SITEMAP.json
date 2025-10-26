@@ -1,0 +1,136 @@
+{
+  "application": "WMP",
+  "sections": [
+    {
+      "sectionCode": "ACCOUNT",
+      "sectionName": "Account",
+      "features": [
+        {
+          "featureCode": "HOME",
+          "featureName": "Home",
+          "permissions": [
+            "VIEW"
+          ]
+        },
+        {
+          "featureCode": "TRANSACTIONS",
+          "featureName": "Transactions",
+          "permissions": [
+            "VIEW"
+          ]
+        },
+        {
+          "featureCode": "ASSETS",
+          "featureName": "Assets",
+          "permissions": [
+            "VIEW"
+          ]
+        },
+        {
+          "featureCode": "BANK_TRANSFERS",
+          "featureName": "Bank Transfers",
+          "permissions": [
+            "VIEW"
+          ]
+        },
+        {
+          "featureCode": "TAX_CREDIT",
+          "featureName": "Tax Credit",
+          "permissions": [
+            "VIEW"
+          ]
+        },
+        {
+          "featureCode": "SECURITIES_TRANSFER",
+          "featureName": "Securities Transfer",
+          "permissions": [
+            "VIEW"
+          ]
+        }
+      ]
+    },
+    {
+      "sectionCode": "INVESTMENTS",
+      "sectionName": "Investments",
+      "features": [
+        {
+          "featureCode": "OVERVIEW",
+          "featureName": "Overview",
+          "permissions": [
+            "VIEW"
+          ]
+        },
+        {
+          "featureCode": "POSITIONS",
+          "featureName": "Positions",
+          "permissions": [
+            "VIEW"
+          ]
+        },
+        {
+          "featureCode": "ORDERS",
+          "featureName": "Orders",
+          "permissions": [
+            "VIEW"
+          ]
+        },
+        {
+          "featureCode": "PERFORMANCE",
+          "featureName": "Performance",
+          "permissions": [
+            "VIEW"
+          ]
+        },
+        {
+          "featureCode": "ALLOCATION",
+          "featureName": "Allocation",
+          "permissions": [
+            "VIEW"
+          ]
+        }
+      ]
+    },
+    {
+      "sectionCode": "NEWS_MARKET",
+      "sectionName": "News & Market",
+      "features": [
+        {
+          "featureCode": "OVERVIEW",
+          "featureName": "Overview",
+          "permissions": [
+            "VIEW"
+          ]
+        },
+        {
+          "featureCode": "MARKET_NEWS",
+          "featureName": "Market News",
+          "permissions": [
+            "VIEW"
+          ]
+        },
+        {
+          "featureCode": "INDEXES",
+          "featureName": "Indexes",
+          "permissions": [
+            "VIEW"
+          ]
+        },
+        {
+          "featureCode": "CURRENCIES",
+          "featureName": "Currencies",
+          "permissions": [
+            "VIEW"
+          ]
+        },
+        {
+          "featureCode": "COMMODITIES",
+          "featureName": "Commodities",
+          "permissions": [
+            "VIEW"
+          ]
+        }
+      ]
+    }
+  ]
+}
+

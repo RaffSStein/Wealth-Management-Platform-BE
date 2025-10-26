@@ -12,7 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Mapper(config = ProfilerCommonMapperConfiguration.class, uses = {PermissionEntityToPermissionMapper.class})
+@Mapper(
+        config = ProfilerCommonMapperConfiguration.class,
+        uses = {PermissionEntityToPermissionMapper.class}
+)
 public interface UserFeaturePermissionToUserPermissionMapper {
 
     UserFeaturePermissionToUserPermissionMapper MAPPER = Mappers.getMapper(UserFeaturePermissionToUserPermissionMapper.class);
