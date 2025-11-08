@@ -5,8 +5,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.util.StringUtils;
-import raff.stein.platformcore.exception.ErrorCode;
-import raff.stein.platformcore.exception.types.unauthorized.JwtTokenException;
 import raff.stein.platformcore.security.jwt.JwtProperties;
 import raff.stein.platformcore.security.jwt.JwtTokenParser;
 
@@ -15,8 +13,11 @@ import java.util.Optional;
 
 /**
  * Filter that extracts the JWT from the request, parses it,
- * and stores the authenticated user in the context.
+ * and stores the authenticated user in the custom WMP context.
  * It also sets the user information in the MDC for logging purposes.
+ *
+ * This filter is non-blocking: if no token is present or token is invalid,
+ * it does not fail the request. Authorization is handled by Spring Security downstream.
  */
 @Slf4j
 public class SecurityContextFilter implements Filter {
@@ -41,7 +42,7 @@ public class SecurityContextFilter implements Filter {
                 String token = extractToken(authHeader);
                 Optional<WMPContext> wmpContextOptional = tokenParser.parseTokenAndBuildContext(token, correlationId);
                 wmpContextOptional.ifPresent(context -> {
-                    // Set the context in SecurityContextHolder
+                    // Set the context in custom SecurityContextHolder (domain-specific, not Spring's)
                     SecurityContextHolder.setContext(context);
                     // Set MDC for logging
                     MDC.put("userId", context.getUserId());
@@ -50,12 +51,7 @@ public class SecurityContextFilter implements Filter {
                     MDC.put("correlationId", context.getCorrelationId());
                 });
             }
-            else {
-                // If no token is present, launch exception
-                // all requests must be authenticated
-                // TODO: find a way to return a standardized error response as done in GlobalControllerExceptionHandler
-                JwtTokenException.of(ErrorCode.MISSING_HEADER_ERROR, jwtProperties.getHeader());
-            }
+            // If no token present or invalid, we let Spring Security decide authorization later.
 
             chain.doFilter(request, response);
 
@@ -69,13 +65,16 @@ public class SecurityContextFilter implements Filter {
      * Checks if the Authorization header contains a Bearer token.
      */
     private boolean isTokenPresent(String authHeader) {
-        return StringUtils.hasText(authHeader) && authHeader.startsWith(jwtProperties.getPrefix() + " ");
+        if (!StringUtils.hasText(authHeader)) return false;
+        String expectedPrefix = jwtProperties.getPrefix() == null ? "Bearer" : jwtProperties.getPrefix().trim();
+        return authHeader.startsWith(expectedPrefix);
     }
 
     /**
      * Extracts the JWT from the Authorization header.
      */
     private String extractToken(String authHeader) {
-        return authHeader.substring((jwtProperties.getPrefix() + " ").length());
+        String expectedPrefix = jwtProperties.getPrefix() == null ? "Bearer" : jwtProperties.getPrefix().trim();
+        return authHeader.substring(expectedPrefix.length()).trim();
     }
 }

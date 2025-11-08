@@ -23,3 +23,10 @@ spring:
     import:
       - classpath:platform-shared-properties.yaml
       - classpath:kafka-properties.yaml
+
+security:
+  jwt:
+    publicKeyPath: classpath:keys/public_key.pem
+    private-key-path: classpath:keys/private_key.pem
+    issuer: user-service
+    expiration-seconds: 3600

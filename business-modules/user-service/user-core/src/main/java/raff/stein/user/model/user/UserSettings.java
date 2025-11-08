@@ -1,4 +1,4 @@
-package raff.stein.user.model;
+package raff.stein.user.model.user;
 
 import lombok.Builder;
 import lombok.Data;

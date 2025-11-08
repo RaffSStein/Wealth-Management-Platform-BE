@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import raff.stein.platformcore.messaging.publisher.WMPBaseEventPublisher;
 import raff.stein.platformcore.messaging.publisher.model.EventData;
 import raff.stein.user.event.producer.mapper.UserToUserCreatedEventMapper;
-import raff.stein.user.model.User;
+import raff.stein.user.model.user.User;
 
 @Slf4j
 @Component

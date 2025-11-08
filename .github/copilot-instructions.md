@@ -15,6 +15,7 @@ It is built using Spring Boot, uses Postgres for data storage (DB) and Kafka for
 - `/business-modules/*-service/*-api-data`: * is a placeholder which represents the name of the microservice (e.g. bank).
 This folder contains the API data models (DTOs) and mappers for the respective microservice, usually in a .yaml format (Open API).
 This is also a maven module that other microservices can depend on to get access to the API data models.
+- When creating new REST endpoints, ensure to update the OpenAPI specification in this module accordingly.
 - `/business-modules/*-service/*-event-data`: * is a placeholder which represents the name of the microservice (e.g. bank).
 This folder contains the event data models (DTOs) and mappers for the respective microservice, usually in a .yaml format (Open API).
 This is also a maven module that other microservices can depend on to get access to the event data models for event-driven communication.

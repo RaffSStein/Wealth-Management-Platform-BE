@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
 import raff.stein.platformcore.messaging.consumer.WMPBaseEventConsumer;
 import raff.stein.user.event.consumer.mapper.CreateUserEventToUserMapper;
 import raff.stein.user.event.producer.UserCreatedEventPublisher;
-import raff.stein.user.model.User;
 import raff.stein.user.model.entity.UserEntity;
 import raff.stein.user.model.entity.mapper.UserToUserEntityMapper;
+import raff.stein.user.model.user.User;
 import raff.stein.user.repository.UserRepository;
 
 import java.util.Optional;

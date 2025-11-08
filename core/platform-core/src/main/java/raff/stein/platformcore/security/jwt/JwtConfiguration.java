@@ -1,10 +1,11 @@
 package raff.stein.platformcore.security.jwt;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import raff.stein.platformcore.security.context.SecurityContextFilter;
 
 import java.security.PublicKey;
@@ -25,12 +26,20 @@ public class JwtConfiguration {
         return new JwtTokenParser(publicKey);
     }
 
+    /**
+     * JwtDecoder used by Spring Security OAuth2 Resource Server.
+     */
     @Bean
-    public FilterRegistrationBean<SecurityContextFilter> securityContextFilter(JwtTokenParser parser, JwtProperties properties) {
-        FilterRegistrationBean<SecurityContextFilter> registration = new FilterRegistrationBean<>();
-        registration.setFilter(new SecurityContextFilter(parser, properties));
-        registration.setOrder(1);
-        registration.addUrlPatterns("/*"); // Apply to all endpoints
-        return registration;
+    public JwtDecoder jwtDecoder(JwtProperties properties) {
+        PublicKey publicKey = JwtPublicKeyProvider.loadPublicKey(resourceLoader.getResource(properties.getPublicKeyPath()));
+        return NimbusJwtDecoder.withPublicKey((java.security.interfaces.RSAPublicKey) publicKey).build();
+    }
+
+    /**
+     * Exposes the custom security context filter as a bean so it can be ordered inside the Spring SecurityFilterChain.
+     */
+    @Bean
+    public SecurityContextFilter securityContextFilter(JwtTokenParser parser, JwtProperties properties) {
+        return new SecurityContextFilter(parser, properties);
     }
 }

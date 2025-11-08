@@ -5,7 +5,7 @@ import org.mapstruct.factory.Mappers;
 import org.openapitools.model.UserCreatedEvent;
 import raff.stein.platformcore.model.mapper.configuration.CommonMapperConfiguration;
 import raff.stein.user.model.BranchRole;
-import raff.stein.user.model.User;
+import raff.stein.user.model.user.User;
 
 import java.time.LocalDate;
 import java.util.List;

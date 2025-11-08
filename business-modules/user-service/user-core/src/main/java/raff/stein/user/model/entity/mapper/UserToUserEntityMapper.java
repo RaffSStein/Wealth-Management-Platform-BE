@@ -2,9 +2,9 @@ package raff.stein.user.model.entity.mapper;
 
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
-import raff.stein.user.model.User;
 import raff.stein.user.model.entity.BranchUserEntity;
 import raff.stein.user.model.entity.UserEntity;
+import raff.stein.user.model.user.User;
 
 import java.time.LocalDate;
 

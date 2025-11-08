@@ -4,9 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.openapitools.api.UserApi;
 import org.openapitools.model.UserDTO;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 import raff.stein.user.controller.mapper.UserToUserDTOMapper;
-import raff.stein.user.model.User;
+import raff.stein.user.model.user.User;
 import raff.stein.user.service.UserService;
 
 import java.net.URI;
@@ -21,14 +22,18 @@ public class UserController implements UserApi {
     private static final UserToUserDTOMapper userToUserDTOMapper = UserToUserDTOMapper.MAPPER;
 
     @Override
+    @PreAuthorize("hasRole('ADVISOR')")
     public ResponseEntity<UserDTO> createUser(UserDTO userDTO) {
         User userInput = userToUserDTOMapper.toUser(userDTO);
         User createdUser = userService.createUser(userInput);
         UserDTO responseUserDTO = userToUserDTOMapper.toUserDto(createdUser);
-        return ResponseEntity.created(URI.create("/users/" + responseUserDTO.getId())).body(responseUserDTO);
+        return ResponseEntity
+                .created(URI.create("/users/" + responseUserDTO.getId()))
+                .body(responseUserDTO);
     }
 
     @Override
+    @PreAuthorize("hasRole('ADVISOR')")
     public ResponseEntity<Void> disableUser(UUID id) {
         boolean disabled = userService.disableUser(id);
         if (disabled) {
@@ -39,6 +44,7 @@ public class UserController implements UserApi {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADVISOR')")
     public ResponseEntity<Void> enableUser(UUID id) {
         boolean enabled = userService.enableUser(id);
         if (enabled) {
@@ -49,6 +55,7 @@ public class UserController implements UserApi {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADVISOR','CUSTOMER')")
     public ResponseEntity<UserDTO> getCurrentUser() {
         User currentUser = userService.getCurrentUser();
         UserDTO userDTO = userToUserDTOMapper.toUserDto(currentUser);
@@ -56,6 +63,7 @@ public class UserController implements UserApi {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADVISOR','CUSTOMER')")
     public ResponseEntity<UserDTO> getUserById(UUID id) {
         User user = userService.getUserById(id);
         UserDTO userDTO = userToUserDTOMapper.toUserDto(user);
@@ -63,6 +71,7 @@ public class UserController implements UserApi {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADVISOR')")
     public ResponseEntity<UserDTO> updateUserById(UUID id, UserDTO userDTO) {
         User userInput = userToUserDTOMapper.toUser(userDTO);
         User updatedUser = userService.updateUserById(id, userInput);

@@ -1,7 +1,8 @@
-package raff.stein.user.model;
+package raff.stein.user.model.user;
 
 import lombok.Builder;
 import lombok.Data;
+import raff.stein.user.model.BranchRole;
 
 import java.util.List;
 

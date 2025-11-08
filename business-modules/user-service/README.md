@@ -1,33 +1,40 @@
-# User Service
+# user-service
 
-This microservice manages user accounts for the Wealth Management Platform (WMP).
+This service manages users and provides both administrative and self-signup authentication endpoints.
 
-## Features
-- Exposes synchronous CRUD APIs for user management (create, update, enable/disable users).
-- Publishes user events to Kafka topics for asynchronous processing.
-- Consumes events from Kafka to perform asynchronous CRUD operations on users.
-- Integrates with PostgreSQL for persistent storage.
-- Supports customizable user settings (e.g., theme, language, preferences).
-- Logging is compatible with Splunk and follows the platform's log pattern.
+## API Surfaces
+- Administrative (secured):
+  - POST /user (create user) — requires role ADMIN
+  - PUT /user/{id} (update) — requires role ADMIN
+  - POST /user/{id}/enable|disable — requires role ADMIN
+  - GET /user/{id}, GET /me — requires authenticated role ADMIN or USER (as configured)
+- Self-signup (public):
+  - POST /auth/register — registers a new user and emits a JWT
+  - POST /auth/login — authenticates and emits a JWT
 
-## Architecture
-- Spring Boot based microservice.
-- Event-driven, using Kafka topics for inter-service communication.
-- Database: PostgreSQL (dedicated instance per microservice).
-- Docker Compose is used for local development, including Kafka, Kafka UI, and PostgreSQL containers.
+All REST interfaces and DTOs are defined in `user-api-data/user-api-data.yaml` and generated via OpenAPI. Controllers in `user-core` implement those generated interfaces.
 
-## API Endpoints
-- `/users`: Create a new user.
-- `/users/{id}`: Update user data.
-- `/users/{id}/enable`: Enable a user.
-- `/users/{id}/disable`: Disable a user.
-- `/me`: Retrieve the currently logged-in user's data.
+## Security
+- Spring Security (stateless), OAuth2 Resource Server (JWT) configured in platform-core.
+- Roles are mapped from the `roles` claim; method-level authorization is enforced with `@PreAuthorize`.
+- CORS enabled and CSRF disabled for APIs.
+
+## Flows
+### 1) Administrative flow (Back-office)
+- Intended for authenticated operators.
+- Create/Update/Enable/Disable users via secured endpoints.
+- Publishes `UserCreatedEvent` upon creation.
+- Does not handle passwords from the back-office payload.
+
+### 2) Self-signup flow (Public)
+- `POST /auth/register` accepts registration payload, hashes password, persists user, publishes `UserCreatedEvent`, and returns a JWT.
+- `POST /auth/login` verifies credentials and returns a JWT. The request carries a `bankCode` to scope the session.
+- Permissions are not embedded in the JWT; they are provisioned asynchronously by profiler-service based on `UserCreatedEvent` and retrieved at runtime by other services.
+
+## Integration with profiler-service
+- After user creation, an event is emitted; profiler-service consumes it and materializes permissions.
+- Services resolve fine-grained permissions via profiler-service using email + bankCode from the token.
 
 ## Development
-- DTOs for API and event payloads are defined in dedicated submodules (`user-api-data`, `user-event-data`).
-- OpenAPI specifications are used to generate DTOs and API interfaces.
-- Logging is centralized and parametrized via logback configuration.
-
-## Work in Progress
-This module is under active development. See the main repository README for global architecture and development guidelines.
-
+- Edit `user-api-data.yaml` and run the build to regenerate interfaces/DTOs.
+- Ensure `security.jwt.publicKeyPath` and (for user-service) `security.jwt.private-key-path` are configured.

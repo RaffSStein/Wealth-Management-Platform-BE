@@ -9,8 +9,8 @@ import org.openapitools.model.UserBranchRoleDTO;
 import org.openapitools.model.UserDTO;
 import org.openapitools.model.UserSettingsDTO;
 import raff.stein.user.model.BranchRole;
-import raff.stein.user.model.User;
-import raff.stein.user.model.UserSettings;
+import raff.stein.user.model.user.User;
+import raff.stein.user.model.user.UserSettings;
 
 import java.util.List;
 

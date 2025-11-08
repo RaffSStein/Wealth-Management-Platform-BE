@@ -59,6 +59,14 @@ public class UserEntity extends BaseDateEntity<UUID> {
     @Column(nullable = false)
     private String phoneNumber;
 
+    // explicit setter to ensure availability
+    @Setter
+    @Column(name = "password_hash", nullable = false, length = 100)
+    private String passwordHash;
+
+    @Column(name = "enabled", nullable = false)
+    private boolean enabled = true;
+
     @Column(length = 2)
     private String country; // es: "IT", "US"
 

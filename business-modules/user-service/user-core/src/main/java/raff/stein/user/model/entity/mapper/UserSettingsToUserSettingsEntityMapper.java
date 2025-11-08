@@ -2,8 +2,8 @@ package raff.stein.user.model.entity.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
-import raff.stein.user.model.UserSettings;
 import raff.stein.user.model.entity.UserSettingsEntity;
+import raff.stein.user.model.user.UserSettings;
 
 @Mapper(config = UserEntityCommonMapperConfig.class)
 public interface UserSettingsToUserSettingsEntityMapper {
