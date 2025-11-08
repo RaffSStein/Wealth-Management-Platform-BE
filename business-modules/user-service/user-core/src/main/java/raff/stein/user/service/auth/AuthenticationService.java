@@ -19,9 +19,11 @@ import raff.stein.user.model.entity.UserEntity;
 import raff.stein.user.model.user.User;
 import raff.stein.user.repository.UserRepository;
 import raff.stein.user.security.JwtTokenIssuer;
+import raff.stein.user.security.PlatformUserDetails;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +41,6 @@ public class AuthenticationService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email already registered");
         }
-        // Persist new user with encoded password
         UserEntity entity = UserEntity.builder()
                 .email(request.getEmail())
                 .firstName(request.getFirstName())
@@ -63,30 +64,26 @@ public class AuthenticationService {
                 .build();
         userCreatedEventPublisher.publishUserCreatedEvent(domainUser);
 
-        Authentication auth = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        List<String> tokenRoles = auth.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .filter(a -> a.startsWith("ROLE_"))
-                .map(a -> a.substring("ROLE_".length()))
-                .distinct()
-                .toList();
+        // Derive token roles directly from provided branch roles (avoid extra authenticate/query)
+        List<String> tokenRoles = rolesFromBranchRoles(branchRoles);
         if (tokenRoles.isEmpty()) {
-            log.warn("Role fallback applied during registration auth: assigning CUSTOMER for email [{}] (no authorities found)", request.getEmail());
+            log.warn("Role fallback applied during registration: assigning CUSTOMER for email [{}] (no branch roles provided)", request.getEmail());
             tokenRoles = List.of(PlatformRole.CUSTOMER.name());
         }
-
+        String userId = String.valueOf(entity.getId());
         String bankCodeClaim = branchRoles.isEmpty() ? null : branchRoles.get(0).getBankCode();
-        String token = jwtTokenIssuer.issueToken(String.valueOf(entity.getId()), entity.getEmail(), tokenRoles, buildExtraClaims(String.valueOf(entity.getId()), bankCodeClaim));
+        //TODO: remove issuing for registered users if email verification is needed
+        String token = jwtTokenIssuer.issueToken(
+                userId,
+                entity.getEmail(),
+                tokenRoles,
+                buildExtraClaims(userId, bankCodeClaim));
         return new AuthResponse(token, "Bearer", jwtTokenIssuer.getExpirationSeconds());
     }
 
     public AuthResponse login(LoginRequest request) {
         Authentication auth = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        UserEntity entity = userRepository.findByEmailIgnoreCase(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
-        if (!entity.isEnabled()) {
-            throw new IllegalStateException("Account disabled");
-        }
+        PlatformUserDetails principal = (PlatformUserDetails) auth.getPrincipal();
         List<String> tokenRoles = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .filter(a -> a.startsWith("ROLE_"))
@@ -94,14 +91,28 @@ public class AuthenticationService {
                 .distinct()
                 .toList();
         if (tokenRoles.isEmpty()) {
-            log.warn("Role fallback applied during login auth: assigning CUSTOMER for email [{}] (no authorities found)", request.getEmail());
+            log.warn("Role fallback applied during login auth: assigning CUSTOMER for email [{}] (no authorities found)",
+                    request.getEmail());
             tokenRoles = List.of(PlatformRole.CUSTOMER.name());
         }
-        String token = jwtTokenIssuer.issueToken(String.valueOf(entity.getId()), entity.getEmail(), tokenRoles, buildExtraClaims(String.valueOf(entity.getId()), request.getBankCode()));
+        String token = jwtTokenIssuer.issueToken(
+                principal.getUserId(),
+                principal.getUsername(),
+                tokenRoles,
+                buildExtraClaims(principal.getUserId(), request.getBankCode()));
         return new AuthResponse(token, "Bearer", jwtTokenIssuer.getExpirationSeconds());
     }
 
     // --- Helpers --------------------------------------------------------------------
+
+    private List<String> rolesFromBranchRoles(List<BranchRole> branchRoles) {
+        if (branchRoles == null || branchRoles.isEmpty()) return List.of();
+        Set<PlatformRole> roles = branchRoles.stream()
+                .map(BranchRole::getRole)
+                .map(PlatformRole::fromString)
+                .collect(java.util.stream.Collectors.toSet());
+        return roles.stream().map(Enum::name).sorted().toList();
+    }
 
     private List<BranchRole> mapBranchRoleRequests(List<raff.stein.user.model.auth.BranchRoleRequest> requests) {
         if (requests == null) return List.of();

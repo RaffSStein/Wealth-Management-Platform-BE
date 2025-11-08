@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -36,7 +35,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         Collection<? extends GrantedAuthority> authorities = platformRoles.stream()
                 .map(r -> new SimpleGrantedAuthority("ROLE_" + r.name()))
                 .toList();
-        return new User(entity.getEmail(), entity.getPasswordHash(), authorities);
+        return new PlatformUserDetails(
+                String.valueOf(entity.getId()),
+                entity.getEmail(),
+                entity.getPasswordHash(),
+                authorities,
+                true
+        );
     }
 
     /**
