@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -25,6 +24,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import raff.stein.platformcore.security.context.SecurityContextFilter;
 import raff.stein.platformcore.security.error.RestAccessDeniedHandler;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -57,8 +58,18 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Disable CSRF for stateless APIs
                 .csrf(AbstractHttpConfigurer::disable)
-                // Enable CORS with a bean-defined configuration
-                .cors(Customizer.withDefaults())
+                // Enable CORS with custom configuration
+                .cors(cors -> cors.configurationSource(request -> {
+                            CorsConfiguration config = new CorsConfiguration();
+                            config.setAllowedOrigins(Collections.singletonList("*"));
+                            config.setAllowedMethods(Collections.singletonList("*"));
+                            config.setAllowCredentials(false);
+                            config.setAllowedHeaders(Collections.singletonList("*"));
+                            config.setExposedHeaders(Arrays.asList("Authorization", "Jwt-Token"));
+                            config.setMaxAge(3600L);
+                            return config;
+                        })
+                )
                 // Exception handling customization
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED))
