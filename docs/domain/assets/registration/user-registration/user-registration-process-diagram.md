@@ -1,6 +1,5 @@
 @startuml
 actor FE as "Frontend (CRM/BO)"
-participant "bank-service" as Bank
 participant "user-service" as User
 queue "user-created-topic" as userCreatedTopic
 participant "email-service" as Reporting
@@ -8,19 +7,16 @@ participant "profiler-service" as Profiler
 queue "user-permission-created-topic" as userPermissionCreatedTopic
 
 activate FE
-FE -> Bank: GET /branches\nretrieve branches by filters
-activate Bank
-Bank -> FE: 200 OK\nlist of branches
-deactivate Bank
-FE -> FE: fill in user data
-FE -> User: POST /users\ncreate user
+FE -> FE: fill in  registration\nuser data
+FE -> User: POST /auth/register\nregister user
 activate User
 User -> User: validate user data
 User -> User: save user to DB
 User -> userCreatedTopic: publish user-created event
 User -> FE: 201 Created\nuser data
-deactivate FE
 deactivate User
+FE -> FE: show registration\nsuccess message
+deactivate FE
 userCreatedTopic --> Profiler: consume user-created event
 activate Profiler
 Profiler -> Profiler: save profile user data\n(customer/advisor)
