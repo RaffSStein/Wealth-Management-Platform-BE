@@ -13,7 +13,7 @@ import java.util.stream.IntStream;
  * - Temporary password generation
  * - Hashing (encoding) of passwords
  * - Masking for safe logging
- *
+ * <p>
  * NOTE: Plain passwords must never be logged in full nor returned in API responses.
  */
 @Service

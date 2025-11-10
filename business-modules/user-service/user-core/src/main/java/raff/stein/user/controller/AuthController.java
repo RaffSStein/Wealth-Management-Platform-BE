@@ -13,6 +13,8 @@ import raff.stein.user.model.auth.LoginRequest;
 import raff.stein.user.model.auth.RegisterRequest;
 import raff.stein.user.service.auth.AuthenticationService;
 
+import java.net.URI;
+
 /**
  * Authentication endpoints (login & register) specific to user-service.
  */
@@ -21,6 +23,7 @@ import raff.stein.user.service.auth.AuthenticationService;
 public class AuthController implements AuthApi {
 
     private final AuthenticationService authenticationService;
+
     private static final AuthDtoMapper authDtoMapper = AuthDtoMapper.MAPPER;
 
     @Override
@@ -31,9 +34,9 @@ public class AuthController implements AuthApi {
     }
 
     @Override
-    public ResponseEntity<AuthResponseDTO> registerUser(RegisterRequestDTO registerRequestDTO) {
+    public ResponseEntity<Void> registerUser(RegisterRequestDTO registerRequestDTO) {
         RegisterRequest request = authDtoMapper.toRegisterRequest(registerRequestDTO);
-        AuthResponse response = authenticationService.register(request);
-        return ResponseEntity.ok(authDtoMapper.toAuthResponseDTO(response));
+        authenticationService.register(request);
+        return ResponseEntity.created(URI.create("/user")).build();
     }
 }

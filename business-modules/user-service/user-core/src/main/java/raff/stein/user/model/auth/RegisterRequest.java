@@ -17,8 +17,6 @@ public class RegisterRequest {
     private String lastName;
     @NotBlank
     private String phoneNumber;
-    @NotBlank
-    private String password;
 
     // Initial branch-role associations for permission provisioning
     private List<BranchRoleRequest> branchRoles;

@@ -10,7 +10,7 @@ import java.util.Collection;
  * Custom UserDetails carrying the userId so downstream logic (e.g. JWT issuance) does not need an extra DB lookup.
  */
 @Getter
-public class PlatformUserDetails implements UserDetails {
+public class WmpUserDetails implements UserDetails {
 
     private final String userId;
     private final String username; // email
@@ -18,11 +18,12 @@ public class PlatformUserDetails implements UserDetails {
     private final Collection<? extends GrantedAuthority> authorities;
     private final boolean enabled;
 
-    public PlatformUserDetails(String userId,
-                               String username,
-                               String passwordHash,
-                               Collection<? extends GrantedAuthority> authorities,
-                               boolean enabled) {
+    public WmpUserDetails(
+            String userId,
+            String username,
+            String passwordHash,
+            Collection<? extends GrantedAuthority> authorities,
+            boolean enabled) {
         this.userId = userId;
         this.username = username;
         this.passwordHash = passwordHash;

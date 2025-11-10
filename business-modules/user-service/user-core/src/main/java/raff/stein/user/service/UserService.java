@@ -21,36 +21,21 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserCreatedEventPublisher userCreatedEventPublisher;
-    private final PasswordService passwordService;
 
     private static final UserToUserEntityMapper userToUserEntityMapper = UserToUserEntityMapper.MAPPER;
 
-    /**
-     * Creates a user in an administrative context.
-     * Generates a strong temporary password, hashes it and stores the hash.
-     * The plain password must be delivered to the customer through a secure channel (e.g. email-service).
-     * TODO: Publish an event (e.g. UserInitialPasswordGeneratedEvent) or invoke email-service to send the password.
-     */
     @Transactional
     public User createUser(User user) {
         log.debug("Creating user: [{}]", user);
-
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new IllegalArgumentException("User with email already exists: " + user.getEmail());
+        }
         UserEntity entity = userToUserEntityMapper.toUserEntity(user);
-
-        // Generate and hash temporary password via PasswordService
-        String tempPassword = passwordService.generateTemporaryPassword();
-        entity.setPasswordHash(passwordService.encode(tempPassword));
-
         UserEntity savedUserEntity = userRepository.save(entity);
         final User savedUser = userToUserEntityMapper.toUser(savedUserEntity);
-
-        // Publish user created domain event (without exposing password)
+        // Publish user created domain event
         userCreatedEventPublisher.publishUserCreatedEvent(savedUser);
-
-        // Mask password for internal trace (never log full password)
-        log.info("Temporary password generated for user [{}]. Pending secure delivery.",
-                savedUser.getEmail());
-
+        log.info("Created user with ID: [{}], email: [{}]", savedUser.getId(), savedUser.getEmail());
         return savedUser;
     }
 
