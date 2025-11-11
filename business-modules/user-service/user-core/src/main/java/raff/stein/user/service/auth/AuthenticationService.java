@@ -17,7 +17,6 @@ import raff.stein.user.service.UserService;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -47,10 +46,12 @@ public class AuthenticationService {
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
-                        request.getPassword()));
+                        request.getPassword())
+        );
 
         WmpUserDetails principal = (WmpUserDetails) auth.getPrincipal();
-        List<String> tokenRoles = auth.getAuthorities().stream()
+        List<String> tokenRoles = auth.getAuthorities()
+                .stream()
                 .map(GrantedAuthority::getAuthority)
                 .filter(a -> a.startsWith("ROLE_"))
                 .map(a -> a.substring("ROLE_".length()))
@@ -70,15 +71,6 @@ public class AuthenticationService {
     }
 
     // --- Helpers --------------------------------------------------------------------
-
-    private List<String> rolesFromBranchRoles(List<BranchRole> branchRoles) {
-        if (branchRoles == null || branchRoles.isEmpty()) return List.of();
-        Set<WmpRole> roles = branchRoles.stream()
-                .map(BranchRole::getRole)
-                .map(WmpRole::fromString)
-                .collect(java.util.stream.Collectors.toSet());
-        return roles.stream().map(Enum::name).sorted().toList();
-    }
 
     private List<BranchRole> mapBranchRoleRequests(List<BranchRoleRequest> requests) {
         if (requests == null) return List.of();
