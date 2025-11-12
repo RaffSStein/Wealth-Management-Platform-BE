@@ -16,6 +16,8 @@
 
     <modules>
         <module>email-core</module>
+        <module>email-api-data</module>
+        <module>email-event-data</module>
     </modules>
 
 </project>

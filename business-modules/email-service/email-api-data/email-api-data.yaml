@@ -1,0 +1,18 @@
+openapi: 3.1.0
+info:
+  title: Email Apis
+  version: 1.0.0
+  description: API for managing emails in the system.
+
+paths: {}
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas: {}
+

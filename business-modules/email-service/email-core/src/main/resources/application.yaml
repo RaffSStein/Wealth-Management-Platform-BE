@@ -1,0 +1,26 @@
+server:
+  port: 8092
+  servlet:
+    context-path: /email-service
+spring:
+  application:
+    name: email-service
+  jpa:
+    generate-ddl: true
+    defer-datasource-initialization: true
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+      # any additional Hibernate properties can be added here
+  datasource:
+    url: jdbc:postgresql://localhost:5445/emaildb
+    username: test
+    password: test
+    driver-class-name: org.postgresql.Driver
+  config:
+    import:
+      - classpath:platform-shared-properties.yaml
+      - classpath:kafka-properties.yaml
+

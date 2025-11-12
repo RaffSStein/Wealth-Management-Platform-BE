@@ -1,0 +1,7 @@
+kafka:
+  topics:
+    email-service:
+      domain: email-service
+      # produced topics
+
+    # consumed topics
