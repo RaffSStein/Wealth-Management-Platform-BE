@@ -5,3 +5,8 @@ kafka:
       # produced topics
 
     # consumed topics
+    user-service:
+      user-created:
+        enabled: true
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.user-service.domain}.user-created"
+        groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${kafka.topics.user-service.domain}.user-created.sa.${kafka.broker.serviceAccount}"
