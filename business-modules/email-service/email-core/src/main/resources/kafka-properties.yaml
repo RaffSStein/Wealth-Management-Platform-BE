@@ -6,6 +6,7 @@ kafka:
 
     # consumed topics
     user-service:
+      domain: user-service
       user-created:
         enabled: true
         name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.user-service.domain}.user-created"

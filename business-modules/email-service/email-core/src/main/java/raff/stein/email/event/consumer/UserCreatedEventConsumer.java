@@ -4,10 +4,12 @@ import io.cloudevents.CloudEvent;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openapitools.model.User;
 import org.openapitools.model.UserCreatedEvent;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import raff.stein.email.service.EmailService;
 import raff.stein.platformcore.messaging.consumer.WMPBaseEventConsumer;
 
 import java.util.Optional;
@@ -15,8 +17,10 @@ import java.util.Optional;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "kafka.topics.user-service-user-created.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "kafka.topics.user-service.user-created.enabled", havingValue = "true")
 public class UserCreatedEventConsumer extends WMPBaseEventConsumer {
+
+    private final EmailService emailService;
 
     @KafkaListener(
             topics = "${kafka.topics.user-service.user-created.name}",
@@ -31,6 +35,17 @@ public class UserCreatedEventConsumer extends WMPBaseEventConsumer {
     }
 
     private void processUserCreatedEvent(@NotNull UserCreatedEvent userCreatedEvent) {
-        //TODO
+        final User user = userCreatedEvent.getUser();
+        log.info("Processing UserCreatedEvent for userId: [{}], email: [{}]",
+                userCreatedEvent.getUserId(),
+                user.getEmail());
+        final String userEmail = user.getEmail();
+        final String userName = user.getFirstName();
+        try {
+            emailService.sendOnboardingEmail(userEmail, userName);
+            log.info("Onboarding email sent to user: [{}]", userEmail);
+        } catch (Exception e) {
+            log.error("Failed to send onboarding email to user: [{}]. Error: {}", userEmail, e.getMessage());
+        }
     }
 }

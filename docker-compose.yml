@@ -236,6 +236,15 @@ services:
       - fakegcs-data:/data
     command: -scheme http -external-url http://localhost:7000 -port 7000
 
+  # MailHog for email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+
+
 
 networks:
   dockernet:

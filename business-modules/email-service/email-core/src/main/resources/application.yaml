@@ -23,4 +23,17 @@ spring:
     import:
       - classpath:platform-shared-properties.yaml
       - classpath:kafka-properties.yaml
-
+  mail:
+    host: localhost
+    port: 1025
+    username: test
+    password: test
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+wmp:
+  onboarding:
+    password-setup-link: "https://wmp.example.com/onboarding/setup-password"
