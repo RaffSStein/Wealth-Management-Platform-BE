@@ -37,6 +37,7 @@ public class AuditConfig {
                 throw WmpContextException.forMissingField("userEmail").get();
             }
         }
-        throw WmpContextException.forNullContext().get();
+        log.warn("WMPContext is null. Returning 'ANONYMOUS' as auditor.");
+        return "ANONYMOUS";
     }
 }
