@@ -8,9 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import raff.stein.platformcore.security.context.WMPContext;
 
 import java.security.PublicKey;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Responsible for parsing and validating the JWT token.
@@ -41,7 +40,7 @@ public class JwtTokenParser {
             WMPContext context = WMPContext.builder()
                     .userId(claims.get("userId", String.class))
                     .email(claims.get("email", String.class))
-                    .roles(Set.copyOf(claims.get("roles", List.class)))
+                    .roles(extractRoles(claims))
                     //TODO: probably not needed, as we can get it from the user-service
                     .bankCode(claims.get("bankCode", String.class))
                     .correlationId(correlationId)
@@ -51,5 +50,31 @@ public class JwtTokenParser {
             log.error(e.getMessage());
             return Optional.empty();
         }
+    }
+
+    private Set<String> extractRoles(Claims claims) {
+        Object raw = claims.get("roles");
+        if (raw == null) {
+            return Collections.emptySet();
+        }
+        if (raw instanceof Collection<?>) {
+            return ((Collection<?>) raw).stream()
+                    .filter(Objects::nonNull)
+                    .map(Object::toString)
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toUnmodifiableSet());
+        }
+        if (raw instanceof String str) {
+            if (str.isBlank()) {
+                return Collections.emptySet();
+            }
+            return Arrays.stream(str.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toUnmodifiableSet());
+        }
+        log.warn("Unexpected type for roles claim: {}", raw.getClass().getName());
+        return Collections.emptySet();
     }
 }
