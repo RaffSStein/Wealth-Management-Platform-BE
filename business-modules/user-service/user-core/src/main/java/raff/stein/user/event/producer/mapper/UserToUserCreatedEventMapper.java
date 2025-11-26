@@ -2,6 +2,7 @@ package raff.stein.user.event.producer.mapper;
 
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
+import org.openapitools.model.UserBankBranch;
 import org.openapitools.model.UserCreatedEvent;
 import raff.stein.platformcore.model.mapper.configuration.CommonMapperConfiguration;
 import raff.stein.user.model.BranchRole;
@@ -15,9 +16,10 @@ public interface UserToUserCreatedEventMapper {
 
     UserToUserCreatedEventMapper MAPPER = Mappers.getMapper(UserToUserCreatedEventMapper.class);
 
-    @Mapping(target = "user", source = ".")
-    @Mapping(target = "userId", source = "id")
-    UserCreatedEvent toUserCreatedEvent(User user);
+    @Mapping(target = "user", source = "user")
+    @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "onboardingToken", source = "onboardingToken")
+    UserCreatedEvent toUserCreatedEvent(User user, String onboardingToken);
 
     // Map domain User -> event User
     @Mapping(target = "userBankBranches", source = "branchRoles")
@@ -28,11 +30,11 @@ public interface UserToUserCreatedEventMapper {
     @Mapping(target = "bankCode", source = "bankCode")
     @Mapping(target = "branchCode", source = "bankId")
     @Mapping(target = "role", source = "role")
-    org.openapitools.model.UserBankBranch toUserBankBranch(BranchRole role);
+    UserBankBranch toUserBankBranch(BranchRole role);
 
     // Map list of BranchRole -> list of UserBankBranch
     @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
-    List<org.openapitools.model.UserBankBranch> toUserBankBranches(List<BranchRole> roles);
+    List<UserBankBranch> toUserBankBranches(List<BranchRole> roles);
 
     @Named("mapBirthDate")
     default LocalDate mapBirthDate(String birthDate) {

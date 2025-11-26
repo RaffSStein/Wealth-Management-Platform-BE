@@ -36,4 +36,5 @@ spring:
             enable: false
 wmp:
   onboarding:
-    password-setup-link: "https://wmp.example.com/onboarding/setup-password"
+    # local FE URL to be used in emails
+    password-setup-link: "http://localhost:4200/onboarding/setup-password"

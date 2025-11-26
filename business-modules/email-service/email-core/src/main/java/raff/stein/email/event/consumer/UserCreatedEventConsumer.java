@@ -41,8 +41,9 @@ public class UserCreatedEventConsumer extends WMPBaseEventConsumer {
                 user.getEmail());
         final String userEmail = user.getEmail();
         final String userName = user.getFirstName();
+        final String onboardingToken = userCreatedEvent.getOnboardingToken();
         try {
-            emailService.sendOnboardingEmail(userEmail, userName);
+            emailService.sendOnboardingEmail(userEmail, userName, onboardingToken);
             log.info("Onboarding email sent to user: [{}]", userEmail);
         } catch (Exception e) {
             log.error("Failed to send onboarding email to user: [{}]. Error: {}", userEmail, e.getMessage());

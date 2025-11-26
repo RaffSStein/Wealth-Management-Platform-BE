@@ -52,6 +52,7 @@ public class CreateUserEventConsumer extends WMPBaseEventConsumer {
                     eventId);
             return;
         }
+        //TODO: this should use UserService.createUser to avoid code duplication and to handle the token
         log.info("Creating new user with email: [{}]", user.getEmail());
         // Map User to UserEntity
         UserEntity userEntity = userToUserEntityMapper.toUserEntity(user);
@@ -63,6 +64,6 @@ public class CreateUserEventConsumer extends WMPBaseEventConsumer {
         // Map UserEntity back to User
         User userToBePublished = userToUserEntityMapper.toUser(savedUser);
         // Publish the user just created
-        userCreatedEventPublisher.publishUserCreatedEvent(userToBePublished);
+        userCreatedEventPublisher.publishUserCreatedEvent(userToBePublished, null);
     }
 }

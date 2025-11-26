@@ -2,9 +2,7 @@ package raff.stein.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.openapitools.api.AuthApi;
-import org.openapitools.model.AuthResponseDTO;
-import org.openapitools.model.LoginCredentialsDTO;
-import org.openapitools.model.RegisterRequestDTO;
+import org.openapitools.model.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import raff.stein.user.controller.mapper.AuthDtoMapper;
@@ -38,5 +36,17 @@ public class AuthController implements AuthApi {
         RegisterRequest request = authDtoMapper.toRegisterRequest(registerRequestDTO);
         authenticationService.register(request);
         return ResponseEntity.created(URI.create("/user")).build();
+    }
+
+    @Override
+    public ResponseEntity<Void> requestPasswordReset(PasswordResetRequestDTO passwordResetRequestDTO) {
+        // TODO: implement reset request: trigger email with JWT link
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> setupPassword(SetupPasswordDTO setupPasswordDTO) {
+        // TODO: implement setup: validate JWT (setupPasswordDTO.token), persist password, enable login
+        return ResponseEntity.ok().build();
     }
 }

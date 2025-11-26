@@ -31,15 +31,20 @@ public class AuthenticationService {
     @Transactional
     public void register(RegisterRequest request) {
         // TODO: use a mapper
-        userService.createUser(
+        final User user = userService.createUserEntity(
                 User.builder()
                         .email(request.getEmail())
                         .firstName(request.getFirstName())
                         .lastName(request.getLastName())
                         .phoneNumber(request.getPhoneNumber())
                         .branchRoles(mapBranchRoleRequests(request.getBranchRoles()))
-                        .build()
+                        .build());
+        // Issue a dedicated password setup token
+        String setupToken = jwtTokenIssuer.issuePasswordSetupToken(
+                user.getId(),
+                user.getEmail()
         );
+        userService.publishUser(user, setupToken);
     }
 
     public AuthResponse login(LoginRequest request) {

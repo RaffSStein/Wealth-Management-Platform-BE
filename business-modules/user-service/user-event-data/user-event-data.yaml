@@ -17,9 +17,13 @@ components:
           format: uuid
         user:
           $ref: '#/components/schemas/User'
+        onboardingToken:
+          type: string
+          description: "Token used for user onboarding process"
       required:
         - userId
         - user
+        - onboardingToken
 
 
     UserUpdatedEvent:

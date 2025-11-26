@@ -17,12 +17,14 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import raff.stein.platformcore.security.context.SecurityContextFilter;
 import raff.stein.platformcore.security.error.RestAccessDeniedHandler;
+import raff.stein.platformcore.security.filter.PasswordConfirmJwtFilter;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,7 +53,8 @@ public class SecurityConfig {
             HttpSecurity http,
             SecurityContextFilter securityContextFilter,
             JwtAuthenticationConverter jwtAuthenticationConverter,
-            AccessDeniedHandler accessDeniedHandler) throws Exception {
+            AccessDeniedHandler accessDeniedHandler,
+            PasswordConfirmJwtFilter passwordConfirmJwtFilter) throws Exception {
 
         http
                 // We build a stateless API
@@ -91,7 +94,10 @@ public class SecurityConfig {
                 );
 
         // Register the custom context filter before authorization takes place
-        http.addFilterBefore(securityContextFilter, org.springframework.security.web.authentication.AnonymousAuthenticationFilter.class);
+        http.addFilterBefore(securityContextFilter, AnonymousAuthenticationFilter.class);
+
+        // Register the password-confirm token validator BEFORE the security context filter
+        http.addFilterBefore(passwordConfirmJwtFilter, SecurityContextFilter.class);
 
         return http.build();
     }

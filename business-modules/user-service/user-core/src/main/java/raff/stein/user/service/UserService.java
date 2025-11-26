@@ -1,5 +1,6 @@
 package raff.stein.user.service;
 
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,17 +27,27 @@ public class UserService {
 
     @Transactional
     public User createUser(User user) {
-        log.debug("Creating user: [{}]", user);
+        final User savedUser = createUserEntity(user);
+        // TODO: generate onboarding token for user creation request that comes from an advisor
+        publishUser(savedUser, null);
+        return savedUser;
+    }
+
+    @Transactional
+    public User createUserEntity(User user) {
+        log.debug("Creating user entity: [{}]", user);
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new IllegalArgumentException("User with email already exists: " + user.getEmail());
         }
         UserEntity entity = userToUserEntityMapper.toUserEntity(user);
         UserEntity savedUserEntity = userRepository.save(entity);
         final User savedUser = userToUserEntityMapper.toUser(savedUserEntity);
-        // Publish user created domain event
-        userCreatedEventPublisher.publishUserCreatedEvent(savedUser);
         log.info("Created user with ID: [{}], email: [{}]", savedUser.getId(), savedUser.getEmail());
         return savedUser;
+    }
+
+    public void publishUser(User user, @Nullable String onboardingToken) {
+        userCreatedEventPublisher.publishUserCreatedEvent(user, onboardingToken);
     }
 
     public boolean disableUser(UUID id) {
