@@ -80,6 +80,7 @@ public class JwtTokenIssuer {
         RSAPrivateKey key = loadPrivateKey();
 
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(subject)
                 .claims(claims == null ? Map.of() : claims)
                 .issuer(issuer)

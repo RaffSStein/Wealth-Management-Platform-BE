@@ -44,6 +44,7 @@ public class JwtTokenParser {
                     //TODO: probably not needed, as we can get it from the user-service
                     .bankCode(claims.get("bankCode", String.class))
                     .correlationId(correlationId)
+                    .rawToken(token)
                     .build();
             return Optional.of(context);
         } catch (JwtException e) {

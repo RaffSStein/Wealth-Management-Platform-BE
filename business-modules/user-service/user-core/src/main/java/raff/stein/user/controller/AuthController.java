@@ -3,7 +3,6 @@ package raff.stein.user.controller;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.api.AuthApi;
 import org.openapitools.model.*;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import raff.stein.user.controller.mapper.AuthDtoMapper;
@@ -47,7 +46,7 @@ public class AuthController implements AuthApi {
 
     @Override
     public ResponseEntity<Void> setupPassword(SetupPasswordDTO setupPasswordDTO) {
-        // TODO: implement setup: validate JWT (setupPasswordDTO.token), persist password, enable login
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        authenticationService.setupPassword(setupPasswordDTO.getPassword());
+        return ResponseEntity.accepted().build();
     }
 }

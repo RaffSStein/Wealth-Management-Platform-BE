@@ -8,11 +8,17 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import raff.stein.platformcore.security.context.SecurityContextHolder;
+import raff.stein.platformcore.security.context.WMPContext;
 import raff.stein.user.model.BranchRole;
 import raff.stein.user.model.auth.*;
+import raff.stein.user.model.entity.UserEntity;
 import raff.stein.user.model.user.User;
+import raff.stein.user.repository.UserRepository;
 import raff.stein.user.security.JwtTokenIssuer;
 import raff.stein.user.security.WmpUserDetails;
+import raff.stein.user.service.PasswordService;
+import raff.stein.user.service.PasswordSetupTokenService;
 import raff.stein.user.service.UserService;
 
 import java.util.List;
@@ -24,9 +30,11 @@ import java.util.Map;
 public class AuthenticationService {
 
     private final UserService userService;
-
+    private final PasswordService passwordService;
+    private final UserRepository userRepository;
     private final JwtTokenIssuer jwtTokenIssuer;
     private final AuthenticationManager authenticationManager;
+    private final PasswordSetupTokenService passwordSetupTokenService;
 
     @Transactional
     public void register(RegisterRequest request) {
@@ -73,6 +81,24 @@ public class AuthenticationService {
                 tokenRoles,
                 buildExtraClaims(principal.getUserId(), request.getBankCode()));
         return new AuthResponse(token, "Bearer", jwtTokenIssuer.getExpirationSeconds());
+    }
+
+    @Transactional
+    public void setupPassword(String password) {
+        final WMPContext context = SecurityContextHolder.getContext();
+        final String userEmail = context.getEmail();
+        final String rawToken = context.getRawToken();
+        final UserEntity userEntity = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + userEmail));
+        final List<String> violations = passwordService.validatePolicy(password, userEmail);
+        if (!violations.isEmpty()) {
+            throw new IllegalArgumentException("Password does not meet policy requirements: " + String.join(", ", violations));
+        }
+        // Validate and consume the password setup token to avoid future reuse
+        passwordSetupTokenService.validateAndConsume(rawToken);
+        final String hashedPassword = passwordService.encode(password);
+        userEntity.setPasswordHash(hashedPassword);
+        userRepository.save(userEntity);
     }
 
     // --- Helpers --------------------------------------------------------------------

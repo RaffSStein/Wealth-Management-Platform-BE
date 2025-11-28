@@ -209,7 +209,7 @@ paths:
             schema:
               $ref: '#/components/schemas/SetupPasswordDTO'
       responses:
-        '200':
+        '201':
           description: Password set successfully
         '400':
           description: Invalid token or password rules violation
@@ -296,14 +296,10 @@ components:
       type: object
       required:
         - password
-        - token
       properties:
         password:
           type: string
           description: "New password (apply server-side validation rules)"
-        token:
-          type: string
-          description: "Token to authenticate the password setup request"
 
     PasswordResetRequestDTO:
       type: object

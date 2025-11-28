@@ -28,7 +28,10 @@ public class RequestResponseLoggingFilter implements Filter {
         }
         String path = httpRequest.getRequestURI();
         // Exclude actuator/health and actuator/prometheus endpoints from logging
-        if (path.startsWith("/actuator/health") || path.startsWith("/actuator/prometheus")) {
+        // Also exclude password setup/reset endpoints to avoid logging sensitive payloads
+        if (path.startsWith("/actuator/health")
+                || path.startsWith("/actuator/prometheus")
+                || isPasswordFlow(path)) {
             chain.doFilter(request, response);
             return;
         }
@@ -41,6 +44,15 @@ public class RequestResponseLoggingFilter implements Filter {
             logResponse(wrappedResponse);
             wrappedResponse.copyBodyToResponse();
         }
+    }
+
+    private boolean isPasswordFlow(String path) {
+        if (path == null) return false;
+        // Common endpoints for password setup/reset flows
+        return path.startsWith("/auth/password/setup")
+                || path.startsWith("/auth/password/reset")
+                || path.startsWith("/password/setup")
+                || path.startsWith("/password/reset");
     }
 
     private void logRequest(ContentCachingRequestWrapper request) {
