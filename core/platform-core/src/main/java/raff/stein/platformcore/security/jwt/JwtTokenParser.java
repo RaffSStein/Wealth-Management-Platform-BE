@@ -37,6 +37,10 @@ public class JwtTokenParser {
                     .parseSignedClaims(token);
             Claims claims = claimsJws.getPayload();
 
+            Long expEpoch = Optional.ofNullable(claims.getExpiration())
+                    .map(d -> d.toInstant().getEpochSecond())
+                    .orElse(null);
+
             WMPContext context = WMPContext.builder()
                     .userId(claims.get("userId", String.class))
                     .email(claims.get("email", String.class))
@@ -45,6 +49,8 @@ public class JwtTokenParser {
                     .bankCode(claims.get("bankCode", String.class))
                     .correlationId(correlationId)
                     .rawToken(token)
+                    .jti(claims.getId())
+                    .tokenExpEpochSeconds(expEpoch)
                     .build();
             return Optional.of(context);
         } catch (JwtException e) {

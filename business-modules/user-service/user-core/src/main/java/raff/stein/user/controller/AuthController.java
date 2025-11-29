@@ -49,4 +49,10 @@ public class AuthController implements AuthApi {
         authenticationService.setupPassword(setupPasswordDTO.getPassword());
         return ResponseEntity.accepted().build();
     }
+
+    @Override
+    public ResponseEntity<Void> logoutUser() {
+        authenticationService.logout();
+        return ResponseEntity.ok().build();
+    }
 }

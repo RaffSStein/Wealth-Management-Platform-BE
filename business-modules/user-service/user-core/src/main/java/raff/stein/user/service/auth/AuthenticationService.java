@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import raff.stein.platformcore.security.context.SecurityContextHolder;
 import raff.stein.platformcore.security.context.WMPContext;
+import raff.stein.platformcore.security.jwt.TokenRevocationService;
 import raff.stein.user.model.BranchRole;
 import raff.stein.user.model.auth.*;
 import raff.stein.user.model.entity.UserEntity;
@@ -35,6 +36,7 @@ public class AuthenticationService {
     private final JwtTokenIssuer jwtTokenIssuer;
     private final AuthenticationManager authenticationManager;
     private final PasswordSetupTokenService passwordSetupTokenService;
+    private final TokenRevocationService tokenRevocationService;
 
     @Transactional
     public void register(RegisterRequest request) {
@@ -99,6 +101,18 @@ public class AuthenticationService {
         final String hashedPassword = passwordService.encode(password);
         userEntity.setPasswordHash(hashedPassword);
         userRepository.save(userEntity);
+    }
+
+    public void logout() {
+        WMPContext context = SecurityContextHolder.getContext();
+        if (context == null) {
+            return; // nothing to revoke
+        }
+        String jti = context.getJti();
+        Long expEpoch = context.getTokenExpEpochSeconds();
+        if (jti != null && expEpoch != null) {
+            tokenRevocationService.revoke(jti, expEpoch);
+        }
     }
 
     // --- Helpers --------------------------------------------------------------------

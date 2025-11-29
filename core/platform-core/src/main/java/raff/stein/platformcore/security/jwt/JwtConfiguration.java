@@ -39,7 +39,10 @@ public class JwtConfiguration {
      * Exposes the custom security context filter as a bean so it can be ordered inside the Spring SecurityFilterChain.
      */
     @Bean
-    public SecurityContextFilter securityContextFilter(JwtTokenParser parser, JwtProperties properties) {
-        return new SecurityContextFilter(parser, properties);
+    public SecurityContextFilter securityContextFilter(
+            JwtTokenParser parser,
+            JwtProperties properties,
+            TokenRevocationService tokenRevocationService) {
+        return new SecurityContextFilter(parser, properties, tokenRevocationService);
     }
 }
