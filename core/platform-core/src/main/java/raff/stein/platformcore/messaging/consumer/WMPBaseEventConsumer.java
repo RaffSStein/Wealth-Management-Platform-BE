@@ -1,6 +1,5 @@
 package raff.stein.platformcore.messaging.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.CloudEventData;
 import lombok.RequiredArgsConstructor;
@@ -9,8 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import raff.stein.platformcore.security.context.SecurityContextHolder;
 import raff.stein.platformcore.security.context.WMPContext;
+import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -37,12 +36,16 @@ public class WMPBaseEventConsumer implements EventConsumer {
                 cloudEvent.getData());
         CloudEventData cloudEventData = cloudEvent.getData();
         if(cloudEventData != null ) {
+            // rebuild the context
+            SecurityContextHolder.setContext(getContextFromCloudEvent(cloudEvent));
             try {
-                // rebuild the context
-                SecurityContextHolder.setContext(getContextFromCloudEvent(cloudEvent));
                 return Optional.ofNullable(objectMapper.readValue(cloudEventData.toBytes(), clazz));
-            } catch (IOException e) {
-                log.error("Failed to parse event payload: {}", e.getMessage());
+
+            } catch (Exception e) {
+                log.error("Error deserializing CloudEvent data for eventId: [{}], class: [{}], error: {}",
+                        cloudEvent.getId(),
+                        clazz,
+                        e.getMessage());
             }
         }
         return Optional.empty();
@@ -72,7 +75,7 @@ public class WMPBaseEventConsumer implements EventConsumer {
             } else {
                 log.warn("CloudEvent data is null for eventId: [{}], skipping...", cloudEvent.getId());
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Failed to parse event payload: {}", e.getMessage(), e);
         } finally {
             // Clear the security context after processing the event

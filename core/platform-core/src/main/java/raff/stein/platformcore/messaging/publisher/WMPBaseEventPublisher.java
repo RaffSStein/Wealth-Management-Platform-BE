@@ -1,6 +1,5 @@
 package raff.stein.platformcore.messaging.publisher;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import io.cloudevents.core.data.PojoCloudEventData;
@@ -14,6 +13,7 @@ import org.springframework.util.StringUtils;
 import raff.stein.platformcore.messaging.publisher.model.EventData;
 import raff.stein.platformcore.security.context.SecurityContextHolder;
 import raff.stein.platformcore.security.context.WMPContext;
+import tools.jackson.databind.ObjectMapper;
 
 import java.net.URI;
 import java.time.OffsetDateTime;

@@ -52,8 +52,8 @@ Each business module may contain submodules for API data models (OpenAPI-generat
 All business events (e.g., proposal created, order executed) are published to Kafka topics. Other services subscribe to relevant topics to react to these events, ensuring loose coupling and scalability. Event payloads are defined in dedicated submodules (e.g., proposal-event-data) and shared via dependencies.
 
 ## Technologies
-- Java 17
-- Spring Boot 3
+- Java 21
+- Spring Boot 4
 - Apache Kafka
 - PostgreSQL
 - Docker Compose

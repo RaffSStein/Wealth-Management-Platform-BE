@@ -35,7 +35,7 @@ public class RequestResponseLoggingFilter implements Filter {
             chain.doFilter(request, response);
             return;
         }
-        ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(httpRequest);
+        ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(httpRequest, 1024 * 1024);
         ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper((HttpServletResponse) response);
         try {
             chain.doFilter(wrappedRequest, wrappedResponse);

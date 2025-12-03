@@ -1,6 +1,5 @@
 package raff.stein.profiler.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +20,7 @@ import raff.stein.profiler.model.sitemap.SitemapSectionDefinition;
 import raff.stein.profiler.repository.FeatureRepository;
 import raff.stein.profiler.repository.PermissionRepository;
 import raff.stein.profiler.repository.UserFeaturePermissionRepository;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.*;
