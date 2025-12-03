@@ -67,6 +67,8 @@
         <dependency>
             <groupId>io.awspring.cloud</groupId>
             <artifactId>spring-cloud-aws-starter-s3</artifactId>
+            <!-- TODO: remove this milestone version when a stable one will be released -->
+            <!-- https://mvnrepository.com/artifact/io.awspring.cloud/spring-cloud-aws-starter-s3 -->
             <version>4.0.0-M1</version>
         </dependency>
         <!-- Dependency for the document modules -->
