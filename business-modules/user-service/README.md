@@ -1,40 +1,82 @@
 # user-service
 
-This service manages users and provides both administrative and self-signup authentication endpoints.
+Technical overview and developer notes for the user-service module. This document focuses on module structure, build, configuration, and integration points. It intentionally avoids API and functional flow descriptions.
 
-## API Surfaces
-- Administrative (secured):
-  - POST /user (create user) — requires role ADMIN
-  - PUT /user/{id} (update) — requires role ADMIN
-  - POST /user/{id}/enable|disable — requires role ADMIN
-  - GET /user/{id}, GET /me — requires authenticated role ADMIN or USER (as configured)
-- Self-signup (public):
-  - POST /auth/register — registers a new user and emits a JWT
-  - POST /auth/login — authenticates and emits a JWT
+## Module structure
+- Parent aggregator: `business-modules/user-service/pom.xml` (packaging: pom)
+  - `user-api-data`: OpenAPI-driven DTOs and generated interfaces for REST controllers.
+  - `user-core`: Spring Boot application core (controllers implement generated interfaces, services, repositories, config, models).
+  - `user-event-data`: OpenAPI-driven DTOs for event payloads.
 
-All REST interfaces and DTOs are defined in `user-api-data/user-api-data.yaml` and generated via OpenAPI. Controllers in `user-core` implement those generated interfaces.
+## Build & toolchain
+- Java: 21 (Temurin recommended). Aligns with Spring Boot 4.
+- Spring Boot: 4.x across modules.
+- Maven build:
+  - From repository root, build all modules:
+    - `mvn -B -ntp clean install`
+  - The root aggregator defines shared versions and plugins; user-service modules inherit via `<parent>`.
+- CI: GitHub Actions uses JDK 21, caches Maven dependencies, and runs `clean install` + `test`.
 
-## Security
-- Spring Security (stateless), OAuth2 Resource Server (JWT) configured in platform-core.
-- Roles are mapped from the `roles` claim; method-level authorization is enforced with `@PreAuthorize`.
-- CORS enabled and CSRF disabled for APIs.
+## Generated sources (OpenAPI)
+- `user-api-data` and `user-event-data` use `openapi-generator-maven-plugin` with generator `spring` and `interfaceOnly`:
+  - Input specs:
+    - `user-api-data/user-api-data.yaml`
+    - `user-event-data/user-event-data.yaml`
+  - Outputs include Java DTOs and API interfaces that `user-core` implements.
+  - Key configOptions:
+    - `useJakartaEe=true` (Jakarta namespaces)
+    - `useBeanValidation=true`
+    - `requestMappingMode=api_interface`
+    - `interfaceOnly=true`
+    - `useSpringBoot3=true`
+    - `operationNamingConvention=camelCase`
+- Regenerate by building the modules; generated code is placed under the target directories according to plugin configuration.
 
-## Flows
-### 1) Administrative flow (Back-office)
-- Intended for authenticated operators.
-- Create/Update/Enable/Disable users via secured endpoints.
-- Publishes `UserCreatedEvent` upon creation.
-- Does not handle passwords from the back-office payload.
+## Dependencies
+- `user-core` depends on:
+  - Spring Boot starters: `web`, `actuator`, `data-jpa`, testing (`starter-test` scope test)
+  - `spring-data-commons`
+  - `spring-boot-micrometer-tracing`
+  - Database driver: `postgresql`
+  - Mapping: `mapstruct`
+  - Lombok
+  - Jakarta Persistence API
+  - Internal modules: `user-api-data`, `user-event-data`, and `platform-core` (shared security/config)
 
-### 2) Self-signup flow (Public)
-- `POST /auth/register` accepts registration payload, hashes password, persists user, publishes `UserCreatedEvent`, and returns a JWT.
-- `POST /auth/login` verifies credentials and returns a JWT. The request carries a `bankCode` to scope the session.
-- Permissions are not embedded in the JWT; they are provisioned asynchronously by profiler-service based on `UserCreatedEvent` and retrieved at runtime by other services.
+## Package layout (user-core)
+- `raff.stein.user.controller`: REST controllers implementing generated interfaces
+- `raff.stein.user.service`: business services
+- `raff.stein.user.repository`: Spring Data repositories
+- `raff.stein.user.model`: JPA entities
+- `raff.stein.user.config`: configuration classes
+- `raff.stein.user.event`: event producers/consumers
+- `raff.stein.user.exception`: custom exceptions
 
-## Integration with profiler-service
-- After user creation, an event is emitted; profiler-service consumes it and materializes permissions.
-- Services resolve fine-grained permissions via profiler-service using email + bankCode from the token.
+## Configuration
+- Security and OAuth2 Resource Server setup is centralized in `core/platform-core`.
+- Required properties (examples; actual keys reside in application configs):
+  - `security.jwt.publicKeyPath` (platform-core)
+  - `security.jwt.private-key-path` (user-service, for token issuance when applicable)
+- CORS/CSRF: configured for stateless APIs in platform-core, inherited by user-core.
 
-## Development
-- Edit `user-api-data.yaml` and run the build to regenerate interfaces/DTOs.
-- Ensure `security.jwt.publicKeyPath` and (for user-service) `security.jwt.private-key-path` are configured.
+## Database
+- Postgres is the default RDBMS; JPA/Hibernate used in `user-core`.
+- Ensure datasource properties are provided via environment or `application-*.yml` profiles.
+- Migrations: follow project conventions (Flyway/Liquibase if present in platform-core or service modules).
+
+## Testing
+- Unit tests via `spring-boot-starter-test` in `user-core`.
+- Prefer deterministic tests; mock external integrations (Kafka/events, security context).
+- When public behavior changes, update tests and generated models if needed.
+
+## Local development
+- Prerequisites: Java 21, Maven.
+- Typical loop:
+  - Edit OpenAPI in `user-api-data.yaml` or `user-event-data.yaml` and rebuild.
+  - Implement/adjust controller interfaces in `user-core`.
+  - Run service with appropriate profile and environment variables for DB and security.
+
+## Notes
+- Keep identifiers, comments, and documentation in English across the repository.
+- Maintain backward compatibility on public APIs; update OpenAPI specs and mappers when changes are necessary.
+- Use MapStruct for DTO-domain-entity mappings; keep mapping code in dedicated `mapper` packages where applicable.
