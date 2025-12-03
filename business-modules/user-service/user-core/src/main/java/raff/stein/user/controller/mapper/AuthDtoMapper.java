@@ -18,7 +18,6 @@ public interface AuthDtoMapper {
     // Login
     @Mapping(target = "email", source = "email")
     @Mapping(target = "password", source = "password")
-    @Mapping(target = "bankCode", source = "bankCode")
     LoginRequest toLoginRequest(LoginCredentialsDTO dto);
 
     // Register

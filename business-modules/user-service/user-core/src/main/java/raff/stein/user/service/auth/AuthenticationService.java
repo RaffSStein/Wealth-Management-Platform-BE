@@ -81,7 +81,7 @@ public class AuthenticationService {
                 principal.getUserId(),
                 principal.getUsername(),
                 tokenRoles,
-                buildExtraClaims(principal.getUserId(), request.getBankCode()));
+                buildExtraClaims(principal.getUserId()));
         return new AuthResponse(token, "Bearer", jwtTokenIssuer.getExpirationSeconds());
     }
 
@@ -128,10 +128,7 @@ public class AuthenticationService {
                 .toList();
     }
 
-    private Map<String, Object> buildExtraClaims(String userId, String bankCode) {
-        if (bankCode == null || bankCode.isBlank()) {
-            return Map.of("userId", userId);
-        }
-        return Map.of("userId", userId, "bankCode", bankCode);
+    private Map<String, Object> buildExtraClaims(String userId) {
+        return Map.of("userId", userId);
     }
 }

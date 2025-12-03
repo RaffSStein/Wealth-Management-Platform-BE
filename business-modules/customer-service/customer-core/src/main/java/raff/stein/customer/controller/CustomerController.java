@@ -70,4 +70,13 @@ public class CustomerController implements CustomerApi {
         CustomerDTO responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(customer);
         return ResponseEntity.ok(responseCustomerDTO);
     }
+
+    @Override
+    public ResponseEntity<List<CustomerDTO>> getCustomersByUserId(UUID userId) {
+        List<Customer> customers = customerService.getCustomersByUserId(userId);
+        List<CustomerDTO> responseCustomerDTOs = customers.stream()
+                .map(customerDTOToCustomerMapper::toCustomerDTO)
+                .toList();
+        return ResponseEntity.ok(responseCustomerDTOs);
+    }
 }

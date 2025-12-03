@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import raff.stein.customer.model.entity.customer.CustomerEntity;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,5 +23,7 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID> 
             "customerOnboardingStatuses"
     })
     Optional<CustomerEntity> findById(@NonNull UUID id);
+
+    List<CustomerEntity> findByUserId(@NonNull UUID userId);
 
 }

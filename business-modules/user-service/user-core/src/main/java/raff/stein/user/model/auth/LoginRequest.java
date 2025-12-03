@@ -11,10 +11,4 @@ public class LoginRequest {
     private String email;
     @NotBlank
     private String password;
-
-    /**
-     * Selected bank code for the session scope. Used to scope permissions.
-     */
-    @NotBlank
-    private String bankCode;
 }

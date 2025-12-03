@@ -13,6 +13,7 @@ import raff.stein.customer.service.onboarding.OnboardingService;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
 import raff.stein.customer.service.update.visitor.CustomerVisitorDispatcher;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -59,6 +60,19 @@ public class CustomerService {
         CustomerEntity customerEntity = customerRepository.findById(customerId)
                 .orElseThrow(() -> new IllegalArgumentException("Customer not found with ID: " + customerId));
         return customerToCustomerEntityMapper.toCustomer(customerEntity);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Customer> getCustomersByUserId(UUID userId) {
+        log.debug("Retrieving customers for userId: [{}]", userId);
+        List<CustomerEntity> customerEntities = customerRepository.findByUserId(userId);
+        if (customerEntities.isEmpty()) {
+            throw new IllegalArgumentException("No customers found for user ID: " + userId);
+        }
+        return customerEntities
+                .stream()
+                .map(customerToCustomerEntityMapper::toCustomer)
+                .toList();
     }
 
     public void proceedToOnboardingStep(
