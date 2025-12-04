@@ -54,7 +54,7 @@ public class SecurityConfig {
             SecurityContextFilter securityContextFilter,
             JwtAuthenticationConverter jwtAuthenticationConverter,
             AccessDeniedHandler accessDeniedHandler,
-            PasswordConfirmJwtFilter passwordConfirmJwtFilter) throws Exception {
+            PasswordConfirmJwtFilter passwordConfirmJwtFilter) {
 
         http
                 // We build a stateless API

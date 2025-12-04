@@ -229,17 +229,82 @@ Each `*-service/*-core` module should depend on `platform-core` through Maven. T
   - Use `EventPublisher` or `WMPBaseEventPublisher` to send events.
   - Implement `EventConsumer` or extend `WMPBaseEventConsumer` to process events with consistent tracing and security context.
 
-## Work in progress: optimistic locking and retry
+## Optimistic locking and retry
 
-Optimistic locking using `@Version` is already supported at entity level in several services. `platform-core` will standardize its handling and error mapping.
 
-Planned directions:
+`platform-core` exposes a common pattern for optimistic locking handling and retry. Business modules should adopt it consistently to achieve predictable behavior under concurrent updates.
 
-- Define clear usage guidelines for `@Version` on JPA entities, possibly via a shared base class for versioned entities.
-- Standardize mapping of `OptimisticLockException` (and similar persistence exceptions) to `VersionLockingException` and HTTP 409 Conflict responses.
-- Provide optional retry helpers or patterns (for example, wrappers or annotations based on Spring Retry) for idempotent write operations:
-  - Recommended only for operations that can be safely retried.
-  - Configurable backoff and max attempts.
+#### 1. Use `BaseDateEntity` and `@Version` on JPA entities
+
+- Extend the shared base entity provided by `platform-core` (for example `raff.stein.platformcore.model.BaseDateEntity` or equivalent) for all aggregate roots that require optimistic locking and audit information.
+- Ensure that the base class (or the concrete entity) declares a `@Version` field, for example:
+  - `@Version private Long version;`
+- Apply this pattern across write-heavy entities (orders, proposals, portfolios, customer aggregates) where concurrent updates are expected.
+- Do not mix optimistic locking with long-running transactions; keep transactions as short as possible.
+
+#### 2. Configure retry behavior via properties
+
+`platform-core` provides configuration properties (for example `OptimisticLockingRetryProperties`) that define the retry policy for optimistic locking conflicts. These properties are bound from `application.properties` or `application.yml` using a shared prefix, for example:
+
+```properties
+optimistic-locking.retry.max-attempts=3
+optimistic-locking.retry.backoff-delay-ms=50
+optimistic-locking.retry.backoff-multiplier=2.0
+```
+
+or in YAML:
+
+```yaml
+optimistic-locking:
+  retry:
+    max-attempts: 3
+    backoff-delay-ms: 50
+    backoff-multiplier: 2.0
+```
+
+Guidelines for business modules:
+
+- Configure these properties **per microservice** based on its workload and SLOs.
+- Keep `max-attempts` small (typically 2–5) to avoid cascading retries under heavy contention.
+- Use conservative delays and multipliers to reduce the risk of retry storms.
+- Treat these settings as operational knobs that can be tuned per environment (local, dev, prod) without code changes.
+
+#### 3. Annotate idempotent write operations with `@OptimisticLockingRetry`
+
+The `raff.stein.platformcore.optimisticlocking.annotation.OptimisticLockingRetry` annotation wraps a method with an optimistic-lock-aware retry policy built on top of Spring Retry.
+
+Typical usage in a business service:
+
+```java
+@Service
+public class ProposalService {
+
+    @OptimisticLockingRetry
+    @Transactional
+    public Proposal updateProposal(ProposalUpdateRequest request) {
+        // load aggregate with @Version
+        // apply changes
+        // persist via repository
+        // any OptimisticLockingFailureException will trigger a retry
+    }
+}
+```
+
+Key points:
+
+- Apply `@OptimisticLockingRetry` only to **idempotent** or **semantically safe-to-retry** methods.
+- The annotation is intended mainly for service-layer methods that encapsulate a single logical update of an aggregate.
+- On an `OptimisticLockingFailureException` (or `ObjectOptimisticLockingFailureException`), the method invocation is transparently retried according to the configured properties.
+- After the last attempt, failures should be mapped to `VersionLockingException` and then to an HTTP 409 Conflict by the shared exception handler.
+
+#### 4. Combine retry with clear API semantics
+
+For REST APIs exposed by business modules:
+
+- Make it explicit in API documentation (OpenAPI) that certain endpoints are subject to optimistic locking and may respond with HTTP 409 in case of conflicts.
+- Use shared error types (for example, `ErrorResponse` with an appropriate `ErrorCode`/`ErrorCategory`) to describe optimistic locking failures.
+
+This combination of `BaseDateEntity` + `@Version` + `@OptimisticLockingRetry` + shared properties ensures that all services handle concurrent updates and retries in a uniform and observable way.
 
 
 ## Work in progress: shared `TaskExecutor` and `@Async`
@@ -301,4 +366,3 @@ Planned directions:
   - Compression and header size limits suitable for financial payloads.
 - Provide baseline server properties that can be imported by services and overridden when necessary.
 - Capture security hardening guidelines related to HTTP and TLS configuration (even if actual keys and certificates are managed externally).
-
