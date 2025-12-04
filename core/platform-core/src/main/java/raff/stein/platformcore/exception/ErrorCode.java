@@ -16,6 +16,7 @@ public enum ErrorCode {
     OPTIMISTIC_LOCKING_ERROR("The resource has been modified by another transaction. Please retry", ErrorCategory.VALIDATION_ERROR),
     NOT_IMPLEMENTED_ERROR("This feature [%s] is not implemented yet", ErrorCategory.GENERIC_ERROR),
 
+    // TODO: move to specific modules
     // Domain specific errors
     // Document related errors
     DOCUMENT_UPLOAD_VALIDATION_ERROR("File validation not passed. Field [%s] - Value [%s]", ErrorCategory.VALIDATION_ERROR),

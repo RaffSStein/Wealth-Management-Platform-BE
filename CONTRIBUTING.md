@@ -8,6 +8,9 @@ This document outlines the process and expectations for contributions across all
 - Preserve existing conventions and style: multi-module Java/Maven (Spring ecosystem). Match package structure, naming, annotations, and formatting.
 - Keep public APIs stable. If APIs (REST/OpenAPI, DTOs, events) change, ensure backward compatibility or document breaking changes and update all affected clients, mappers, and tests in the same change.
 - Minimize blast radius: prefer the smallest coherent change set; avoid unrelated refactors.
+- Write clear, maintainable code. Prioritize readability over cleverness.
+- If working on core module, ensure changes do not negatively impact dependent business modules. Refer to [core/platform-core](core/platform-core/README.md) for further details.
+
 
 ## Repository structure
 - `business-modules/*-service` modules:
