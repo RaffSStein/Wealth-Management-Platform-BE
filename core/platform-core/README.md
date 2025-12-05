@@ -400,21 +400,234 @@ public class CustomerNotificationService {
 - No additional `@EnableAsync` configuration is required in the business module, as
   it is already provided by `PlatformCoreBeans`.
 
-## Work in progress: database throughput and shared tuning
+## Database throughput and shared tuning
 
-Database throughput is a key factor in a high-throughput banking platform. `platform-core` will provide shared patterns and, where appropriate, shared configuration for Postgres data access.
+Database throughput is a key factor in a high-throughput banking platform. `platform-core` provides shared patterns and, where appropriate, shared configuration for Postgres data access.
+The goal is to offer **safe, overridable defaults** that every microservice can adopt, while leaving final tuning decisions to each `*-service/*-core` module.
 
-Planned directions:
+### Shared vs service-specific responsibilities
 
-- Centralize recommended HikariCP datasource properties (for example, connection pool size, max lifetime, timeouts) via shared configuration files.
-- Document guidance for service-level overrides based on workload characteristics.
-- Align transaction timeouts and connection pool settings to avoid resource exhaustion and deadlocks.
-- Encourage best practices such as:
-  - Pagination for large queries.
-  - Batching for bulk writes.
-  - Avoiding long-running transactions and unnecessary locks.
+- `platform-core`:
+  - Provides shared configuration files (`platform-shared-properties.yaml`, `kafka-shared-properties.yaml`, `db-shared-properties.yaml`).
+  - Defines **baseline** HikariCP and Hibernate settings for Postgres.
+  - Documents recommended value ranges and how to override them.
+- Business microservices (`*-service/*-core`):
+  - Own final values for pool sizes, timeouts, batching, and indexes.
+  - Must validate their DB behavior via service-level load tests.
+  - Are responsible for domain-specific schema design and indexing.
 
-Services should already ensure that queries are efficient, indexed, and scoped appropriately. Future versions of `platform-core` will make it easier to apply consistent DB tuning across all modules.
+### Shared DB configuration: `db-shared-properties.yaml`
+
+`platform-core` exposes a shared DB configuration file under `src/main/resources/db-shared-properties.yaml`.
+It is imported by `platform-shared-properties.yaml` so that all services automatically inherit its defaults.
+
+The shared DB properties provide conservative defaults for HikariCP and Hibernate:
+
+```yaml
+spring:
+  datasource:
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 2000   # ms, time to wait for a connection from the pool
+      idle-timeout: 600000       # ms, 10 minutes
+      max-lifetime: 1800000      # ms, 30 minutes, should be < DB or LB connection max lifetime
+
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50         # enable conservative batching for services that use bulk writes
+        order_inserts: true
+        order_updates: true
+```
+
+Guidance:
+
+- These values are **starting points**, not hard rules. Each microservice should override them where needed.
+- All properties use standard Spring Boot / Hibernate names so they can be overridden directly in service `application-*.yaml`.
+- Batch settings should be enabled only for services that actually perform bulk writes and have been tested under load.
+
+### Connection pooling (HikariCP)
+
+Connection pooling is one of the most impactful levers for DB throughput and stability.
+
+**Baseline (shared):**
+
+- `minimum-idle`: 5
+- `maximum-pool-size`: 20
+- `connection-timeout`: 2000 ms
+- `idle-timeout`: 600000 ms (10 minutes)
+- `max-lifetime`: 1800000 ms (30 minutes)
+
+These defaults are meant for **small to medium** services in non-extreme load scenarios.
+
+**Service-level tuning:**
+
+Each `*-service/*-core` module should review and, if necessary, override HikariCP settings in its own `application-*.yaml`, for example:
+
+```yaml
+spring:
+  datasource:
+    hikari:
+      minimum-idle: 10
+      maximum-pool-size: 40
+      connection-timeout: 3000
+```
+
+Recommendations:
+
+- Size `maximum-pool-size` based on:
+  - service concurrency (HTTP thread pool, async executors);
+  - how DB-bound the service is;
+  - Postgres `max_connections` and the number of microservice instances.
+- Ensure that the **sum** of all pools across services and instances + admin connections remains safely below `max_connections`.
+- Keep `connection-timeout` in the range 2000–5000 ms and ensure it is **shorter** than the HTTP timeout for the same request.
+- Set `max-lifetime` slightly below any DB-level or load-balancer connection lifetime to avoid using half-closed connections.
+
+### Transaction boundaries and timeouts
+
+Transaction design has a direct impact on contention and throughput.
+
+Shared principles (to be applied in all services):
+
+- Place `@Transactional` on **service-layer** methods, not on controllers.
+- Keep transactions **short-lived**: avoid long-running business logic, remote HTTP calls, or blocking I/O inside the same transaction.
+- Combine transactions with optimistic locking where appropriate (see [Optimistic locking and retry](#optimistic-locking-and-retry)).
+
+Optional baseline properties (services may adopt them explicitly):
+
+```yaml
+spring:
+  transaction:
+    default-timeout: 10  # seconds, avoid indefinitely long transactions
+```
+
+Timeout alignment guidelines:
+
+- HTTP server timeouts (for example, Tomcat/Netty) should be **greater** than DB transaction and query timeouts.
+- Hikari `connection-timeout` should be **smaller** than the HTTP timeout, so that a lack of DB connections surfaces quickly.
+
+### Query design, pagination, and result size control
+
+Every microservice should design queries with throughput and resource usage in mind:
+
+- Always paginate list endpoints.
+  - Expose `page`/`size` (and optionally `sort`) parameters.
+  - Enforce a reasonable default page size (for example, 20–50) and a maximum page size (for example, 100) per service.
+- Avoid N+1 query patterns.
+  - Use `@EntityGraph`, fetch joins, or DTO projections to load related data efficiently.
+- Prefer projections / DTO queries for large result sets instead of loading full entities and their graph.
+- Always specify an `ORDER BY` when using pagination to get deterministic results.
+
+If a service uses shared pagination DTOs from `platform-core` or its own `api-data` module, make sure the REST layer and repositories are aligned on page/size semantics.
+
+### Indexing and schema design
+
+Indexing and schema design are **service-specific** responsibilities, but platform-wide guidelines apply:
+
+- Ensure that primary keys and foreign keys are indexed.
+- Add indexes on columns that appear frequently in `WHERE`, `JOIN`, and critical `ORDER BY` clauses.
+- Use unique constraints for natural keys (for example, IBAN, external customer ID) instead of ad-hoc uniqueness checks in code.
+- Manage indexes through your migration tool (for example, Liquibase/Flyway) in each microservice.
+
+Microservices should regularly review slow queries (for example, via Postgres logs or APM) and adjust indexes accordingly.
+
+### Batching and bulk operations
+
+For services that perform batch inserts or updates (imports, nightly jobs, mass recalculations), Hibernate batching can significantly improve throughput:
+
+- Shared defaults in `db-shared-properties.yaml` enable conservative batching:
+  - `hibernate.jdbc.batch_size: 50`
+  - `hibernate.order_inserts: true`
+  - `hibernate.order_updates: true`
+- Services that **do not** rely on bulk operations can keep these defaults as-is or partially override them.
+
+Service-level guidance:
+
+- Use `saveAll` or dedicated batch operations rather than single-row `save` in loops.
+- Validate batching configuration under load to ensure it does not introduce unexpected lock contention.
+- Consider separate profiles (for example, `batch` vs `default`) if a service has very different runtime modes.
+
+### Timeouts and slow query protection
+
+Time-based limits protect the platform from runaway queries and resource exhaustion.
+
+Levers available to services:
+
+- Hikari connection timeout (see above).
+- JPA / Hibernate query timeouts, for example via properties:
+
+  ```yaml
+  spring:
+    jpa:
+      properties:
+        javax:
+          persistence:
+            query:
+              timeout: 4000  # ms, adjust per service
+  ```
+
+- HTTP timeouts at the server and API gateway level.
+
+Guidelines:
+
+- Set DB query timeouts to a value **lower than** the HTTP timeout for the same request.
+- Monitor and review slow queries regularly; do not rely solely on timeouts to hide performance problems.
+
+### Locking and concurrency
+
+`platform-core` already provides shared support for optimistic locking and retry. DB tuning should be aligned with those patterns:
+
+- Prefer optimistic locking with `@Version` and `@OptimisticLockingRetry` for concurrent updates.
+- Avoid long-held locks by keeping transactions short and avoiding full-table scans on hot tables.
+- Use pessimistic locks (`SELECT ... FOR UPDATE`) only in exceptional cases where business invariants cannot be protected otherwise, and document those cases per service.
+
+### Environment-specific tuning
+
+DB tuning is environment dependent. Typical patterns:
+
+- **local/dev**:
+  - Small pools (for example, `maximum-pool-size` 5–10).
+  - Short timeouts, to surface misconfigurations early and avoid exhausting local resources.
+- **test/stage**:
+  - Similar properties to production but scaled down.
+  - Used to validate behavior under realistic (but not full production) load.
+- **prod**:
+  - Pool sizes and timeouts tuned based on real traffic, hardware capacity, and SLOs.
+  - Properties typically provided via environment variables or externalized configuration.
+
+Examples of profile-specific overrides in a business microservice:
+
+```yaml
+# application-local.yaml
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+
+# application-prod.yaml
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 40
+      minimum-idle: 10
+```
+
+### How to adopt these patterns in a new or existing microservice
+
+When creating or tuning a `*-service/*-core` module:
+
+1. Ensure the service imports `platform-shared-properties.yaml` (and thus `db-shared-properties.yaml`) so the shared defaults are applied.
+2. Review HikariCP settings in your service `application-*.yaml` and adjust `maximum-pool-size`, `minimum-idle`, and timeouts according to your workload.
+3. Make sure all list endpoints use pagination and that repositories are designed accordingly.
+4. Review key read and write queries, add or adjust indexes via your migration scripts.
+5. Enable and tune batching only if your service performs bulk operations.
+6. Align DB timeouts with HTTP and async processing patterns.
+
+By following these shared patterns and properties, business microservices can achieve consistent, predictable database
+behavior while retaining full control over service-specific tuning.
 
 ## Work in progress: caching support
 

@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 2000   # ms, time to wait for a connection from the pool
+      idle-timeout: 600000       # ms, 10 minutes
+      max-lifetime: 1800000      # ms, 30 minutes, should be < DB or LB connection max lifetime
+
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50         # enable conservative batching for services that use bulk writes
+        order_inserts: true
+        order_updates: true
+
