@@ -4,6 +4,9 @@
 
 name: Maven Build & Test
 
+permissions:
+  contents: read
+
 on:
   # Trigger the workflow on pushes to main and on pull requests targeting main.
   push:
