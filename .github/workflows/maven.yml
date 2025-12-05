@@ -19,9 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # 1) Checkout the repository to the runner workspace.
-      # actions/checkout@v4 supports sparse checkout, submodules, and LFS when configured; here we use defaults.
+      # actions/checkout@v6 supports sparse checkout, submodules, and LFS when configured; here we use defaults.
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # 2) Set up JDK 21 (Temurin distribution).
       # Spring Boot 4 targets Java 21; this ensures Maven and the build toolchain use JDK 21.
