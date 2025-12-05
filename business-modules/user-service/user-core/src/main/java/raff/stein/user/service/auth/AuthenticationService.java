@@ -40,7 +40,7 @@ public class AuthenticationService {
 
     @Transactional
     public void register(RegisterRequest request) {
-        // TODO: use a mapper
+        // TODO: use a mapper, add branch roles association
         final User user = userService.createUserEntity(
                 User.builder()
                         .email(request.getEmail())
