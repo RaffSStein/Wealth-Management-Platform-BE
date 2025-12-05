@@ -10,8 +10,6 @@ updates:
       prefix: "chore(dependencies): "
     labels:
       - "dependencies"
-    reviewers:
-      - "RaffSStein"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
