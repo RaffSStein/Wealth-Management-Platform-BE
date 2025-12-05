@@ -10,27 +10,38 @@
 - Support production-grade observability, resiliency, and traceability for a distributed banking environment.
 - Keep `platform-core` free of business/domain logic; only platform and infrastructure concerns belong here.
 
-## Module and package overview
+## Usage in business microservices
 
-> Package names and class names below reflect the current structure and may evolve. Use this section as a high-level map.
+### Adding the dependency
 
-- `raff.stein.platformcore.exception`
-  - Shared exception hierarchy and error codes.
-  - Global exception handlers that translate exceptions into OpenAPI-compatible error responses.
-- `raff.stein.platformcore.logging`
-  - HTTP request/response logging filter and shared logging conventions.
-- `raff.stein.platformcore.messaging.consumer`
-  - Base abstractions for Kafka consumers and event handling.
-- `raff.stein.platformcore.messaging.publisher`
-  - Base abstractions for Kafka publishers and shared `EventData` envelope.
-- `raff.stein.platformcore.messaging.consumer.config`
-  - Shared Kafka consumer configuration and security context initialization for event-driven flows.
-- `src/main/resources`
-  - `platform-shared-properties.yaml`: shared Spring and security properties.
-  - `kafka-shared-properties.yaml`: shared Kafka connection and producer/consumer properties.
-  - `logback-spring.xml`: shared logging configuration.
-  - `jwt/`: JWT key material and configuration documentation.
-  - `api-data.yaml`: shared OpenAPI models (for example, `ErrorResponse`).
+Each `*-service/*-core` module should depend on `platform-core` through Maven. The exact coordinates and version are managed by the root `pom.xml` and the service module POMs.
+
+### Typical usage patterns
+
+- REST controllers:
+    - Throw shared exceptions such as `RequestValidationException`, `GenericObjectNotFoundException`, or `VersionLockingException`.
+    - Rely on `GlobalExceptionHandler` for consistent error mapping and logging.
+- Service layer:
+    - Use `GenericException` or specialized subclasses for cross-cutting conditions.
+    - Log with the shared logging configuration, ensuring `traceId` is present on all relevant logs.
+- Messaging components:
+    - Use `EventPublisher` or `WMPBaseEventPublisher` to send events.
+    - Implement `EventConsumer` or extend `WMPBaseEventConsumer` to process events with consistent tracing and security context.
+
+
+## Core features overview
+
+The `platform-core` module groups several cross-cutting features that can be reused by all business services:
+
+- [Shared exception and error handling](#shared-exception-and-error-handling)
+- [Logging and HTTP request/response tracing](#logging-and-http-requestresponse-tracing)
+- [Distributed tracing and observability](#distributed-tracing-and-observability)
+- [Messaging abstractions (Kafka)](#messaging-abstractions-kafka)
+- [Shared configuration and properties](#shared-configuration-and-properties)
+- [JWT and security support](#jwt-and-security-support)
+- [Cross-cutting patterns for business microservices](#cross-cutting-patterns-for-business-microservices)
+- [Optimistic locking and retry](#optimistic-locking-and-retry)
+- [Shared async TaskExecutor and `@Async`](#shared-async-taskexecutor-and-async)
 
 Business microservices depend on `platform-core` as a Maven module to automatically inherit these behaviors.
 
@@ -211,23 +222,6 @@ Services should follow these conventions when building authentication filters an
 - For Kafka flows, use the shared consumer configuration and security context initialization utilities so that event processing uses the same identity information as HTTP calls.
 - Use the shared exception types for security-related problems so they are surfaced consistently.
 
-## Usage in business microservices
-
-### Adding the dependency
-
-Each `*-service/*-core` module should depend on `platform-core` through Maven. The exact coordinates and version are managed by the root `pom.xml` and the service module POMs.
-
-### Typical usage patterns
-
-- REST controllers:
-  - Throw shared exceptions such as `RequestValidationException`, `GenericObjectNotFoundException`, or `VersionLockingException`.
-  - Rely on `GlobalExceptionHandler` for consistent error mapping and logging.
-- Service layer:
-  - Use `GenericException` or specialized subclasses for cross-cutting conditions.
-  - Log with the shared logging configuration, ensuring `traceId` is present on all relevant logs.
-- Messaging components:
-  - Use `EventPublisher` or `WMPBaseEventPublisher` to send events.
-  - Implement `EventConsumer` or extend `WMPBaseEventConsumer` to process events with consistent tracing and security context.
 
 ## Optimistic locking and retry
 
@@ -307,18 +301,104 @@ For REST APIs exposed by business modules:
 This combination of `BaseDateEntity` + `@Version` + `@OptimisticLockingRetry` + shared properties ensures that all services handle concurrent updates and retries in a uniform and observable way.
 
 
-## Work in progress: shared `TaskExecutor` and `@Async`
+## Shared async TaskExecutor and `@Async`
 
-To support concurrent processing without blocking HTTP request threads, `platform-core` will expose a shared `TaskExecutor` and patterns for `@Async` usage.
+To support concurrent processing without blocking HTTP request threads, `platform-core` exposes a shared `TaskExecutor` and patterns for `@Async` usage.
 
-Planned directions:
+### Provided executor bean
 
-- Provide a common `ThreadPoolTaskExecutor` bean with sensible defaults (core pool size, max pool size, queue capacity, thread name prefix, rejection policy).
-- Document how to reference it via `@Async("taskExecutor")` in service components.
-- Ensure that Micrometer tracing context is propagated into async threads, so logs and metrics remain correlated.
-- Recommend use cases for `@Async` versus message-driven processing with Kafka (for example, short-lived background tasks vs. durable, event-driven workflows).
+- `platformTaskExecutor` (type `ThreadPoolTaskExecutor`)
+  - Defined in `raff.stein.platformcore.bean.PlatformCoreBeans`.
+  - Enabled for Spring `@Async` via `@EnableAsync` on the same configuration.
+  - Configured via `platform.async.task-executor.*` properties (see below).
+  - Uses a `TracingTaskDecorator` so that Micrometer tracing / observation context is propagated to async threads.
 
-In the interim, services can define their own executors, but should follow a consistent naming and sizing strategy that fits platform guidelines.
+Recommended usage in business microservices:
+
+- Annotate asynchronous methods with `@Async("platformTaskExecutor")` to run them on the shared executor.
+- Keep async methods short-lived and non-blocking where possible; prefer Kafka and event-driven flows for long-running work.
+
+### Configuration properties
+
+`platform-core` binds executor settings from configuration using `AsyncTaskExecutorProperties` (`platform.async.task-executor` prefix).
+
+Example YAML configuration:
+
+```yaml
+platform:
+  async:
+    task-executor:
+      core-pool-size: 10
+      max-pool-size: 50
+      queue-capacity: 1000
+      keep-alive-seconds: 60
+      thread-name-prefix: "platform-async-"
+      rejection-policy: "CALLER_RUNS" # allowed values: CALLER_RUNS, ABORT, DISCARD, DISCARD_OLDEST
+      wait-for-tasks-to-complete-on-shutdown: true
+      await-termination-seconds: 30
+```
+
+Key behaviors:
+
+- **Thread pool sizing**
+  - `core-pool-size` / `max-pool-size`: control concurrency; tune per microservice based on workload and resources.
+  - `queue-capacity`: bounds the number of queued tasks; too large values may hide overload, too small may cause early rejections.
+- **Thread naming**
+  - `thread-name-prefix` defaults to `platform-async-` so executor threads appear as `platform-async-1`, `platform-async-2`, ... in logs and debuggers.
+- **Rejection policy** (`rejection-policy`)
+  - `CALLER_RUNS` (default): task is executed in the calling thread when the pool and queue are saturated; this naturally back-pressures callers.
+  - `ABORT`: throws a `RejectedExecutionException` when saturated.
+  - `DISCARD`: silently discards the new task.
+  - `DISCARD_OLDEST`: discards the oldest queued task in favor of the new one.
+- **Shutdown behavior**
+  - `wait-for-tasks-to-complete-on-shutdown`: whether to wait for running tasks during context shutdown.
+  - `await-termination-seconds`: maximum seconds to wait for active tasks to finish.
+
+### Tracing and observability
+
+- The shared executor uses `TracingTaskDecorator`, which relies on Micrometer Observation to propagate the current observation/tracing context (`traceId`, span) into async threads.
+- Any code executed via `@Async("platformTaskExecutor")` will see the same tracing context as the calling thread, so logs and metrics remain correlated across async boundaries.
+
+### Service-level guidance
+
+- Configure executor properties **per microservice** using that service's `application-*.yaml`, overriding the shared defaults when needed.
+- Use the shared executor for short-lived background tasks (for example, fire-and-forget notifications, light recalculations).
+- Prefer Kafka and the messaging abstractions in `platform-core` for durable, long-running, or externally observable workflows.
+
+### Usage example in a business module
+
+In a `*-service/*-core` module you can use the shared executor as follows:
+
+1. Configure (optionally) service-specific executor settings in `application.yml`:
+
+```yaml
+platform:
+  async:
+    task-executor:
+      core-pool-size: 5
+      max-pool-size: 20
+      queue-capacity: 200
+      thread-name-prefix: "customer-async-"
+```
+
+2. Annotate a service method to run asynchronously on the shared executor:
+
+```java
+@Service
+public class CustomerNotificationService {
+
+    @Async("platformTaskExecutor")
+    public void sendWelcomeEmail(String customerId) {
+        // perform non-blocking, short-lived work here
+        // e.g. prepare email payload and delegate to email-service
+    }
+}
+```
+
+- The `@Async("platformTaskExecutor")` annotation ensures that the method is executed
+  on the shared, instrumented thread pool defined in `platform-core`.
+- No additional `@EnableAsync` configuration is required in the business module, as
+  it is already provided by `PlatformCoreBeans`.
 
 ## Work in progress: database throughput and shared tuning
 
