@@ -29,7 +29,7 @@
         <jackson.databind.nullable.version>0.2.6</jackson.databind.nullable.version>
         <logstash.logback.encoder.version>7.4</logstash.logback.encoder.version>
         <cloudevent.version>4.0.1</cloudevent.version>
-        <hibernate.version>7.1.8.Final</hibernate.version>
+        <hibernate.version>7.1.11.Final</hibernate.version>
         <micrometer.version>1.16.0</micrometer.version>
         <micrometer.tracing.version>1.6.0</micrometer.tracing.version>
         <micrometer.tracing.bridge.brave.version>1.6.0</micrometer.tracing.bridge.brave.version>
