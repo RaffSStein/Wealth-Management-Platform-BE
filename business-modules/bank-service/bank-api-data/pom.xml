@@ -59,7 +59,7 @@
                     <dependency>
                         <groupId>io.openapiprocessor</groupId>
                         <artifactId>openapi-processor-spring</artifactId>
-                        <version>2025.4</version>
+                        <version>2025.5</version>
                     </dependency>
                 </dependencies>
 
