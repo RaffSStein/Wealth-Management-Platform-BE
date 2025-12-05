@@ -2,6 +2,8 @@
 
 Thank you for considering a contribution to RaffStein's Wealth Management Platform!
 This document outlines the process and expectations for contributions across all modules.
+> **Important:** Before starting contributions, please read
+> [Core module README](core/platform-core/README.md) for a better understanding of shared components.
 
 ## Ground rules
 - Always use English for identifiers, comments, documentation, commit messages, and filenames.
@@ -47,8 +49,17 @@ Cover happy path and at least one edge case. Prefer deterministic tests; mock ex
 ## Git workflow
 - Create feature branches from `main`.
 - Keep commits small and atomic.
-- Commit messages: imperative, descriptive (e.g., `user-service: add password validator`).
-- Reference the module/service and scope when relevant.
+- Commit messages follow a conventional, type-based format:
+  - `feat(<scope>)`: a new feature (user-facing or API-level).
+  - `fix(<scope>)`: a bug fix.
+  - `docs(<scope>)`: documentation-only changes.
+  - `refactor(<scope>)`: internal refactors that do not change external behavior.
+  - `test(<scope>)`: add or update tests only.
+  - `chore(<scope>)`: maintenance tasks (dependencies, build, tooling, housekeeping).
+- Use an imperative, descriptive subject in English, for example:
+  - `feat(platform-core): add shared async task executor`
+  - `fix(customer-service): handle missing customer profile`
+- Prefer including the module/service in the scope when relevant (for example, `platform-core`, `customer-service`, `proposal-service`).
 - In PR descriptions: include rationale, risk, testing notes; link to related docs or tickets.
 
 ## CI & PRs
@@ -61,4 +72,3 @@ Cover happy path and at least one edge case. Prefer deterministic tests; mock ex
 ## Questions
 - For module-specific questions, refer to `README.md` within each service.
 - For shared components, see `core/platform-core`.
-

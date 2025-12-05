@@ -43,6 +43,19 @@ It is built using Spring Boot, uses Postgres for data storage (DB) and Kafka for
  breaking changes and update all affected clients, mappers, and tests in the same change.
 - Minimize blast radius: prefer the smallest coherent change set; avoid unrelated refactors in the same PR.
 
+## Commit message guidelines
+- When suggesting commit messages, follow a conventional, type-based format:
+  - `feat(<scope>)`: a new feature (user-facing or API-level).
+  - `fix(<scope>)`: a bug fix.
+  - `docs(<scope>)`: documentation-only changes.
+  - `refactor(<scope>)`: internal refactors that do not change external behavior.
+  - `test(<scope>)`: add or update tests only.
+  - `chore(<scope>)`: maintenance tasks (dependencies, build, tooling, housekeeping).
+- Use an imperative, descriptive subject in English, for example:
+  - `feat(platform-core): add shared async task executor`
+  - `fix(customer-service): handle missing customer profile`
+- Prefer including the module/service in the scope when relevant (for example, `platform-core`, `customer-service`, `proposal-service`).
+
 ## Code & architecture
 - Prefer standard Java, Spring Boot/Spring frameworks already used in the repo; do not introduce new dependencies unless
  clearly justified and widely adopted. If added, pin versions and update the module’s pom.xml consistently.
@@ -75,22 +88,6 @@ It is built using Spring Boot, uses Postgres for data storage (DB) and Kafka for
 
 ## Logging & observability
 - Keep logs structured and consistent with existing services. Use the established logging framework and fields (correlationId, userId, etc.) where applicable.
-
-## Commit & PR guidelines
-- Keep commits small and atomic; prefer one logical change per commit.
-- Use imperative, descriptive commit messages (e.g., "Add password validator to PasswordService").
-- Reference the module/service and scope in the subject when relevant (e.g., "customer-service: enforce JWT jti in WMPContext").
-- When a change spans multiple files or themes, list changes in the commit body as bullet points grouped by theme:
-  - Security:
-    - Enforce jti validation in WMPContext
-    - Replace reflection access with typed getters
-  - API:
-    - Add /onboarding/active endpoint
-    - Restrict /onboarding/{onboardingId} to int64
-  - Tests:
-    - Add unit tests for PasswordService validator
-- In PR descriptions, include rationale, risk, and testing notes; link to related docs or tickets.
-- Avoid mixing formatting-only changes with functional changes; if needed, separate into distinct commits.
 
 ## AI assistant behavior (meta)
 - If requirements are underspecified, make 1–2 reasonable assumptions consistent with the repo and proceed; ask questions only if truly blocked.
