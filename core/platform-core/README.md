@@ -42,6 +42,7 @@ The `platform-core` module groups several cross-cutting features that can be reu
 - [Cross-cutting patterns for business microservices](#cross-cutting-patterns-for-business-microservices)
 - [Optimistic locking and retry](#optimistic-locking-and-retry)
 - [Shared async TaskExecutor and `@Async`](#shared-async-taskexecutor-and-async)
+- [Caching support](#caching-support)
 
 Business microservices depend on `platform-core` as a Maven module to automatically inherit these behaviors.
 
@@ -606,7 +607,8 @@ spring:
     hikari:
       maximum-pool-size: 5
       minimum-idle: 1
-
+```
+```yaml
 # application-prod.yaml
 spring:
   datasource:
@@ -629,33 +631,232 @@ When creating or tuning a `*-service/*-core` module:
 By following these shared patterns and properties, business microservices can achieve consistent, predictable database
 behavior while retaining full control over service-specific tuning.
 
-## Work in progress: caching support
+## Caching support
 
 Caching is a powerful lever for reducing load on downstream systems and improving response times. In a distributed banking context, it must be applied carefully.
 
-Planned directions:
+`platform-core` exposes shared configuration and infrastructure for Spring Cache so that each `*-service/*-core` module can opt in to consistent,
+Redis-backed caching when appropriate.
 
-- Provide shared configuration for Spring Cache abstraction, including:
-  - Recommended cache names for common use cases (for example, reference data such as products or risk profiles).
-  - Default time-to-live (TTL) values and eviction policies.
-- Support for pluggable cache providers:
-  - Local in-memory cache (for example, Caffeine) for development and simple scenarios.
-  - Distributed cache (for example, Redis) for cross-instance caching in production.
-- Observability and safety:
-  - Provide metrics for cache hit/miss and size.
-  - Document guidelines to avoid caching sensitive or highly volatile data (for example, balances, orders, or personal information).
+### Design principles
 
+- **Opt-in and safe by default**: caching is disabled unless explicitly enabled via `platform.cache.enabled=true`.
+- **Spring Cache first**: use standard Spring annotations (`@Cacheable`, `@CacheEvict`, `@CachePut`) rather than custom caching APIs.
+- **Provider pluggability**: support multiple providers through configuration, with Redis as the recommended choice for production.
+- **Namespaced keys**: cache names are automatically namespaced per service to avoid collisions across microservices.
+- **Configuration over code**: TTLs and provider selection are driven primarily by properties, not hard-coded values.
 
-## Work in progress: HTTP server and Tomcat tuning
+### Configuration properties
 
+Caching is configured via `PlatformCacheProperties` bound under the `platform.cache` prefix:
 
-`platform-core` will document and, where appropriate, provide shared defaults for HTTP server tuning to support high concurrency and throughput.
+```yaml
+platform:
+  cache:
+    enabled: true                # master switch, default is false
+    provider: REDIS              # NONE | REDIS | SIMPLE_IN_MEMORY
+    default-ttl: 5m              # optional global TTL for all caches
+    key-prefix: "wmp"            # optional global prefix applied to all cache names
+    service-name: "customer-service" # optional override; by default spring.application.name is used
+    caches:
+      customerProfileById:
+        ttl: 10m
+      productCatalog:
+        ttl: 1h
+```
 
-Planned directions:
+Key fields:
 
-- Standardize recommendations for embedded server configuration (for example, Tomcat):
-  - Maximum number of request processing threads.
-  - Connection limits, keep-alive settings, and timeouts.
-  - Compression and header size limits suitable for financial payloads.
-- Provide baseline server properties that can be imported by services and overridden when necessary.
-- Capture security hardening guidelines related to HTTP and TLS configuration (even if actual keys and certificates are managed externally).
+- `enabled`: when `false` (default), caching is effectively disabled and a `NoOpCacheManager` is used.
+- `provider`:
+  - `NONE` (default): no caching; all cache annotations behave as no-ops.
+  - `REDIS`: use Redis as the backing cache store (recommended for shared, cross-instance caching in prod).
+  - `SIMPLE_IN_MEMORY`: use an in-memory `ConcurrentMapCacheManager` (suitable for local development without Redis).
+- `default-ttl`: optional global TTL applied to all caches if not overridden per cache.
+- `key-prefix`: optional global prefix to separate WMP caches from others.
+- `service-name`: optional override of the service name used in cache namespacing (otherwise `spring.application.name` is used).
+- `caches`: per-cache configuration, currently supporting per-cache TTL via `ttl`.
+
+### Cache naming and namespacing
+
+Cache names are constructed by `PlatformCacheConfiguration` using the following pattern:
+
+```text
+[keyPrefix:]<serviceName>::<logicalCacheName>
+```
+
+Examples:
+
+- With `key-prefix=wmp` and `spring.application.name=customer-service`:
+  - Logical cache name `customerProfileById` becomes:
+    - `wmp:customer-service::customerProfileById`
+- Without prefix and with `spring.application.name=product-service`:
+  - Logical cache name `productCatalog` becomes:
+    - `product-service::productCatalog`
+
+When using Spring annotations such as `@Cacheable(cacheNames = "customerProfileById")`, you should always refer to **logical cache names**.
+The actual physical cache name stored in Redis is derived using the pattern above.
+
+### Cache providers
+
+`platform-core` wires a `CacheManager` based on `platform.cache.provider`:
+
+- `NONE` (default):
+  - A `NoOpCacheManager` is created; all cache annotations are effectively disabled.
+- `SIMPLE_IN_MEMORY`:
+  - A `ConcurrentMapCacheManager` is created.
+  - Predefined cache names are taken from `platform.cache.caches` keys.
+  - TTL is **not** enforced at the in-memory level; it is intended for simple local development scenarios.
+- `REDIS`:
+  - A `RedisCacheManager` is configured in `PlatformRedisCacheConfiguration`.
+  - Values are serialized using `GenericJackson2JsonRedisSerializer`.
+  - Default TTL is taken from `platform.cache.default-ttl` when provided.
+  - Per-cache TTL overrides can be configured under `platform.cache.caches.<name>.ttl`.
+
+Redis connection settings are provided via standard Spring Boot properties (for example in each service `application-*.yaml`):
+
+```yaml
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      # password: my-secret
+      # database: 0
+      timeout: 2000ms
+```
+
+`platform-core` does not hard-code Redis hosts or credentials; those remain the responsibility of each microservice and environment.
+
+### Local development
+
+For local development you can avoid running Redis by using the in-memory provider:
+
+```yaml
+spring:
+  profiles: local
+
+platform:
+  cache:
+    enabled: true
+    provider: SIMPLE_IN_MEMORY
+    caches:
+      customerProfileById: {}
+      productCatalog: {}
+```
+
+In this setup:
+
+- No external cache infrastructure is required.
+- Cache entries live for the lifetime of the application; TTL is **not** enforced.
+- Behavior is good enough to validate functional correctness and cache key semantics.
+
+Alternatively, you can disable caching entirely while still keeping cache annotations in code:
+
+```yaml
+platform:
+  cache:
+    enabled: false
+```
+
+### Enabling Redis in higher environments
+
+For live environments, Redis should be the default cache provider:
+
+```yaml
+spring:
+  application:
+    name: customer-service
+  data:
+    redis:
+      host: redis-host
+      port: 6379
+
+platform:
+  cache:
+    enabled: true
+    provider: REDIS
+    default-ttl: 5m
+    key-prefix: "wmp"
+    caches:
+      customerProfileById:
+        ttl: 10m
+      productCatalog:
+        ttl: 1h
+```
+
+With this configuration:
+
+- All cache entries are stored in Redis, shared across all instances of the service.
+- Keys are namespaced per service using `spring.application.name`.
+- Different caches can have different TTLs.
+
+### Usage patterns in business microservices
+
+In a `*-service/*-core` module you typically:
+
+1. Add or reuse the dependency on `platform-core`.
+2. Enable Spring Cache in the service by adding `@EnableCaching` on one of its configuration classes (for example under `raff.stein.<service>.config`).
+3. Configure cache properties in the service `application-*.yaml`.
+4. Apply Spring Cache annotations in the service layer.
+
+Example configuration to enable caching in a business module:
+
+```java
+package raff.stein.customerservice.config;
+
+@Configuration
+@EnableCaching
+public class CustomerCacheConfiguration {
+    // No explicit beans required if you rely on platform-core CacheManager
+}
+```
+
+Example: caching a read operation in a service class:
+
+```java
+@Service
+public class CustomerProfileService {
+
+    private final CustomerProfileRepository customerProfileRepository;
+
+    public CustomerProfileService(CustomerProfileRepository customerProfileRepository) {
+        this.customerProfileRepository = customerProfileRepository;
+    }
+
+    @Cacheable(cacheNames = "customerProfileById", key = "#customerId")
+    public CustomerProfile getCustomerProfile(String customerId) {
+        return customerProfileRepository.findById(customerId)
+                .orElseThrow(() -> new GenericObjectNotFoundException("Customer profile not found for id " + customerId));
+    }
+
+    @CacheEvict(cacheNames = "customerProfileById", key = "#customer.id")
+    public CustomerProfile updateCustomerProfile(CustomerProfile customer) {
+        return customerProfileRepository.save(customer);
+    }
+}
+```
+
+Guidelines:
+
+- Use caching for **idempotent, read-mostly** operations (for example, reference data, profiles, catalogs).
+- Avoid caching highly volatile or sensitive data (for example, real-time balances, orders in-flight, or PII) unless strictly justified and carefully controlled.
+- Always define a clear invalidation strategy using `@CacheEvict` when underlying data can change.
+
+### Testing and rollout strategy
+
+To avoid regressions, enable caching gradually:
+
+1. Upgrade the service to a version of `platform-core` that includes caching support.
+2. Set `platform.cache.enabled=true` and `platform.cache.provider=NONE`:
+   - This keeps behavior identical while allowing you to introduce annotations.
+3. Introduce `@Cacheable` / `@CacheEvict` annotations on selected service methods.
+4. For local and test environments, use `SIMPLE_IN_MEMORY` to validate functional behavior.
+5. For dev/stage/prod, configure Redis (`provider=REDIS`) and monitor cache hit/miss rates and overall performance.
+
+Unit tests can verify caching behavior by checking repository invocation counts when using an in-memory provider:
+
+- First call hits the repository.
+- Second call with the same key returns from cache and does not hit the repository again.
+
+By centralizing cache configuration and Redis integration in `platform-core`, business microservices can adopt consistent, production-ready caching with minimal boilerplate while keeping full control over what is cached and for how long.

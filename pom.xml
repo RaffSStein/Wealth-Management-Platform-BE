@@ -37,6 +37,7 @@
         <jackson.databind.version>3.0.3</jackson.databind.version>
         <spring.retry.version>2.0.12</spring.retry.version>
         <jjwt.version>0.13.0</jjwt.version>
+        <spring.boot.cache.version>4.0.0</spring.boot.cache.version>
     </properties>
 
     <dependencyManagement>
@@ -205,6 +206,16 @@
                 <artifactId>jjwt-jackson</artifactId>
                 <version>${jjwt.version}</version>
                 <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-cache</artifactId>
+                <version>${spring.boot.cache.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-redis</artifactId>
+                <version>${spring.boot.cache.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
