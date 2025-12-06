@@ -1,13 +1,13 @@
 # platform-core module
 
-`platform-core` is the shared core library for all Wealth Management Platform (WMP) microservices. It centralizes cross-cutting concerns (error handling, logging, tracing, messaging abstractions, security configuration, shared properties) so that business services can stay focused on domain logic.
+`platform-core` is the shared core library for all Wealth Management Platform (WMP) microservices. It centralizes cross-cutting concerns
+(error handling, logging, tracing, messaging abstractions, security configuration, shared properties) so that business services can stay focused on domain logic.
 
 ## Architecture and design goals
 
 - Provide a single, consistent implementation for platform-level concerns across all `*-service/*-core` modules.
 - Minimize duplication of boilerplate (exception mapping, logging filters, Kafka wiring, shared configuration).
 - Be opinionated but overridable: expose sensible defaults while allowing service-level customization.
-- Support production-grade observability, resiliency, and traceability for a distributed banking environment.
 - Keep `platform-core` free of business/domain logic; only platform and infrastructure concerns belong here.
 
 ## Usage in business microservices
@@ -15,18 +15,15 @@
 ### Adding the dependency
 
 Each `*-service/*-core` module should depend on `platform-core` through Maven. The exact coordinates and version are managed by the root `pom.xml` and the service module POMs.
+Example dependency declaration in `customer-service/customer-core/pom.xml`:
 
-### Typical usage patterns
-
-- REST controllers:
-    - Throw shared exceptions such as `RequestValidationException`, `GenericObjectNotFoundException`, or `VersionLockingException`.
-    - Rely on `GlobalExceptionHandler` for consistent error mapping and logging.
-- Service layer:
-    - Use `GenericException` or specialized subclasses for cross-cutting conditions.
-    - Log with the shared logging configuration, ensuring `traceId` is present on all relevant logs.
-- Messaging components:
-    - Use `EventPublisher` or `WMPBaseEventPublisher` to send events.
-    - Implement `EventConsumer` or extend `WMPBaseEventConsumer` to process events with consistent tracing and security context.
+```xml
+<dependency>
+    <groupId>raff.stein</groupId>
+    <artifactId>platform-core</artifactId>
+    <version>1.0-SNAPSHOT</version>
+</dependency>
+```
 
 
 ## Core features overview
@@ -70,10 +67,7 @@ The module defines a shared exception hierarchy to express cross-cutting error s
 - Specialized exceptions (examples):
   - `RequestValidationException` – input validation or business rule violations (HTTP 400).
   - `AuthenticationException`, `JwtTokenException`, `WmpContextException` – authentication and context-related issues (HTTP 401).
-  - `AccessDeniedException` – authorization failures (HTTP 403).
-  - `GenericObjectNotFoundException` – missing domain objects (HTTP 404).
-  - `VersionLockingException` – optimistic locking / concurrent modification conflicts (HTTP 409).
-  - `NotImplementedException` – functionality defined but not yet implemented.
+  - and others for not-found, conflict, forbidden, etc.
 
 Services should prefer these shared exception types over ad-hoc ones whenever the semantics are platform-wide.
 
@@ -91,7 +85,8 @@ Services should prefer these shared exception types over ad-hoc ones whenever th
 - Catch-all handling
   - Any unhandled `Exception` is translated into a generic 500 error with a safe, non-sensitive message.
 
-By simply depending on `platform-core`, a microservice gets this consistent behavior without additional configuration. Local `@ControllerAdvice` classes can still be used for service-specific rules if needed.
+By simply depending on `platform-core`, a microservice gets this consistent behavior without additional configuration.
+Local `@ControllerAdvice` classes can still be used for service-specific rules if needed.
 
 ## Logging and HTTP request/response tracing
 
@@ -189,6 +184,10 @@ This resource centralizes configuration that is common across services:
   - Properties that fine-tune default Spring Boot behavior (for example, disabling template checks where not used).
 - Kafka configuration import:
   - `spring.config.import` to pull in `kafka-shared-properties.yaml`.
+- Database configuration import:
+  - `spring.config.import` to pull in `db-shared-properties.yaml`.
+- Cache configuration import:
+  - `spring.config.import` to pull in `cache-shared-properties.yaml`.
 
 Services are expected to import or extend these shared properties, overriding them only where necessary for local concerns.
 
@@ -198,11 +197,12 @@ The `jwt/` resource subtree documents and supports the platform JWT model:
 
 - Keys and tokens:
   - `public_key.pem` and `private_key.pem` (or their equivalents) for signing and verification.
-  - Sample tokens (for example a `local_token.txt`) to simplify local testing.
-- Documentation:
-  - `jwt_configuration.md` describes JWT structure, required claims, and validation rules.
+- Documentation: (to be expanded)
+  - JWT claims conventions (standard and custom claims).
+  - Token lifecycle and rotation strategies.
 
-Services should follow these conventions when building authentication filters and WMP context handling, so that JWT behavior is consistent across the platform.
+Services should follow these conventions when building authentication filters and WMP context handling, so that JWT behavior is
+consistent across the platform.
 
 ## Cross-cutting patterns for business microservices
 
@@ -220,34 +220,32 @@ Services should follow these conventions when building authentication filters an
 ### Logging, security, and context propagation
 
 - Always rely on the tracing and logging conventions defined by `platform-core` (trace identifiers, log structure).
-- For Kafka flows, use the shared consumer configuration and security context initialization utilities so that event processing uses the same identity information as HTTP calls.
+- For Kafka flows, use the shared consumer configuration and security context initialization utilities so that event 
+processing uses the same identity information as HTTP calls.
 - Use the shared exception types for security-related problems so they are surfaced consistently.
 
 
 ## Optimistic locking and retry
 
 
-`platform-core` exposes a common pattern for optimistic locking handling and retry. Business modules should adopt it consistently to achieve predictable behavior under concurrent updates.
+`platform-core` exposes a common pattern for optimistic locking handling and retry. Business modules should adopt it consistently
+to achieve predictable behavior under concurrent updates.
 
-#### 1. Use `BaseDateEntity` and `@Version` on JPA entities
+#### 1. Extend `BaseDateEntity`
 
-- Extend the shared base entity provided by `platform-core` (for example `raff.stein.platformcore.model.BaseDateEntity` or equivalent) for all aggregate roots that require optimistic locking and audit information.
-- Ensure that the base class (or the concrete entity) declares a `@Version` field, for example:
+- Extend the shared base entity provided by `platform-core` (for example `raff.stein.platformcore.model.BaseDateEntity` or
+equivalent) for all aggregate roots that require optimistic locking and audit information.
+- Ensure that any base classes (or the concrete entity) declares a `@Version` field, if not extending `raff.stein.platformcore.model.BaseDateEntity`,
+for example:
   - `@Version private Long version;`
 - Apply this pattern across write-heavy entities (orders, proposals, portfolios, customer aggregates) where concurrent updates are expected.
 - Do not mix optimistic locking with long-running transactions; keep transactions as short as possible.
 
 #### 2. Configure retry behavior via properties
 
-`platform-core` provides configuration properties (for example `OptimisticLockingRetryProperties`) that define the retry policy for optimistic locking conflicts. These properties are bound from `application.properties` or `application.yml` using a shared prefix, for example:
-
-```properties
-optimistic-locking.retry.max-attempts=3
-optimistic-locking.retry.backoff-delay-ms=50
-optimistic-locking.retry.backoff-multiplier=2.0
-```
-
-or in YAML:
+`platform-core` provides configuration properties (for example `OptimisticLockingRetryProperties`) that define the retry
+policy for optimistic locking conflicts. These properties are bound from `application.properties` or `application.yml` using a shared prefix,
+for example:
 
 ```yaml
 optimistic-locking:
@@ -289,22 +287,26 @@ Key points:
 
 - Apply `@OptimisticLockingRetry` only to **idempotent** or **semantically safe-to-retry** methods.
 - The annotation is intended mainly for service-layer methods that encapsulate a single logical update of an aggregate.
-- On an `OptimisticLockingFailureException` (or `ObjectOptimisticLockingFailureException`), the method invocation is transparently retried according to the configured properties.
+- On an `OptimisticLockingFailureException` (or `ObjectOptimisticLockingFailureException`), the method invocation is transparently
+retried according to the configured properties.
 - After the last attempt, failures should be mapped to `VersionLockingException` and then to an HTTP 409 Conflict by the shared exception handler.
 
 #### 4. Combine retry with clear API semantics
 
 For REST APIs exposed by business modules:
 
-- Make it explicit in API documentation (OpenAPI) that certain endpoints are subject to optimistic locking and may respond with HTTP 409 in case of conflicts.
+- Make it explicit in API documentation (OpenAPI) that certain endpoints are subject to optimistic locking and may respond with 
+HTTP 409 in case of conflicts.
 - Use shared error types (for example, `ErrorResponse` with an appropriate `ErrorCode`/`ErrorCategory`) to describe optimistic locking failures.
 
-This combination of `BaseDateEntity` + `@Version` + `@OptimisticLockingRetry` + shared properties ensures that all services handle concurrent updates and retries in a uniform and observable way.
+This combination of `BaseDateEntity` + `@Version` + `@OptimisticLockingRetry` + shared properties ensures that all services
+handle concurrent updates and retries in a uniform and observable way.
 
 
 ## Shared async TaskExecutor and `@Async`
 
-To support concurrent processing without blocking HTTP request threads, `platform-core` exposes a shared `TaskExecutor` and patterns for `@Async` usage.
+To support concurrent processing without blocking HTTP request threads, `platform-core` exposes a shared `TaskExecutor`
+and patterns for `@Async` usage.
 
 ### Provided executor bean
 
@@ -357,8 +359,10 @@ Key behaviors:
 
 ### Tracing and observability
 
-- The shared executor uses `TracingTaskDecorator`, which relies on Micrometer Observation to propagate the current observation/tracing context (`traceId`, span) into async threads.
-- Any code executed via `@Async("platformTaskExecutor")` will see the same tracing context as the calling thread, so logs and metrics remain correlated across async boundaries.
+- The shared executor uses `TracingTaskDecorator`, which relies on Micrometer Observation to propagate the current
+observation/tracing context (`traceId`, span) into async threads.
+- Any code executed via `@Async("platformTaskExecutor")` will see the same tracing context as the calling thread,
+so logs and metrics remain correlated across async boundaries.
 
 ### Service-level guidance
 
@@ -403,8 +407,10 @@ public class CustomerNotificationService {
 
 ## Database throughput and shared tuning
 
-Database throughput is a key factor in a high-throughput banking platform. `platform-core` provides shared patterns and, where appropriate, shared configuration for Postgres data access.
-The goal is to offer **safe, overridable defaults** that every microservice can adopt, while leaving final tuning decisions to each `*-service/*-core` module.
+Database throughput is a key factor in a high-throughput banking platform. `platform-core` provides shared patterns and,
+where appropriate, shared configuration for Postgres data access.
+The goal is to offer **safe, overridable defaults** that every microservice can adopt, while leaving final tuning decisions
+to each `*-service/*-core` module.
 
 ### Shared vs service-specific responsibilities
 
@@ -521,7 +527,8 @@ Every microservice should design queries with throughput and resource usage in m
 - Prefer projections / DTO queries for large result sets instead of loading full entities and their graph.
 - Always specify an `ORDER BY` when using pagination to get deterministic results.
 
-If a service uses shared pagination DTOs from `platform-core` or its own `api-data` module, make sure the REST layer and repositories are aligned on page/size semantics.
+If a service uses shared pagination DTOs from `platform-core` or its own `api-data` module, make sure the REST layer
+and repositories are aligned on page/size semantics.
 
 ### Indexing and schema design
 
@@ -582,40 +589,9 @@ Guidelines:
 
 - Prefer optimistic locking with `@Version` and `@OptimisticLockingRetry` for concurrent updates.
 - Avoid long-held locks by keeping transactions short and avoiding full-table scans on hot tables.
-- Use pessimistic locks (`SELECT ... FOR UPDATE`) only in exceptional cases where business invariants cannot be protected otherwise, and document those cases per service.
+- Use pessimistic locks (`SELECT ... FOR UPDATE`) only in exceptional cases where business invariants cannot be protected otherwise,
+and document those cases per service.
 
-### Environment-specific tuning
-
-DB tuning is environment dependent. Typical patterns:
-
-- **local/dev**:
-  - Small pools (for example, `maximum-pool-size` 5–10).
-  - Short timeouts, to surface misconfigurations early and avoid exhausting local resources.
-- **test/stage**:
-  - Similar properties to production but scaled down.
-  - Used to validate behavior under realistic (but not full production) load.
-- **prod**:
-  - Pool sizes and timeouts tuned based on real traffic, hardware capacity, and SLOs.
-  - Properties typically provided via environment variables or externalized configuration.
-
-Examples of profile-specific overrides in a business microservice:
-
-```yaml
-# application-local.yaml
-spring:
-  datasource:
-    hikari:
-      maximum-pool-size: 5
-      minimum-idle: 1
-```
-```yaml
-# application-prod.yaml
-spring:
-  datasource:
-    hikari:
-      maximum-pool-size: 40
-      minimum-idle: 10
-```
 
 ### How to adopt these patterns in a new or existing microservice
 
@@ -633,7 +609,8 @@ behavior while retaining full control over service-specific tuning.
 
 ## Caching support
 
-Caching is a powerful lever for reducing load on downstream systems and improving response times. In a distributed banking context, it must be applied carefully.
+Caching is a powerful lever for reducing load on downstream systems and improving response times. In a distributed banking context,
+it must be applied carefully.
 
 `platform-core` exposes shared configuration and infrastructure for Spring Cache so that each `*-service/*-core` module can opt in to consistent,
 Redis-backed caching when appropriate.
@@ -852,11 +829,8 @@ To avoid regressions, enable caching gradually:
    - This keeps behavior identical while allowing you to introduce annotations.
 3. Introduce `@Cacheable` / `@CacheEvict` annotations on selected service methods.
 4. For local and test environments, use `SIMPLE_IN_MEMORY` to validate functional behavior.
-5. For dev/stage/prod, configure Redis (`provider=REDIS`) and monitor cache hit/miss rates and overall performance.
+5. For any other env, configure Redis (`provider=REDIS`) and monitor cache hit/miss rates and overall performance.
 
-Unit tests can verify caching behavior by checking repository invocation counts when using an in-memory provider:
 
-- First call hits the repository.
-- Second call with the same key returns from cache and does not hit the repository again.
-
-By centralizing cache configuration and Redis integration in `platform-core`, business microservices can adopt consistent, production-ready caching with minimal boilerplate while keeping full control over what is cached and for how long.
+By centralizing cache configuration and Redis integration in `platform-core`, business microservices can adopt consistent,
+production-ready caching with minimal boilerplate while keeping full control over what is cached and for how long.
