@@ -28,13 +28,16 @@
         <lombok.mapstruct.binding.version>0.2.0</lombok.mapstruct.binding.version>
         <jackson.databind.nullable.version>0.2.6</jackson.databind.nullable.version>
         <logstash.logback.encoder.version>7.4</logstash.logback.encoder.version>
-        <cloudevent.version>2.5.0</cloudevent.version>
-        <hibernate.version>7.1.8.Final</hibernate.version>
+        <cloudevent.version>4.0.1</cloudevent.version>
+        <hibernate.version>7.1.11.Final</hibernate.version>
         <micrometer.version>1.16.0</micrometer.version>
         <micrometer.tracing.version>1.6.0</micrometer.tracing.version>
         <micrometer.tracing.bridge.brave.version>1.6.0</micrometer.tracing.bridge.brave.version>
         <openapi.generator.maven.plugin.version>2024.1</openapi.generator.maven.plugin.version>
         <jackson.databind.version>3.0.3</jackson.databind.version>
+        <spring.retry.version>2.0.12</spring.retry.version>
+        <jjwt.version>0.13.0</jjwt.version>
+        <spring.boot.cache.version>4.0.0</spring.boot.cache.version>
     </properties>
 
     <dependencyManagement>
@@ -181,6 +184,38 @@
                 <groupId>io.openapiprocessor</groupId>
                 <artifactId>openapi-processor-maven-plugin</artifactId>
                 <version>${openapi.generator.maven.plugin.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.retry</groupId>
+                <artifactId>spring-retry</artifactId>
+                <version>${spring.retry.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-cache</artifactId>
+                <version>${spring.boot.cache.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-redis</artifactId>
+                <version>${spring.boot.cache.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

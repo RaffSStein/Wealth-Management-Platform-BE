@@ -52,7 +52,8 @@ public class RequestResponseLoggingFilter implements Filter {
         return path.startsWith("/auth/password/setup")
                 || path.startsWith("/auth/password/reset")
                 || path.startsWith("/password/setup")
-                || path.startsWith("/password/reset");
+                || path.startsWith("/password/reset")
+                || path.startsWith("/auth/login");
     }
 
     private void logRequest(ContentCachingRequestWrapper request) {
