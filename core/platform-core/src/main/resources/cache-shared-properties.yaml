@@ -1,0 +1,9 @@
+platform:
+  cache:
+    enabled: false
+    provider: NONE
+    # default-ttl: 5m
+    # key-prefix: "wmp"
+    # service-name: "your-service-name"
+    caches: {}
+

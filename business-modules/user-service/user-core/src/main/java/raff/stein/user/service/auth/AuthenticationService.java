@@ -40,7 +40,7 @@ public class AuthenticationService {
 
     @Transactional
     public void register(RegisterRequest request) {
-        // TODO: use a mapper
+        // TODO: use a mapper, add branch roles association
         final User user = userService.createUserEntity(
                 User.builder()
                         .email(request.getEmail())
@@ -82,6 +82,7 @@ public class AuthenticationService {
                 principal.getUsername(),
                 tokenRoles,
                 buildExtraClaims(principal.getUserId()));
+        log.info("User [{}] logged in successfully", request.getEmail());
         return new AuthResponse(token, "Bearer", jwtTokenIssuer.getExpirationSeconds());
     }
 
