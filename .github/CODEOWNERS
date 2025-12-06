@@ -1,0 +1,9 @@
+# Global code owners
+* @RaffSStein
+
+# Example of more granular ownership for future expansion (currently commented)
+# /business-modules/bank-service/ @RaffSStein
+# /business-modules/customer-service/ @RaffSStein
+# /core/platform-core/ @RaffSStein
+# /.github/workflows/ @RaffSStein
+

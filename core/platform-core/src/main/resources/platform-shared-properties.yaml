@@ -8,4 +8,4 @@ spring:
   mustache:
     check-template-location: false
   config:
-    import: classpath:kafka-shared-properties.yaml,classpath:db-shared-properties.yaml
+    import: classpath:kafka-shared-properties.yaml,classpath:db-shared-properties.yaml,classpath:cache-shared-properties.yaml
