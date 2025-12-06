@@ -82,6 +82,7 @@ public class AuthenticationService {
                 principal.getUsername(),
                 tokenRoles,
                 buildExtraClaims(principal.getUserId()));
+        log.info("User [{}] logged in successfully", request.getEmail());
         return new AuthResponse(token, "Bearer", jwtTokenIssuer.getExpirationSeconds());
     }
 

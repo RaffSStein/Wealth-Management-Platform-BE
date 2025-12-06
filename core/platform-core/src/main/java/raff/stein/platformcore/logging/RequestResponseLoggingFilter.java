@@ -49,11 +49,11 @@ public class RequestResponseLoggingFilter implements Filter {
     private boolean isPasswordFlow(String path) {
         if (path == null) return false;
         // Common endpoints for password setup/reset flows
-        return path.startsWith("/auth/password/setup")
-                || path.startsWith("/auth/password/reset")
-                || path.startsWith("/password/setup")
-                || path.startsWith("/password/reset")
-                || path.startsWith("/auth/login");
+        return path.contains("/auth/password/setup")
+                || path.contains("/auth/password/reset")
+                || path.contains("/password/setup")
+                || path.contains("/password/reset")
+                || path.contains("/auth/login");
     }
 
     private void logRequest(ContentCachingRequestWrapper request) {
