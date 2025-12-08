@@ -46,6 +46,15 @@ Cover happy path and at least one edge case. Prefer deterministic tests; mock ex
 - Performance: be mindful of allocations, blocking calls, and DB interactions on hot paths.
 - Logging: follow existing structured logging conventions (correlationId, userId, etc.).
 
+### DB Data Model Guidelines
+The data model for the Wealth Management Platform is designed to support both internal microservice autonomy and robust event-driven communication.
+
+- **Entity Keys**:
+    - For entities that are exposed externally (e.g., via events or APIs), use UUIDs as the primary keys. This ensures global uniqueness and facilitates safe event propagation across distributed systems.
+    - For entities whose lifecycle and visibility are strictly internal to a single microservice, uaw a numeric ID:
+        - **Long**: for tables that are expected to grow significantly in size (e.g., logging, audit tables).
+        - **Integer**: for domain tables with a limited or predictable number of records.
+
 ## Git workflow
 - Create feature branches from `main`.
 - Keep commits small and atomic.
