@@ -1,0 +1,103 @@
+openapi: 3.1.0
+info:
+  title: AI Apis
+  version: 1.0.0
+  description: API for using AI.
+
+paths:
+  /chat:
+    post:
+      summary: Chat with AI assistant
+      description: Sends user messages to an AI assistant and returns a single, complete reply. This endpoint does not stream tokens.
+      operationId: chatWithAssistant
+      tags:
+        - Chat
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequestDTO'
+      responses:
+        '200':
+          description: Assistant reply
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponseDTO'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+
+components:
+  schemas:
+    ChatMessageDTO:
+      type: object
+      description: Single message within a chat conversation.
+      required:
+        - role
+        - content
+      properties:
+        role:
+          type: string
+          description: Role of the message author.
+          enum:
+            - user
+            - assistant
+            - system
+        content:
+          type: string
+          description: Natural language content of the message.
+        timestamp:
+          type: string
+          format: date-time
+          description: Optional client-side timestamp of when the message was created.
+
+    ChatRequestDTO:
+      type: object
+      description: Chat request containing the conversation history and the latest user message.
+      required:
+        - messages
+      properties:
+        messages:
+          type: array
+          description: Full or partial conversation history, ordered from oldest to newest.
+          items:
+            $ref: '#/components/schemas/ChatMessageDTO'
+        sessionId:
+          type: string
+          description: Optional client-defined session identifier for grouping messages.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: Optional metadata that can be used for future extensions (e.g., locale, tone).
+
+    ChatResponseDTO:
+      type: object
+      description: Chat response returned by the AI assistant, containing a single reply message.
+      required:
+        - reply
+      properties:
+        reply:
+          $ref: '#/components/schemas/ChatMessageDTO'
+        conversationId:
+          type: string
+          description: Optional server-side conversation identifier.
+        usage:
+          type: object
+          description: Optional usage information returned by the underlying AI provider.
+          properties:
+            promptTokens:
+              type: integer
+              format: int32
+            completionTokens:
+              type: integer
+              format: int32
+            totalTokens:
+              type: integer
+              format: int32
+

@@ -3,7 +3,7 @@
 This repository contains a modular, event-driven microservices platform for wealth management. 
 Each module represents a business domain and is implemented as an independent Spring Boot microservice.
 
-> ⚠️ **IMPORTANT:** This project is intended for educational and demonstration purposes only. It is not production-ready and should not be 
+> ⚠️ **IMPORTANT:** This project is intended for demonstration purposes only. It is not production-ready and should not be 
 > used as-is in real-world applications without significant enhancements, security reviews, and testing.
 
 > **Note:** This repository is a work in progress. The platform is under active development and subject to frequent changes.

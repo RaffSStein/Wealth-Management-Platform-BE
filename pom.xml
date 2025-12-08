@@ -38,6 +38,7 @@
         <spring.retry.version>2.0.12</spring.retry.version>
         <jjwt.version>0.13.0</jjwt.version>
         <spring.boot.cache.version>4.0.0</spring.boot.cache.version>
+        <spring.ai.version>1.1.1</spring.ai.version>
     </properties>
 
     <dependencyManagement>
@@ -217,6 +218,13 @@
                 <artifactId>spring-boot-starter-data-redis</artifactId>
                 <version>${spring.boot.cache.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring.ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -266,5 +274,7 @@
         <module>business-modules/email-service</module>
         <module>business-modules/document-service</module>
         <module>core/platform-core</module>
+        <module>business-modules/ai-simple-service/ai-api-data</module>
+        <module>business-modules/ai-simple-service/ai-core</module>
     </modules>
 </project>
