@@ -38,15 +38,38 @@ Each business module may contain submodules for API data models (OpenAPI-generat
 
 ## How to Run
 1. Clone the repository.
-2. Start the infrastructure with Docker Compose (see the provided docker-compose.yml). This will start Kafka, Kafka UI, PostgreSQL, Splunk, and Splunk Forwarder.
-3. Build all modules with Maven:
-   ```
-   mvn clean install
-   ```
-4. Start each microservice individually (from its module directory):
-   ```
-   mvn spring-boot:run
-   ```
+2. Start the infrastructure with Docker Compose (from the repository root, using the provided `docker-compose.yml`):
+   - Unix/macOS:
+     ```bash
+     docker compose -f docker-compose.yml up -d
+     ```
+   - Windows (PowerShell or cmd):
+     ```powershell
+     docker compose -f docker-compose.yml up -d
+     ```
+     Requires Docker Desktop (or equivalent) with WSL2 backend.
+
+3. Build all modules using the Maven Wrapper (recommended):
+> Prerequisites for building and running the microservices:
+> - **JDK 21** installed and configured (ensure `JAVA_HOME` and `PATH` point to a Java 21 installation).
+> - **Maven Wrapper** is provided in this repository (`mvnw` / `mvnw.cmd`); a local Maven installation is not required.
+   - Unix/macOS:
+     ```bash
+     ./mvnw clean install
+     ```
+   - Windows (PowerShell or cmd):
+     ```powershell
+     .\mvnw.cmd clean install
+     ```
+4. Start each microservice individually (from its module directory) using the Maven Wrapper:
+   - Unix/macOS:
+     ```bash
+     ./mvnw spring-boot:run
+     ```
+   - Windows (PowerShell or cmd):
+     ```powershell
+     .\mvnw.cmd spring-boot:run
+     ```
 
 ## Event-Driven Approach
 All business events (e.g., proposal created, order executed) are published to Kafka topics. Other services subscribe to relevant topics to react to these events, ensuring loose coupling and scalability. Event payloads are defined in dedicated submodules (e.g., proposal-event-data) and shared via dependencies.
