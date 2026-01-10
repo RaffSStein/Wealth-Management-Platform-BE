@@ -29,7 +29,6 @@ public class OllamaChatModelConfiguration {
                 .modelName(modelName)
                 .timeout(Duration.ofSeconds(60))
                 .temperature(0.0)   // critical for deterministic responses in business use-cases
-                .timeout(Duration.ofSeconds(60))
                 .maxRetries(3)
                 .build();
     }
