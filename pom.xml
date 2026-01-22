@@ -16,9 +16,9 @@
 
     <properties>
         <java.version>21</java.version>
-        <spring.boot.starter.version>4.0.0</spring.boot.starter.version>
+        <spring.boot.starter.version>4.0.1</spring.boot.starter.version>
         <spring.data.commons.version>4.0.0</spring.data.commons.version>
-        <openapi.generator.version>7.17.0</openapi.generator.version>
+        <openapi.generator.version>7.18.0</openapi.generator.version>
         <lombok.version>1.18.42</lombok.version>
         <postgresql.version>42.7.8</postgresql.version>
         <spring.kafka.version>4.0.0</spring.kafka.version>
@@ -30,7 +30,7 @@
         <logstash.logback.encoder.version>9.0</logstash.logback.encoder.version>
         <cloudevent.version>4.0.1</cloudevent.version>
         <hibernate.version>7.1.11.Final</hibernate.version>
-        <micrometer.version>1.16.0</micrometer.version>
+        <micrometer.version>1.16.1</micrometer.version>
         <micrometer.tracing.version>1.6.0</micrometer.tracing.version>
         <micrometer.tracing.bridge.brave.version>1.6.0</micrometer.tracing.bridge.brave.version>
         <openapi.generator.maven.plugin.version>2024.1</openapi.generator.maven.plugin.version>
