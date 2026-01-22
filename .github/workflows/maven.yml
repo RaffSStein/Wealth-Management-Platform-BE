@@ -45,16 +45,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # 4) Build all modules using Maven in batch mode.
+      # 4) Build all modules using Maven Wrapper in batch mode.
       # Flags:
       # -B   ("--batch-mode"): run Maven without interactive prompts; recommended for CI.
       # -ntp ("--no-transfer-progress"): suppress dependency download progress bars to reduce log noise in CI.
       # The goal chain "clean install" ensures modules are cleaned and artifacts are built/installed to the local repo.
-      - name: Build with Maven
-        run: mvn -B -ntp clean install
+      - name: Build with Maven Wrapper
+        run: ./mvnw -B -ntp clean install
         working-directory: ./
 
       # 5) Run unit tests explicitly (optional as "install" already runs tests unless -DskipTests is set).
       # Using -ntp again to keep logs concise; tests run with the configured surefire/failsafe plugins in the project.
-      - name: Run tests
-        run: mvn -ntp test
+      - name: Run tests with Maven Wrapper
+        run: ./mvnw -ntp test
+        working-directory: ./
