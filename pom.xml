@@ -31,7 +31,7 @@
         <cloudevent.version>4.0.1</cloudevent.version>
         <hibernate.version>7.1.11.Final</hibernate.version>
         <micrometer.version>1.16.1</micrometer.version>
-        <micrometer.tracing.version>1.6.0</micrometer.tracing.version>
+        <micrometer.tracing.version>1.6.1</micrometer.tracing.version>
         <micrometer.tracing.bridge.brave.version>1.6.0</micrometer.tracing.bridge.brave.version>
         <openapi.generator.maven.plugin.version>2024.1</openapi.generator.maven.plugin.version>
         <jackson.databind.version>3.0.3</jackson.databind.version>
