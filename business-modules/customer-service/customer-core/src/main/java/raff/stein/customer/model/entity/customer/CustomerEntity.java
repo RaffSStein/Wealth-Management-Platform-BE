@@ -71,42 +71,54 @@ public class CustomerEntity extends BaseDateEntity<UUID> {
     private CustomerType customerType;
 
     @Column
+    @Setter
     private String firstName; // Only for individual
 
     @Column
+    @Setter
     private String lastName; // Only for individual
 
     @Column
+    @Setter
     private LocalDate dateOfBirth;
 
     @Column
+    @Setter
     private String gender;
 
     @Column(length = 2)
+    @Setter
     private String nationality; // ISO 3166-1 alpha-2
 
     @Column
     private String companyName; // Only for corporate
 
     @Column(nullable = false)
+    @Setter
     private String taxId;
 
     @Column
+    @Setter
     private String phoneNumber;
 
     @Column
+    @Setter
     private String addressLine1;
 
     @Column
+    @Setter
     private String addressLine2; // Optional
 
     @Column
+    @Setter
     private String city;
 
     @Column
+    @Setter
     private String zipCode;
 
     @Column(length = 2)
+    @Setter
     private String country; // ISO 3166-1 alpha-2
 
     @Enumerated(EnumType.STRING)

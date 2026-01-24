@@ -66,9 +66,6 @@ public class CustomerService {
     public List<Customer> getCustomersByUserId(UUID userId) {
         log.debug("Retrieving customers for userId: [{}]", userId);
         List<CustomerEntity> customerEntities = customerRepository.findByUserId(userId);
-        if (customerEntities.isEmpty()) {
-            throw new IllegalArgumentException("No customers found for user ID: " + userId);
-        }
         return customerEntities
                 .stream()
                 .map(customerToCustomerEntityMapper::toCustomer)

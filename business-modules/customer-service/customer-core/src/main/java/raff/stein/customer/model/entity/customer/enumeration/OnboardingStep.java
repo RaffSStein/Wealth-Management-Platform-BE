@@ -5,13 +5,14 @@ import lombok.Getter;
 @Getter
 public enum OnboardingStep {
 
-    INIT(1),                   // step 1
-    DOCUMENTS(2),              // step 1.1
-    FINANCIALS(3),             // step 2
-    GOALS(4),                  // step 3
-    MIFID(5),                  // step 4
-    AML(6),                    // step 5
-    FINALIZE(7);               // step 6
+    INIT(1),
+    PERSONAL_DETAILS(2),
+    DOCUMENTS(3),
+    FINANCIALS(4),
+    GOALS(5),
+    MIFID(6),
+    AML(7),
+    FINALIZE(8);
 
     private final int order;
 

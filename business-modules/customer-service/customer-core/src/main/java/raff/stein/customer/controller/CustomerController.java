@@ -6,12 +6,14 @@ import org.openapitools.api.CustomerApi;
 import org.openapitools.model.CustomerDTO;
 import org.openapitools.model.CustomerFinancialDTO;
 import org.openapitools.model.CustomerGoalDTO;
+import org.openapitools.model.CustomerPersonalDetailsDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import raff.stein.customer.controller.mapper.customer.CustomerDTOToCustomerMapper;
 import raff.stein.customer.model.bo.customer.Customer;
 import raff.stein.customer.model.bo.customer.CustomerFinancials;
 import raff.stein.customer.model.bo.customer.CustomerGoals;
+import raff.stein.customer.model.bo.customer.CustomerPersonalDetails;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
 import raff.stein.customer.service.CustomerService;
 
@@ -31,6 +33,19 @@ public class CustomerController implements CustomerApi {
         Customer customerInput = customerDTOToCustomerMapper.toCustomer(customerDTO);
         Customer createdCustomer = customerService.initCustomer(customerInput);
         CustomerDTO responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(createdCustomer);
+        return ResponseEntity.ok(responseCustomerDTO);
+    }
+
+    @Override
+    public ResponseEntity<CustomerDTO> updateCustomerPersonalDetails(UUID customerId, CustomerPersonalDetailsDTO customerPersonalDetailsDTO) {
+        CustomerPersonalDetails customerPersonalDetails = customerDTOToCustomerMapper.toCustomerPersonalDetails(customerPersonalDetailsDTO);
+        // update customer personal details
+        Customer customer = customerService.updateCustomer(
+                customerId,
+                customerPersonalDetails);
+        // record the onboarding step
+        customerService.proceedToOnboardingStep(customerId, OnboardingStep.PERSONAL_DETAILS);
+        CustomerDTO responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(customer);
         return ResponseEntity.ok(responseCustomerDTO);
     }
 
