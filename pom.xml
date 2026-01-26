@@ -37,7 +37,7 @@
         <jackson.databind.version>3.0.3</jackson.databind.version>
         <spring.retry.version>2.0.12</spring.retry.version>
         <jjwt.version>0.13.0</jjwt.version>
-        <spring.boot.cache.version>4.0.0</spring.boot.cache.version>
+        <spring.boot.cache.version>4.0.2</spring.boot.cache.version>
     </properties>
 
     <dependencyManagement>
