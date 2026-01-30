@@ -9,3 +9,9 @@ spring:
     check-template-location: false
   config:
     import: classpath:kafka-shared-properties.yaml,classpath:db-shared-properties.yaml,classpath:cache-shared-properties.yaml
+
+platform:
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      model-name: llama3.1
