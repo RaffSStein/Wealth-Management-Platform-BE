@@ -61,25 +61,29 @@ public class JwtTokenParser {
 
     private Set<String> extractRoles(Claims claims) {
         Object raw = claims.get("roles");
-        if (raw == null) {
-            return Collections.emptySet();
-        }
-        if (raw instanceof Collection<?>) {
-            return ((Collection<?>) raw).stream()
-                    .filter(Objects::nonNull)
-                    .map(Object::toString)
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toUnmodifiableSet());
-        }
-        if (raw instanceof String str) {
-            if (str.isBlank()) {
+        switch (raw) {
+            case null -> {
                 return Collections.emptySet();
             }
-            return Arrays.stream(str.split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toUnmodifiableSet());
+            case Collection<?> objects -> {
+                return objects.stream()
+                        .filter(Objects::nonNull)
+                        .map(Object::toString)
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.toUnmodifiableSet());
+            }
+            case String str -> {
+                if (str.isBlank()) {
+                    return Collections.emptySet();
+                }
+                return Arrays.stream(str.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.toUnmodifiableSet());
+            }
+            default -> {
+            }
         }
         log.warn("Unexpected type for roles claim: {}", raw.getClass().getName());
         return Collections.emptySet();
