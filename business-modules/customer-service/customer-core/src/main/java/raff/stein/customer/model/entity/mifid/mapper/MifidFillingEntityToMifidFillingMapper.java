@@ -15,6 +15,7 @@ public interface MifidFillingEntityToMifidFillingMapper {
     MifidFillingEntityToMifidFillingMapper MAPPER = Mappers.getMapper(MifidFillingEntityToMifidFillingMapper.class);
 
     @Mapping(target = "fillingId", source = "id")
+    @Mapping(target = "customerRiskProfile.profile", source = "calculatedRiskProfile")
     MifidFilling toMifidFilling(MifidFillingEntity mifidFillingEntity);
 
     @Mapping(target = "responses", ignore = true)

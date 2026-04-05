@@ -38,6 +38,8 @@
         <spring.retry.version>2.0.12</spring.retry.version>
         <jjwt.version>0.13.0</jjwt.version>
         <spring.boot.cache.version>4.0.0</spring.boot.cache.version>
+        <langchain4j.bom.version>0.35.0</langchain4j.bom.version>
+        <junit.version>6.0.1</junit.version>
     </properties>
 
     <dependencyManagement>
@@ -216,6 +218,23 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-redis</artifactId>
                 <version>${spring.boot.cache.version}</version>
+            </dependency>
+
+            <!-- BOMs definitions, in order -->
+            <!-- Enforce consistent JUnit versions across all modules -->
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-bom</artifactId>
+                <version>${langchain4j.bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
