@@ -29,6 +29,7 @@ public class AmlVerificationEntity extends BaseDateEntity<Long> {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "customer_id", nullable = false)
+    @Setter
     private CustomerEntity customer;
 
     @OneToMany(mappedBy = "amlVerification", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -16,7 +16,7 @@ public interface AmlVerificationToAmlVerificationEntityMapper {
     @Mapping(target = "customer.riskProfile", ignore = true)
     AmlVerification toAmlVerification(AmlVerificationEntity entity);
 
-    @Mapping(target = "customer.riskProfile", ignore = true)
-    @Mapping(target = "customer.riskScore", ignore = true)
+    // a customer mapped from the BO would be a detached copy without @Version: the caller must set a managed reference
+    @Mapping(target = "customer", ignore = true)
     AmlVerificationEntity toAmlVerificationEntity(AmlVerification amlVerification);
 }

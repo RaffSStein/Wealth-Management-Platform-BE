@@ -8,6 +8,7 @@ import raff.stein.customer.event.producer.CustomerCreatedEventPublisher;
 import raff.stein.customer.event.producer.CustomerRejectedEventPublisher;
 import raff.stein.customer.model.bo.aml.AmlVerification;
 import raff.stein.customer.model.bo.customer.Customer;
+import raff.stein.customer.model.entity.aml.AmlVerificationEntity;
 import raff.stein.customer.model.entity.aml.mapper.AmlVerificationToAmlVerificationEntityMapper;
 import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
@@ -81,8 +82,10 @@ public class AmlService {
                 .amlResult(amlResult)
                 .build();
 
-        amlVerificationRepository.save(
-                amlVerificationMapper.toAmlVerificationEntity(amlVerification));
+        final AmlVerificationEntity amlVerificationEntity = amlVerificationMapper.toAmlVerificationEntity(amlVerification);
+        // the customer comes from the event payload: reference the persisted row by id instead of saving a copy of it
+        amlVerificationEntity.setCustomer(customerRepository.getReferenceById(customer.getId()));
+        amlVerificationRepository.save(amlVerificationEntity);
 
         // Proceed with onboarding based on AML result
         onboardingService.proceedToStep(
