@@ -23,6 +23,7 @@ import raff.stein.platformcore.exception.types.notimplemented.NotImplementedExce
 import raff.stein.platformcore.exception.types.unauthorized.AuthenticationException;
 import raff.stein.platformcore.exception.types.unauthorized.JwtTokenException;
 import raff.stein.platformcore.exception.types.unauthorized.WmpContextException;
+import tools.jackson.databind.DatabindException;
 import tools.jackson.databind.exc.InvalidFormatException;
 
 import java.util.Optional;
@@ -64,12 +65,17 @@ public class GlobalControllerExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleUnreadableRequestBody(HttpMessageNotReadableException ex) {
-        final String errorMessage = ex.getMostSpecificCause() instanceof InvalidFormatException invalidFormatException
-                ? String.format(
-                        ErrorCode.REQUEST_VALIDATION_ERROR.getMessageTemplate(),
-                        getFieldPath(invalidFormatException),
-                        invalidFormatException.getValue())
-                : "Malformed request body";
+        final String errorMessage = findDatabindException(ex)
+                .filter(databindException -> !databindException.getPath().isEmpty())
+                .map(databindException -> databindException instanceof InvalidFormatException invalidFormatException
+                        ? String.format(
+                                ErrorCode.REQUEST_VALIDATION_ERROR.getMessageTemplate(),
+                                getFieldPath(databindException),
+                                invalidFormatException.getValue())
+                        // e.g. ValueInstantiationException from a generated enum's @JsonCreator: the rejected
+                        // value is not exposed, so name the field only
+                        : String.format("Invalid value for field [%s]", getFieldPath(databindException)))
+                .orElse("Malformed request body");
 
         log.warn("Unreadable request body traceId={} error=[{}]", getTraceId(), errorMessage, ex);
 
@@ -204,7 +210,20 @@ public class GlobalControllerExceptionHandler {
                 .orElse(null);
     }
 
-    private String getFieldPath(InvalidFormatException ex) {
+    // getMostSpecificCause() would skip past the Jackson exception (e.g. to the IllegalArgumentException thrown by a
+    // generated enum's fromValue), so walk the chain to the first DatabindException, which carries the field path
+    private Optional<DatabindException> findDatabindException(Throwable ex) {
+        Throwable current = ex;
+        while (current != null) {
+            if (current instanceof DatabindException databindException) {
+                return Optional.of(databindException);
+            }
+            current = current.getCause() == current ? null : current.getCause();
+        }
+        return Optional.empty();
+    }
+
+    private String getFieldPath(DatabindException ex) {
         return ex.getPath().stream()
                 .map(reference -> reference.getPropertyName() != null
                         ? reference.getPropertyName()
