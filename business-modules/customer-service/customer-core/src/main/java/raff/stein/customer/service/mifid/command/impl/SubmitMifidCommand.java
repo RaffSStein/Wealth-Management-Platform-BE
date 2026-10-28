@@ -8,10 +8,15 @@ import org.springframework.stereotype.Component;
 import raff.stein.customer.model.bo.mifid.filling.CustomerRiskProfile;
 import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
 import raff.stein.customer.model.bo.mifid.filling.MifidResponse;
+import raff.stein.customer.model.entity.customer.CustomerEntity;
+import raff.stein.customer.model.entity.mifid.MifidFillingEntity;
 import raff.stein.customer.model.entity.mifid.RiskProfileConfigurationEntity;
+import raff.stein.customer.repository.customer.CustomerRepository;
+import raff.stein.customer.repository.mifid.MifidFillingRepository;
 import raff.stein.customer.repository.mifid.RiskProfileConfigurationRepository;
 import raff.stein.customer.service.mifid.command.MifidCommand;
 import raff.stein.customer.service.mifid.enumeration.MifidActionType;
+import raff.stein.platformcore.exception.types.notfound.GenericObjectNotFoundException;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +27,8 @@ import java.util.UUID;
 public class SubmitMifidCommand implements MifidCommand {
 
     private final RiskProfileConfigurationRepository riskProfileConfigurationRepository;
+    private final MifidFillingRepository mifidFillingRepository;
+    private final CustomerRepository customerRepository;
 
     @Override
     public MifidActionType getActionType() {
@@ -32,7 +39,7 @@ public class SubmitMifidCommand implements MifidCommand {
     public MifidFilling execute(@NonNull UUID customerId, @Nullable MifidFilling mifidFilling) {
         // answers to all questions are checked in pre hook of SubmitMifidWorkflow
         // mifid filling status is set in post hook of SubmitMifidWorkflow
-        // just calculate customer risk profile here
+        // calculate and persist the customer risk profile here
         if(mifidFilling == null) {
             throw new IllegalArgumentException("MifidFilling cannot be null for action type: " + getActionType());
         }
@@ -54,15 +61,23 @@ public class SubmitMifidCommand implements MifidCommand {
                 .findFirst()
                 .map(RiskProfileConfigurationEntity::getProfileLabel)
                 .orElse("UNDEFINED");
-        log.info("Calculated risk profile: {} with score: {} for customer with ID: {}", riskProfile, totalScore, customerId);
+        log.info("Calculated risk profile: [{}] with score: [{}] for customer with ID: [{}]", riskProfile, totalScore, customerId);
         // 4. set risk profile in mifid filling
         mifidFilling.setCustomerRiskProfile(
                 CustomerRiskProfile.builder()
                         .profile(riskProfile)
                         .score(totalScore)
                         .build());
-        // 5. save customer risk profile
-        //TODO
+        // 5. save customer risk profile: on the filling (history) and on the customer (latest, for customer reads)
+        final MifidFillingEntity mifidFillingEntity = mifidFillingRepository
+                .findByIdAndCustomerId(mifidFilling.getFillingId(), customerId)
+                .orElseThrow(GenericObjectNotFoundException.with(String.valueOf(mifidFilling.getFillingId())));
+        mifidFillingEntity.setCalculatedRiskProfile(riskProfile);
+        mifidFillingEntity.setRiskScore(totalScore);
+        final CustomerEntity customerEntity = customerRepository.findById(customerId)
+                .orElseThrow(GenericObjectNotFoundException.with(customerId.toString()));
+        customerEntity.setRiskProfile(riskProfile);
+        customerEntity.setRiskScore(totalScore);
         return mifidFilling;
     }
 }

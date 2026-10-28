@@ -2,6 +2,7 @@ package raff.stein.customer.model.bo.customer;
 
 import lombok.Builder;
 import lombok.Data;
+import raff.stein.customer.model.bo.mifid.filling.CustomerRiskProfile;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,6 +31,7 @@ public class Customer {
     private String country;
     private String customerStatus;
     private LocalDate onboardingDate;
+    private CustomerRiskProfile riskProfile;
 
     // related objects
     private List<CustomerFinancials> customerFinancials;

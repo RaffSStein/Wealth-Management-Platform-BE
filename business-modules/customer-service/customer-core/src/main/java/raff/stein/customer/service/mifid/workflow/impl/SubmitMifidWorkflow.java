@@ -4,9 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import raff.stein.customer.event.producer.CustomerOnboardedEventPublisher;
 import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
+import raff.stein.customer.model.entity.customer.CustomerEntity;
+import raff.stein.customer.model.entity.customer.enumeration.CustomerStatus;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
 import raff.stein.customer.model.entity.mifid.MifidFillingEntity;
 import raff.stein.customer.model.entity.mifid.mapper.MifidFillingEntityToMifidFillingMapper;
+import raff.stein.customer.repository.customer.CustomerRepository;
 import raff.stein.customer.repository.mifid.MifidQuestionnaireRepository;
 import raff.stein.customer.service.mifid.command.impl.SubmitMifidCommand;
 import raff.stein.customer.service.mifid.enumeration.MifidActionType;
@@ -17,6 +20,7 @@ import raff.stein.customer.service.onboarding.OnboardingService;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
 import raff.stein.platformcore.exception.ErrorCode;
 import raff.stein.platformcore.exception.types.badrequest.RequestValidationException;
+import raff.stein.platformcore.exception.types.notfound.GenericObjectNotFoundException;
 
 import java.util.List;
 import java.util.Map;
@@ -30,6 +34,7 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
     private final MifidQuestionnaireRepository mifidQuestionnaireRepository;
     private final OnboardingService onboardingService;
     private final CustomerOnboardedEventPublisher customerOnboardedEventPublisher;
+    private final CustomerRepository customerRepository;
 
     private static final MifidFillingEntityToMifidFillingMapper mifidFillingEntityToMifidFillingMapper =
             MifidFillingEntityToMifidFillingMapper.MAPPER;
@@ -60,8 +65,21 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
     public List<MifidWorkflowStep> postHooks() {
         return List.of(
                 calculateNextStatus(),              // set and save status on MifidFilling
+                markCustomerPendingVerification(),  // customer awaits the AML check
                 updateOnboardingStatus(),           // update onboarding step status
                 publishCustomerOnboardedEvent());
+    }
+
+    private MifidWorkflowStep markCustomerPendingVerification() {
+        return context -> {
+            final CustomerEntity customerEntity = customerRepository.findById(context.getCustomerId())
+                    .orElseThrow(GenericObjectNotFoundException.with(context.getCustomerId().toString()));
+            // only during onboarding: a MiFID renewal must not demote an already ACTIVE customer
+            if (customerEntity.getCustomerStatus() == CustomerStatus.DRAFT) {
+                customerEntity.setCustomerStatus(CustomerStatus.PENDING_VERIFICATION);
+            }
+            return context;
+        };
     }
 
 

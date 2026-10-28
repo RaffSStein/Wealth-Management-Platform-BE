@@ -123,9 +123,20 @@ public class CustomerEntity extends BaseDateEntity<UUID> {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Setter
     private CustomerStatus customerStatus;
 
     @Column
     private LocalDate onboardingDate;
+
+    // latest submitted MiFID result, denormalized for customer reads (dashboards, advisor lists);
+    // the full history stays on the MiFID fillings
+    @Column(length = 100)
+    @Setter
+    private String riskProfile;
+
+    @Column
+    @Setter
+    private Integer riskScore;
 
 }

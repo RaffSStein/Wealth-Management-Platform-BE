@@ -10,7 +10,10 @@ import org.springframework.stereotype.Component;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
 import raff.stein.customer.service.onboarding.OnboardingService;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
+import raff.stein.customer.service.onboarding.handler.impl.FinalizeStepHandler;
 import raff.stein.platformcore.messaging.consumer.WMPBaseEventConsumer;
+
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -39,6 +42,7 @@ public class CustomerCreatedEventConsumer extends WMPBaseEventConsumer {
                 OnboardingStep.FINALIZE,
                 OnboardingStepContext.builder()
                         .customerId(customerCreatedEvent.getCustomer().getId())
+                        .metadata(Map.of(FinalizeStepHandler.AML_PASSED_METADATA_KEY, true))
                         .build());
 
     }

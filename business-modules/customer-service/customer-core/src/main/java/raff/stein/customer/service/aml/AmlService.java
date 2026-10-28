@@ -22,7 +22,7 @@ import raff.stein.customer.service.aml.utils.JurisdictionUtils;
 import raff.stein.customer.service.onboarding.OnboardingService;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
 
-import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -73,7 +73,8 @@ public class AmlService {
                 .amlCaseId(context.getAmlCaseId())
                 .customer(customer)
                 .jurisdiction(jurisdiction)
-                .verificationDate(OffsetDateTime.from(amlResult.finishedAt()))
+                // OffsetDateTime.from(Instant) always throws: an Instant has no offset, so pin it to UTC
+                .verificationDate(amlResult.finishedAt().atOffset(ZoneOffset.UTC))
                 .status(amlResult.overallStatus().name())
                 .countryCode(customer.getCountry())
                 .verificationResult(amlResult.overallStatus().name())

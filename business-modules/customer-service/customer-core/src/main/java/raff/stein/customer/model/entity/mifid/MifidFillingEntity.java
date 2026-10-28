@@ -60,7 +60,12 @@ public class MifidFillingEntity extends BaseDateEntity<Long> {
     private LocalDateTime fillingDate;
 
     @Column(length = 100)
+    @Setter
     private String calculatedRiskProfile;
+
+    @Column
+    @Setter
+    private Integer riskScore;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
