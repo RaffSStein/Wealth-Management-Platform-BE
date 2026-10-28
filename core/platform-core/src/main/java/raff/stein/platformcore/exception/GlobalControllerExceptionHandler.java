@@ -8,12 +8,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.ErrorCategory;
 import org.openapitools.model.ErrorResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import raff.stein.platformcore.exception.types.GenericException;
 import raff.stein.platformcore.exception.types.badrequest.RequestValidationException;
+import raff.stein.platformcore.exception.types.conflict.InvalidStateTransitionException;
 import raff.stein.platformcore.exception.types.conflict.VersionLockingException;
 import raff.stein.platformcore.exception.types.forbidden.AccessDeniedException;
 import raff.stein.platformcore.exception.types.notfound.GenericObjectNotFoundException;
@@ -21,6 +23,7 @@ import raff.stein.platformcore.exception.types.notimplemented.NotImplementedExce
 import raff.stein.platformcore.exception.types.unauthorized.AuthenticationException;
 import raff.stein.platformcore.exception.types.unauthorized.JwtTokenException;
 import raff.stein.platformcore.exception.types.unauthorized.WmpContextException;
+import tools.jackson.databind.exc.InvalidFormatException;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -51,10 +54,30 @@ public class GlobalControllerExceptionHandler {
 
         return new ErrorResponse()
                 .errorMessage(errorMessages)
-                .errorCode(getErrorCode(ex))
-                .category(getErrorCategory(ex))
+                .errorCode(ErrorCode.REQUEST_VALIDATION_ERROR.name())
+                .category(ErrorCode.REQUEST_VALIDATION_ERROR.getErrorCategory())
                 .traceId(getTraceId());
 
+    }
+
+    // Malformed JSON or values that can't be bound (e.g. unknown enum constant) are client errors, not 500s
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleUnreadableRequestBody(HttpMessageNotReadableException ex) {
+        final String errorMessage = ex.getMostSpecificCause() instanceof InvalidFormatException invalidFormatException
+                ? String.format(
+                        ErrorCode.REQUEST_VALIDATION_ERROR.getMessageTemplate(),
+                        getFieldPath(invalidFormatException),
+                        invalidFormatException.getValue())
+                : "Malformed request body";
+
+        log.warn("Unreadable request body traceId={} error=[{}]", getTraceId(), errorMessage, ex);
+
+        return new ErrorResponse()
+                .errorMessage(errorMessage)
+                .errorCode(ErrorCode.REQUEST_VALIDATION_ERROR.name())
+                .category(ErrorCode.REQUEST_VALIDATION_ERROR.getErrorCategory())
+                .traceId(getTraceId());
     }
 
     /**
@@ -116,7 +139,8 @@ public class GlobalControllerExceptionHandler {
      * ============= CONFLICT (409) exception handlers =============
      */
     @ExceptionHandler({
-            VersionLockingException.class
+            VersionLockingException.class,
+            InvalidStateTransitionException.class
             // Add any specific conflict exceptions here
     })
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -178,6 +202,14 @@ public class GlobalControllerExceptionHandler {
                 .map(Span::context)
                 .map(TraceContext::traceId)
                 .orElse(null);
+    }
+
+    private String getFieldPath(InvalidFormatException ex) {
+        return ex.getPath().stream()
+                .map(reference -> reference.getPropertyName() != null
+                        ? reference.getPropertyName()
+                        : "[" + reference.getIndex() + "]")
+                .collect(Collectors.joining("."));
     }
 
     private String getErrorCode(Exception ex) {
