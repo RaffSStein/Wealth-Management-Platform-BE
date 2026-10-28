@@ -23,4 +23,12 @@ public interface MifidFillingRepository extends JpaRepository<MifidFillingEntity
     })
     Optional<MifidFillingEntity> findTopByCustomerIdAndStatusNotOrderByFillingDateDesc(UUID customerId, MifidFillingStatus status);
 
+    // scoped to the customer so a filling of another customer can't be read or changed through this path
+    @EntityGraph(attributePaths = {
+            "responses",
+            "responses.question",
+            "responses.answerOption"
+    })
+    Optional<MifidFillingEntity> findByIdAndCustomerId(Long id, UUID customerId);
+
 }

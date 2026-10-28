@@ -8,6 +8,7 @@ import raff.stein.customer.service.mifid.command.impl.SaveMifidCommand;
 import raff.stein.customer.service.mifid.enumeration.MifidActionType;
 import raff.stein.customer.service.mifid.workflow.MifidWorkflow;
 import raff.stein.customer.service.mifid.workflow.step.MifidWorkflowStep;
+import raff.stein.customer.service.mifid.workflow.step.state.impl.UpdateMifidStateHandler;
 import raff.stein.customer.service.onboarding.OnboardingService;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
 
@@ -20,6 +21,8 @@ public class SaveMifidWorkflow implements MifidWorkflow {
 
     private final SaveMifidCommand saveCommand;
     private final OnboardingService onboardingService;
+    // status derivation is the same for save and update
+    private final UpdateMifidStateHandler updateMifidStateHandler;
 
     @Override
     public MifidActionType getActionType() {
@@ -42,7 +45,18 @@ public class SaveMifidWorkflow implements MifidWorkflow {
 
     @Override
     public List<MifidWorkflowStep> postHooks() {
-        return List.of(updateOnboardingStatus());
+        return List.of(
+                calculateStatus(),                  // DRAFT or COMPLETED, derived from the answers
+                updateOnboardingStatus());
+    }
+
+    private MifidWorkflowStep calculateStatus() {
+        return context -> {
+            if (context.getResultBo() != null) {
+                updateMifidStateHandler.calculateAndSetNewStatus(context.getResultBo(), context.getCustomerId());
+            }
+            return context;
+        };
     }
 
     private MifidWorkflowStep updateOnboardingStatus() {

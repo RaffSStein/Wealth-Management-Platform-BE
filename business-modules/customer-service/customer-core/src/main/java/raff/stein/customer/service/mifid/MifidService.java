@@ -6,7 +6,6 @@ import org.openapitools.model.MifidFillingDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import raff.stein.customer.controller.mapper.mifid.MifidFillingToMifidFillingDTOMapper;
-import raff.stein.customer.exception.CustomerException;
 import raff.stein.customer.model.bo.mifid.config.MifidQuestionnaireConfig;
 import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
 import raff.stein.customer.model.entity.mifid.MifidQuestionnaireEntity;
@@ -14,6 +13,8 @@ import raff.stein.customer.model.entity.mifid.mapper.MifidQuestionnaireEntityToM
 import raff.stein.customer.repository.mifid.MifidQuestionnaireRepository;
 import raff.stein.customer.service.mifid.enumeration.MifidActionType;
 import raff.stein.customer.service.mifid.workflow.MifidWorkflowDispatcher;
+import raff.stein.platformcore.exception.ErrorCode;
+import raff.stein.platformcore.exception.types.notfound.GenericObjectNotFoundException;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -35,8 +36,11 @@ public class MifidService {
     @Transactional(readOnly = true)
     public MifidQuestionnaireConfig getLatestValidMifidQuestionnaireConfig() {
         log.info("Fetching latest valid Mifid questionnaire configuration");
-        MifidQuestionnaireEntity mifidQuestionnaireEntity = mifidQuestionnaireRepository.findValidQuestionnaire(LocalDate.now())
-                .orElseThrow(() -> new CustomerException("No valid Mifid questionnaire configuration found for today date: " + LocalDate.now()));
+        final LocalDate today = LocalDate.now();
+        MifidQuestionnaireEntity mifidQuestionnaireEntity = mifidQuestionnaireRepository.findValidQuestionnaire(today)
+                .orElseThrow(() -> new GenericObjectNotFoundException(
+                        ErrorCode.OBJECT_NOT_FOUND,
+                        "No valid Mifid questionnaire configuration found for date: [" + today + "]"));
 
         return mifidQuestionnaireEntityToMifidQuestionnaireMapper.toMifidQuestionnaireConfig(mifidQuestionnaireEntity);
     }

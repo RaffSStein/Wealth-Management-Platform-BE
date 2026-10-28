@@ -7,47 +7,35 @@ import raff.stein.customer.model.entity.mifid.enumeration.MifidFillingStatus;
 import raff.stein.customer.repository.mifid.MifidFillingRepository;
 import raff.stein.customer.repository.mifid.MifidQuestionnaireRepository;
 import raff.stein.customer.service.mifid.enumeration.MifidActionType;
+import raff.stein.platformcore.exception.types.conflict.InvalidStateTransitionException;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 @Component
 public class SubmitMifidStateHandler extends BaseMifidStateHandler {
 
-    private final MifidFillingRepository mifidFillingRepository;
-
     protected SubmitMifidStateHandler(
             MifidFillingRepository mifidFillingRepository,
             MifidQuestionnaireRepository mifidQuestionnaireRepository) {
         super(mifidFillingRepository, mifidQuestionnaireRepository);
-        this.mifidFillingRepository = mifidFillingRepository;
     }
 
     @Override
     public void validateStatus(MifidFillingStatus currentStatus, MifidActionType actionType) {
         // No strict validation for other actions
-        if (Objects.requireNonNull(actionType) == MifidActionType.SUBMIT && !currentStatus.isSubmittable()) {
-            throw new IllegalStateException("Cannot submit MIFID unless it is" +
-                    MifidFillingStatus.submittableStatuses() +
-                    ". Current status: " +
-                    currentStatus);
+        if (Objects.requireNonNull(actionType) == MifidActionType.SUBMIT
+                && (currentStatus == null || !currentStatus.isSubmittable())) {
+            throw InvalidStateTransitionException.of(
+                    "submit MIFID filling", currentStatus, MifidFillingStatus.submittableStatuses());
         }
     }
 
     @Override
     public void calculateAndSetNewStatus(MifidFilling mifidFilling, UUID customerId) {
-        Optional<MifidFillingEntity> mifidFillingEntityOptional = mifidFillingRepository
-                .findTopByCustomerIdAndStatusNotOrderByFillingDateDesc(customerId, MifidFillingStatus.DEPRECATED);
-
-        mifidFillingEntityOptional.ifPresentOrElse(
-                mifidFillingEntity -> {
-                    mifidFillingEntity.setStatus(MifidFillingStatus.SUBMITTED);
-                    mifidFilling.setStatus(MifidFillingStatus.SUBMITTED);
-                },
-                () -> {
-                    // if no existing filling is found, we cannot calculate status
-                    throw new IllegalStateException("No existing Mifid filling found for customer with ID: " + customerId);
-                });
+        final MifidFillingEntity mifidFillingEntity = findTargetFilling(mifidFilling, customerId)
+                .orElseThrow(() -> new IllegalStateException("No existing Mifid filling found for customer with ID: " + customerId));
+        mifidFillingEntity.setStatus(MifidFillingStatus.SUBMITTED);
+        mifidFilling.setStatus(MifidFillingStatus.SUBMITTED);
     }
 }

@@ -60,6 +60,8 @@ public class MifidController implements MifidApi {
             UUID customerId,
             Long fillingId,
             MifidFillingDTO mifidFillingDTO) {
+        // the path is authoritative over any fillingId sent in the body
+        mifidFillingDTO.setFillingId(fillingId);
         final MifidFilling mifidFilling = mifidService.handleFilling(
                 MifidActionType.UPDATE,
                 customerId,

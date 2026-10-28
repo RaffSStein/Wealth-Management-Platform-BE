@@ -59,12 +59,15 @@ public class MifidResponseEntity extends BaseEntity<Long> {
     // Fields
 
     @Column(name = "free_text", length = 1000)
+    @Setter
     private String freeText;
 
     @Column(name = "numeric_value")
+    @Setter
     private Double numericValue;
 
     @Column(name = "date_value")
+    @Setter
     private LocalDate dateValue;
 
 }

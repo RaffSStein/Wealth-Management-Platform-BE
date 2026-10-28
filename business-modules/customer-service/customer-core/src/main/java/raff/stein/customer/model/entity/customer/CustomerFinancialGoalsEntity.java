@@ -57,7 +57,7 @@ public class CustomerFinancialGoalsEntity extends BaseDateEntity<Long> {
     @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal targetAmount;
 
-    @Column(nullable = false)
+    @Column
     private LocalDate targetDate;
 
     public void updateFrom(CustomerFinancialGoalsEntity source) {

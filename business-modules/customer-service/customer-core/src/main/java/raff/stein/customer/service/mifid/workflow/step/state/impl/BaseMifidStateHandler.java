@@ -8,6 +8,7 @@ import raff.stein.customer.repository.mifid.MifidFillingRepository;
 import raff.stein.customer.repository.mifid.MifidQuestionnaireRepository;
 import raff.stein.customer.service.mifid.enumeration.MifidActionType;
 import raff.stein.customer.service.mifid.workflow.step.state.MifidStateHandler;
+import raff.stein.platformcore.exception.types.notfound.GenericObjectNotFoundException;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -25,54 +26,49 @@ public abstract class BaseMifidStateHandler implements MifidStateHandler {
         this.mifidQuestionnaireRepository = mifidQuestionnaireRepository;
     }
 
+    // currentStatus is null when the customer has no filling yet
     public abstract void validateStatus(MifidFillingStatus currentStatus, MifidActionType actionType);
 
     @Override
     public void validate(MifidFilling mifidFilling, UUID customerId, MifidActionType actionType) {
-        MifidFillingStatus currentStatus = mifidFillingRepository
-                .findTopByCustomerIdAndStatusNotOrderByFillingDateDesc(customerId, MifidFillingStatus.DEPRECATED)
+        final MifidFillingStatus currentStatus = findTargetFilling(mifidFilling, customerId)
                 .map(MifidFillingEntity::getStatus)
                 .orElse(null);
-
         validateStatus(currentStatus, actionType);
     }
 
     @Override
     public void calculateAndSetNewStatus(MifidFilling mifidFilling, UUID customerId) {
-        Optional<MifidFillingEntity> mifidFillingEntityOptional = mifidFillingRepository
-                .findTopByCustomerIdAndStatusNotOrderByFillingDateDesc(customerId, MifidFillingStatus.DEPRECATED);
-
-        mifidFillingEntityOptional.ifPresentOrElse(
-                mifidFillingEntity ->
-                        calculateStatus(mifidFilling).ifPresent(
-                                status -> {
-                                    mifidFillingEntity.setStatus(status);
-                                    mifidFilling.setStatus(status);
-                                }),
-                () -> {
-                    // if no existing filling is found, we cannot calculate status
-                    throw new IllegalStateException("No existing Mifid filling found for customer with ID: " + customerId);
-                });
+        final MifidFillingEntity mifidFillingEntity = findTargetFilling(mifidFilling, customerId)
+                .orElseThrow(() -> new IllegalStateException("No existing Mifid filling found for customer with ID: " + customerId));
+        final MifidFillingStatus status = calculateStatus(mifidFilling);
+        mifidFillingEntity.setStatus(status);
+        mifidFilling.setStatus(status);
     }
 
-    private Optional<MifidFillingStatus> calculateStatus(MifidFilling mifidFilling) {
-        long expectedQuestions = mifidQuestionnaireRepository.countQuestionsByQuestionnaireId(mifidFilling.getQuestionnaireId());
-        long answeredQuestions = countAnsweredQuestions(mifidFilling);
-
-        if (answeredQuestions == 0) {
-            return Optional.of(MifidFillingStatus.DRAFT);
+    /**
+     * Resolves the filling the operation refers to: the one identified by fillingId when provided,
+     * otherwise the latest non-deprecated filling of the customer.
+     */
+    public Optional<MifidFillingEntity> findTargetFilling(MifidFilling mifidFilling, UUID customerId) {
+        if (mifidFilling != null && mifidFilling.getFillingId() != null) {
+            final Long fillingId = mifidFilling.getFillingId();
+            return Optional.of(mifidFillingRepository.findByIdAndCustomerId(fillingId, customerId)
+                    .orElseThrow(GenericObjectNotFoundException.with(String.valueOf(fillingId))));
         }
+        return mifidFillingRepository.findTopByCustomerIdAndStatusNotOrderByFillingDateDesc(customerId, MifidFillingStatus.DEPRECATED);
+    }
 
-        if (answeredQuestions < expectedQuestions) {
-            return Optional.of(MifidFillingStatus.DRAFT);
-        }
-
-        return Optional.of(MifidFillingStatus.COMPLETED);
+    private MifidFillingStatus calculateStatus(MifidFilling mifidFilling) {
+        final long expectedQuestions = mifidQuestionnaireRepository.countQuestionsByQuestionnaireId(mifidFilling.getQuestionnaireId());
+        final long answeredQuestions = countAnsweredQuestions(mifidFilling);
+        return answeredQuestions >= expectedQuestions && answeredQuestions > 0
+                ? MifidFillingStatus.COMPLETED
+                : MifidFillingStatus.DRAFT;
     }
 
     private long countAnsweredQuestions(MifidFilling mifidFilling) {
         if (mifidFilling.getResponses() == null) return 0;
-
         return mifidFilling.getResponses().stream()
                 .filter(response -> response.getAnswerOption() != null)
                 .count();

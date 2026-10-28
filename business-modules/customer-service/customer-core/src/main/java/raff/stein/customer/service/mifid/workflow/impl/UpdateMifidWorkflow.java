@@ -52,7 +52,8 @@ public class UpdateMifidWorkflow implements MifidWorkflow {
 
     private MifidWorkflowStep calculateStatusStep() {
         return context -> {
-            updateMifidStateHandler.calculateAndSetNewStatus(context.getInputBo(), context.getCustomerId());
+            // the result holds the merged responses (stored + sent), so the status reflects the whole filling
+            updateMifidStateHandler.calculateAndSetNewStatus(context.getResultBo(), context.getCustomerId());
             return context;
         };
     }

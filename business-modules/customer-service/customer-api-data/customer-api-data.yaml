@@ -491,7 +491,10 @@ components:
       type: string
       enum:
         - INDIVIDUAL
-        - CORPORATE
+        - LEGAL_ENTITY
+        - SOLE_PROPRIETOR
+        - JOINT_ACCOUNT
+        - OTHER
 
     Gender:
       type: string
@@ -508,6 +511,8 @@ components:
         - PENDING_VERIFICATION
         - ACTIVE
         - REJECTED
+        - CLOSED
+        - DELETED
 
     FinancialTypeDTO:
       type: object
@@ -554,7 +559,7 @@ components:
       required:
           - goalType
           - targetAmount
-          - goalTimeLine
+          - goalTimeline
       properties:
         id:
           type: integer

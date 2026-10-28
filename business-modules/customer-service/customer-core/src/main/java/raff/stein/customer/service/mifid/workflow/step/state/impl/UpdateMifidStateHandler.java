@@ -5,6 +5,7 @@ import raff.stein.customer.model.entity.mifid.enumeration.MifidFillingStatus;
 import raff.stein.customer.repository.mifid.MifidFillingRepository;
 import raff.stein.customer.repository.mifid.MifidQuestionnaireRepository;
 import raff.stein.customer.service.mifid.enumeration.MifidActionType;
+import raff.stein.platformcore.exception.types.conflict.InvalidStateTransitionException;
 
 import java.util.Objects;
 
@@ -20,11 +21,11 @@ public class UpdateMifidStateHandler extends BaseMifidStateHandler {
     @Override
     public void validateStatus(MifidFillingStatus currentStatus, MifidActionType actionType) {
         // only allow updates if the current status is updatable
-        if (Objects.requireNonNull(actionType) == MifidActionType.UPDATE && !currentStatus.isUpdatable()) {
-            throw new IllegalStateException("Cannot update MIFID unless it is" +
-                    MifidFillingStatus.updatableStatuses() +
-                    ". Current status: " +
-                    currentStatus);
+        // a null status (no filling yet) is allowed: the update command inserts a new filling
+        if (Objects.requireNonNull(actionType) == MifidActionType.UPDATE
+                && currentStatus != null && !currentStatus.isUpdatable()) {
+            throw InvalidStateTransitionException.of(
+                    "update MIFID filling", currentStatus, MifidFillingStatus.updatableStatuses());
         }
     }
 }

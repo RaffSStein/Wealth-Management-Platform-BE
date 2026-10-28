@@ -6,7 +6,9 @@ import lombok.*;
 import raff.stein.platformcore.model.audit.entity.BaseEntity;
 
 @Entity
-@Table(name = "risk_profile_configuration")
+@Table(
+        name = "risk_profile_configuration",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"questionnaire_id", "profile_code"}))
 @Getter
 @Builder
 @NoArgsConstructor

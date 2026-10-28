@@ -5,6 +5,8 @@ import org.springframework.stereotype.Component;
 import raff.stein.customer.event.producer.CustomerOnboardedEventPublisher;
 import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
+import raff.stein.customer.model.entity.mifid.MifidFillingEntity;
+import raff.stein.customer.model.entity.mifid.mapper.MifidFillingEntityToMifidFillingMapper;
 import raff.stein.customer.repository.mifid.MifidQuestionnaireRepository;
 import raff.stein.customer.service.mifid.command.impl.SubmitMifidCommand;
 import raff.stein.customer.service.mifid.enumeration.MifidActionType;
@@ -13,6 +15,8 @@ import raff.stein.customer.service.mifid.workflow.step.MifidWorkflowStep;
 import raff.stein.customer.service.mifid.workflow.step.state.impl.SubmitMifidStateHandler;
 import raff.stein.customer.service.onboarding.OnboardingService;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
+import raff.stein.platformcore.exception.ErrorCode;
+import raff.stein.platformcore.exception.types.badrequest.RequestValidationException;
 
 import java.util.List;
 import java.util.Map;
@@ -27,6 +31,8 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
     private final OnboardingService onboardingService;
     private final CustomerOnboardedEventPublisher customerOnboardedEventPublisher;
 
+    private static final MifidFillingEntityToMifidFillingMapper mifidFillingEntityToMifidFillingMapper =
+            MifidFillingEntityToMifidFillingMapper.MAPPER;
 
     @Override
     public MifidActionType getActionType() {
@@ -37,6 +43,7 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
     public List<MifidWorkflowStep> preHooks() {
         return List.of(
                 validatePreviousStatus(),
+                loadPersistedFilling(),
                 validateAnswers());
     }
 
@@ -65,15 +72,27 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
         };
     }
 
+    // validation and scoring must use the stored answers, not the ones sent with the submit request
+    private MifidWorkflowStep loadPersistedFilling() {
+        return context -> {
+            final MifidFillingEntity persistedFilling = submitMifidStateHandler
+                    .findTargetFilling(context.getInputBo(), context.getCustomerId())
+                    .orElseThrow(() -> new IllegalStateException("No existing Mifid filling found for customer with ID: " + context.getCustomerId()));
+            context.setInputBo(mifidFillingEntityToMifidFillingMapper.toMifidFilling(persistedFilling));
+            return context;
+        };
+    }
+
     private MifidWorkflowStep validateAnswers() {
         return context -> {
-            MifidFilling mifidFilling = context.getInputBo();
-            long expectedQuestions = mifidQuestionnaireRepository.countQuestionsByQuestionnaireId(mifidFilling.getQuestionnaireId());
-            long answeredQuestions = countAnsweredQuestions(mifidFilling);
+            final MifidFilling mifidFilling = context.getInputBo();
+            final long expectedQuestions = mifidQuestionnaireRepository.countQuestionsByQuestionnaireId(mifidFilling.getQuestionnaireId());
+            final long answeredQuestions = countAnsweredQuestions(mifidFilling);
             if (answeredQuestions < expectedQuestions) {
-                throw new IllegalStateException("Cannot submit MIFID filling with ID: " + mifidFilling.getFillingId() +
-                        " because not all questions are answered. Answered questions: " + answeredQuestions +
-                        ", expected questions: " + expectedQuestions);
+                RequestValidationException.of(
+                        ErrorCode.REQUEST_VALIDATION_ERROR,
+                        "responses",
+                        answeredQuestions + " of " + expectedQuestions + " questions answered");
             }
             return context;
         };

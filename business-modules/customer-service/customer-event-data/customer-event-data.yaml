@@ -55,7 +55,7 @@ components:
           type: string
           format: uuid
         customerType:
-          $ref: '#/components/schemas/CustomerType'
+          $ref: '#/components/schemas/CustomerTypeEvent'
         firstName:
           type: string
         lastName:
@@ -64,7 +64,7 @@ components:
           type: string
           format: date
         gender:
-          $ref: '#/components/schemas/Gender'
+          $ref: '#/components/schemas/GenderEvent'
         nationality:
           type: string
           maxLength: 2
@@ -90,7 +90,7 @@ components:
           pattern: '^[A-Z]{2}$'
           description: ISO 3166-1 alpha-2
         customerStatus:
-          $ref: '#/components/schemas/CustomerStatus'
+          $ref: '#/components/schemas/CustomerStatusEvent'
         onboardingDate:
           type: string
           format: date
@@ -103,17 +103,17 @@ components:
           items:
               $ref: '#/components/schemas/CustomerGoal'
 
-    CustomerType:
+    CustomerTypeEvent:
       type: string
       enum: [INDIVIDUAL, LEGAL_ENTITY, SOLE_PROPRIETOR, JOINT_ACCOUNT, OTHER]
 
-    CustomerStatus:
+    CustomerStatusEvent:
       type: string
       enum: [DRAFT, PENDING_VERIFICATION, ACTIVE, REJECTED, CLOSED, DELETED]
 
-    Gender:
+    GenderEvent:
       type: string
-      enum: [MALE, FEMALE, OTHER, UNSPECIFIED]
+      enum: [MALE, FEMALE, OTHER, NOT_SPECIFIED]
 
     FinancialType:
       type: object

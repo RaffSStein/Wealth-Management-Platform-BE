@@ -1,7 +1,7 @@
 --TODO: answer scores (now fixed at 10) and risk profile configurations to be defined
 -- Insert Mifid Questionnaire
 INSERT INTO mifid_questionnaire (name, valid_from, valid_to, description, questionnaire_version, status)
-VALUES ('Mifid 2025', '2025-01-01', '2025-12-31', 'Standard Mifid questionnaire for 2025', '1.0', 'ACTIVE');
+VALUES ('Mifid 2025', '2025-01-01', '2099-12-31', 'Standard Mifid questionnaire for 2025', '1.0', 'ACTIVE');
 
 -- Insert Sections - 5 sections: Personal Information, Investment Experience, Financial Situation, Risk Tolerance, ESG Preferences
 INSERT INTO mifid_section (title, order_index, questionnaire_id)
@@ -204,7 +204,22 @@ INSERT INTO mifid_answer_option (option_text, score, order_index, code, question
 VALUES ('No influence', 5, 4, 'ESG-003-OPT4', (SELECT id FROM mifid_question WHERE code = 'ESG-003'));
 
 -- Insert Risk Profile Configurations
+-- 5 profiles splitting the achievable score range (64-145) into ~equal bands; lowest band starts at 0 so a missing
+-- optional/numeric score never falls outside every band.
+-- ON CONFLICT relies on the (questionnaire_id, profile_code) unique constraint, so re-running the script is safe.
+--TODO: recalibrate bands once answer scores are defined
 INSERT INTO risk_profile_configuration (profile_code, min_score, max_score, profile_label, questionnaire_id)
-VALUES ('CONSERVATIVE', 0, 10, 'Conservative Profile', (SELECT id FROM mifid_questionnaire WHERE name = 'Mifid 2025'));
+VALUES ('CONSERVATIVE', 0, 79, 'Conservative Profile', (SELECT id FROM mifid_questionnaire WHERE name = 'Mifid 2025'))
+ON CONFLICT (questionnaire_id, profile_code) DO NOTHING;
 INSERT INTO risk_profile_configuration (profile_code, min_score, max_score, profile_label, questionnaire_id)
-VALUES ('AGGRESSIVE', 11, 20, 'Aggressive Profile', (SELECT id FROM mifid_questionnaire WHERE name = 'Mifid 2025'));
+VALUES ('MODERATELY_CONSERVATIVE', 80, 95, 'Moderately Conservative Profile', (SELECT id FROM mifid_questionnaire WHERE name = 'Mifid 2025'))
+ON CONFLICT (questionnaire_id, profile_code) DO NOTHING;
+INSERT INTO risk_profile_configuration (profile_code, min_score, max_score, profile_label, questionnaire_id)
+VALUES ('BALANCED', 96, 112, 'Balanced Profile', (SELECT id FROM mifid_questionnaire WHERE name = 'Mifid 2025'))
+ON CONFLICT (questionnaire_id, profile_code) DO NOTHING;
+INSERT INTO risk_profile_configuration (profile_code, min_score, max_score, profile_label, questionnaire_id)
+VALUES ('MODERATELY_AGGRESSIVE', 113, 128, 'Moderately Aggressive Profile', (SELECT id FROM mifid_questionnaire WHERE name = 'Mifid 2025'))
+ON CONFLICT (questionnaire_id, profile_code) DO NOTHING;
+INSERT INTO risk_profile_configuration (profile_code, min_score, max_score, profile_label, questionnaire_id)
+VALUES ('AGGRESSIVE', 129, 145, 'Aggressive Profile', (SELECT id FROM mifid_questionnaire WHERE name = 'Mifid 2025'))
+ON CONFLICT (questionnaire_id, profile_code) DO NOTHING;
