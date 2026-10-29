@@ -9,6 +9,8 @@ import raff.stein.customer.model.entity.mifid.enumeration.MifidFillingStatus;
 import raff.stein.customer.model.entity.onboarding.CustomerOnboardingEntity;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
 
+import java.util.Optional;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -21,15 +23,17 @@ public class MifidStepHandler extends BaseOnboardingStepHandler {
 
     @Override
     public String buildStepReason(OnboardingStepContext context) {
-        final String mifidStatus = (String) context.getMetadata().get("mifidStatus");
-        if (mifidStatus != null) {
-            if (mifidStatus.equals(MifidFillingStatus.DRAFT.name())) {
-                return "MIFID step initiated";
-            } else if (mifidStatus.equals(MifidFillingStatus.SUBMITTED.name())) {
-                return "MIFID step completed";
-            }
-        }
-        throw new CustomerException("MIFID status is missing in the context metadata");
+        final MifidFillingStatus mifidStatus = Optional.ofNullable((String) context.getMetadata().get("mifidStatus"))
+                .map(MifidFillingStatus::valueOf)
+                .orElseThrow(() -> new CustomerException("MIFID status is missing in the context metadata"));
+        // save produces DRAFT or COMPLETED (all answered, not yet submitted); only submit produces SUBMITTED
+        // no default branch: a new status must be handled here explicitly or the build fails
+        return switch (mifidStatus) {
+            case DRAFT -> "MIFID step initiated";
+            case COMPLETED -> "MIFID questionnaire completed, awaiting submission";
+            case SUBMITTED -> "MIFID step completed";
+            case DEPRECATED -> throw new CustomerException("Unexpected MIFID status in the context metadata: [" + mifidStatus + "]");
+        };
     }
 
     @Override
