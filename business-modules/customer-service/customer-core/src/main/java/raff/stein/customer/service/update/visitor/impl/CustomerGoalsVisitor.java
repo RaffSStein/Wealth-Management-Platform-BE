@@ -2,25 +2,38 @@ package raff.stein.customer.service.update.visitor.impl;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import raff.stein.customer.exception.CustomerNotFoundException;
 import raff.stein.customer.model.bo.customer.Customer;
 import raff.stein.customer.model.bo.customer.CustomerGoals;
+import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.customer.model.entity.customer.CustomerFinancialGoalsEntity;
 import raff.stein.customer.model.entity.customer.mapper.CustomerGoalsToCustomerGoalsEntityMapper;
 import raff.stein.customer.model.entity.goals.GoalTypeEntity;
+import raff.stein.customer.repository.customer.CustomerRepository;
 import raff.stein.customer.repository.goal.CustomerGoalsRepository;
 import raff.stein.customer.repository.goal.GoalTypeRepository;
 import raff.stein.customer.service.update.visitor.CustomerVisitor;
 import raff.stein.customer.service.update.visitor.TypeKey;
+import raff.stein.platformcore.exception.ErrorCode;
+import raff.stein.platformcore.exception.types.badrequest.RequestValidationException;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+/**
+ * Replaces the customer's goals with the payload: rows with an id are updated, rows without an id are
+ * created and the customer's rows missing from the payload are deleted.
+ */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CustomerGoalsVisitor implements CustomerVisitor<Collection<CustomerGoals>> {
 
+    private final CustomerRepository customerRepository;
     private final CustomerGoalsRepository customerGoalsRepository;
     private final GoalTypeRepository goalTypeRepository;
 
@@ -34,76 +47,54 @@ public class CustomerGoalsVisitor implements CustomerVisitor<Collection<Customer
 
     @Override
     public Customer visit(Customer customer, @NonNull Collection<CustomerGoals> payload) {
-        UUID customerId = customer.getId();
-        // FE will send back items with an ID for update purposes
-        // if the ID is null, it means it's a new goal to be created
-        // some objects in the payload may already have an ID, so we need to distinguish between new and existing goals
-        Map<Long, CustomerGoals> goalsFromFEToUpdateById = payload.stream()
+        final UUID customerId = customer.getId();
+
+        final Map<Long, CustomerGoals> goalsFromFEToUpdateById = payload.stream()
                 .filter(goal -> goal.getId() != null)
-                .collect(Collectors.toMap(CustomerGoals::getId, Function.identity()));
+                .collect(Collectors.toMap(
+                        CustomerGoals::getId,
+                        Function.identity(),
+                        (first, duplicate) -> {
+                            throw invalidGoalId(customerId, first.getId());
+                        }));
 
-        List<CustomerFinancialGoalsEntity> savedEntities;
+        // already managed in the current transaction, so this does not query the DB again
+        final CustomerEntity customerEntity = customerRepository.findById(customerId)
+                .orElseThrow(CustomerNotFoundException.with(customerId));
+        final Set<CustomerFinancialGoalsEntity> existingGoals = customerEntity.getCustomerFinancialGoals();
+        final Set<Long> ownedGoalIds = existingGoals.stream()
+                .map(CustomerFinancialGoalsEntity::getId)
+                .collect(Collectors.toSet());
 
-        if (goalsFromFEToUpdateById.isEmpty()) {
-            // no existing goals to update, just create new ones
-            savedEntities = createNewGoals(payload, customerId);
-        } else {
-            // upsert cycle
-            savedEntities = upsertGoals(payload, goalsFromFEToUpdateById, customerId);
-        }
-        // add to customer the new goals in order to return them to the FE
-        customer.getCustomerGoals().addAll(
-                savedEntities.stream()
-                        .map(customerGoalsToCustomerGoalsEntityMapper::toCustomerGoals)
-                        .toList());
+        // ids must belong to this customer: unknown or foreign ids are rejected, never silently ignored
+        goalsFromFEToUpdateById.keySet().stream()
+                .filter(goalId -> !ownedGoalIds.contains(goalId))
+                .findFirst()
+                .ifPresent(goalId -> {
+                    throw invalidGoalId(customerId, goalId);
+                });
 
+        // rows missing from the payload are deleted through orphan removal
+        existingGoals.removeIf(entity -> !goalsFromFEToUpdateById.containsKey(entity.getId()));
+        existingGoals.forEach(entity -> entity.updateFrom(
+                customerGoalsToCustomerGoalsEntityMapper.toCustomerGoalsEntity(
+                        goalsFromFEToUpdateById.get(entity.getId()))));
+
+        final List<CustomerFinancialGoalsEntity> createdEntities = createNewGoals(payload, customerId);
+
+        // return the resulting full set to the FE
+        customer.setCustomerGoals(Stream.concat(existingGoals.stream(), createdEntities.stream())
+                .sorted(Comparator.comparing(CustomerFinancialGoalsEntity::getId, Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(customerGoalsToCustomerGoalsEntityMapper::toCustomerGoals)
+                .toList());
         return customer;
     }
 
-    private List<CustomerFinancialGoalsEntity> upsertGoals(
-            @NonNull Collection<CustomerGoals> payload,
-            Map<Long, CustomerGoals> goalsFromFEToUpdateById,
-            UUID customerId) {
-        // fetch existing goals for the customer
-        Map<Long, CustomerFinancialGoalsEntity> customerGoalsEntityToUpdateById = customerGoalsRepository
-                .findByIdIn(goalsFromFEToUpdateById.keySet())
-                .stream()
-                .collect(Collectors.toMap(CustomerFinancialGoalsEntity::getId, Function.identity()));
-        // get goal types from the payload and map them by name and id
-        // this is needed to ensure that we can set the goal type for new entities
-        List<GoalTypeEntity> goalTypes = getGoalTypeEntities(payload);
-        Map<String, GoalTypeEntity> goalTypeEntitiesByName = goalTypes
-                .stream()
-                .collect(Collectors.toMap(GoalTypeEntity::getName, Function.identity()));
-        Map<Integer, GoalTypeEntity> goalTypeEntitiesById = goalTypes
-                .stream()
-                .collect(Collectors.toMap(GoalTypeEntity::getId, Function.identity()));
-        // get new entities from the payload
-        List<CustomerFinancialGoalsEntity> newEntities = getNewEntities(payload, goalTypeEntitiesByName, customerId);
-
-        List<CustomerFinancialGoalsEntity> entitiesToSave = new ArrayList<>(newEntities);
-        // update existing entities
-        // we will update the existing entities with the data from the payload
-        for(Map.Entry<Long, CustomerGoals> entry : goalsFromFEToUpdateById.entrySet()) {
-            Long goalId = entry.getKey();
-            CustomerGoals goalFromFE = entry.getValue();
-            CustomerFinancialGoalsEntity existingEntity = customerGoalsEntityToUpdateById.get(goalId);
-            if (existingEntity != null) {
-                // Update existing entity
-                existingEntity.updateFrom(customerGoalsToCustomerGoalsEntityMapper.toCustomerGoalsEntity(goalFromFE));
-                entitiesToSave.add(existingEntity);
-            }
-        }
-        List<CustomerFinancialGoalsEntity> savedEntities = customerGoalsRepository.saveAll(entitiesToSave);
-        // explicit set goalType for new entities
-        // it is required for the mapper later to work correctly
-        savedEntities.forEach(
-                e -> {
-                    if(e.getGoalType() == null) {
-                        e.setGoalType(goalTypeEntitiesById.getOrDefault(e.getGoalTypeId(), null));
-                    }
-                });
-        return savedEntities;
+    private static RequestValidationException invalidGoalId(UUID customerId, Long goalId) {
+        log.warn("Rejecting goal id: [{}] for customerId: [{}], duplicated or not owned by the customer", goalId, customerId);
+        return new RequestValidationException(
+                ErrorCode.REQUEST_VALIDATION_ERROR,
+                String.format(ErrorCode.REQUEST_VALIDATION_ERROR.getMessageTemplate(), "goals.id", goalId));
     }
 
     private List<CustomerFinancialGoalsEntity> createNewGoals(
