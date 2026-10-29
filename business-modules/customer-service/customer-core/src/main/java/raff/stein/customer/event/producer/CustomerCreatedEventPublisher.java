@@ -5,6 +5,7 @@ import org.openapitools.model.CustomerCreatedEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import raff.stein.customer.event.producer.mapper.CustomerCreatedMapper;
+import raff.stein.customer.exception.CustomerNotFoundException;
 import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.customer.repository.customer.CustomerRepository;
 import raff.stein.platformcore.messaging.publisher.WMPBaseEventPublisher;
@@ -33,7 +34,7 @@ public class CustomerCreatedEventPublisher {
 
     public void publishCustomerCreatedEvent(UUID customerId) {
         final CustomerEntity customerEntity = customerRepository.findById(customerId)
-                .orElseThrow(() -> new IllegalArgumentException("Customer with ID " + customerId + " not found"));
+                .orElseThrow(CustomerNotFoundException.with(customerId));
         final CustomerCreatedEvent customerCreatedEvent =
                 customerCreatedMapper.toCustomerCreatedEvent(customerEntity);
         EventData eventData = new EventData(customerCreatedEvent);

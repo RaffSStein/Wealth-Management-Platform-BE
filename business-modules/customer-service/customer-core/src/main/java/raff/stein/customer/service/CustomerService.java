@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import raff.stein.customer.exception.CustomerNotFoundException;
 import raff.stein.customer.model.bo.customer.Customer;
 import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
@@ -47,7 +48,7 @@ public class CustomerService {
         log.debug("Updating fields [{}] for customer ID: [{}]", customerAttributesToUpdate, customerId);
         // Lookup the customer entity by ID
         CustomerEntity customerEntity = customerRepository.findById(customerId)
-                .orElseThrow(() -> new IllegalArgumentException("Customer not found with ID: " + customerId));
+                .orElseThrow(CustomerNotFoundException.with(customerId));
         // Convert the customer entity to a business object
         Customer customer = customerToCustomerEntityMapper.toCustomer(customerEntity);
         // Update customer attributes via a visitor pattern
@@ -58,7 +59,7 @@ public class CustomerService {
     public Customer getCustomerById(UUID customerId) {
         log.debug("Retrieving customer by ID: [{}]", customerId);
         CustomerEntity customerEntity = customerRepository.findById(customerId)
-                .orElseThrow(() -> new IllegalArgumentException("Customer not found with ID: " + customerId));
+                .orElseThrow(CustomerNotFoundException.with(customerId));
         return customerToCustomerEntityMapper.toCustomer(customerEntity);
     }
 

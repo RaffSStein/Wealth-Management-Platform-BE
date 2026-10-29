@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import raff.stein.customer.event.producer.CustomerCreatedEventPublisher;
 import raff.stein.customer.event.producer.CustomerRejectedEventPublisher;
+import raff.stein.customer.exception.CustomerNotFoundException;
 import raff.stein.customer.model.bo.aml.AmlVerification;
 import raff.stein.customer.model.bo.customer.Customer;
 import raff.stein.customer.model.entity.aml.AmlVerificationEntity;
@@ -46,7 +47,7 @@ public class AmlService {
     //TODO: add API for AML retrigger
     public void triggerAmlCheck(@NonNull UUID customerId) {
         final CustomerEntity customerEntity = customerRepository.findById(customerId)
-                .orElseThrow(() -> new IllegalArgumentException("Customer with ID " + customerId + " not found"));
+                .orElseThrow(CustomerNotFoundException.with(customerId));
         Customer customer = customerMapper.toCustomer(customerEntity);
         triggerAmlCheck(customer);
     }

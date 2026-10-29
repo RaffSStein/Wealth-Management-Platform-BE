@@ -5,6 +5,7 @@ import org.openapitools.model.CustomerOnboardedEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import raff.stein.customer.event.producer.mapper.CustomerOnboardedMapper;
+import raff.stein.customer.exception.CustomerNotFoundException;
 import raff.stein.customer.model.bo.mifid.filling.CustomerRiskProfile;
 import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.customer.repository.customer.CustomerRepository;
@@ -33,7 +34,7 @@ public class CustomerOnboardedEventPublisher {
 
     public void publishCustomerOnboardedEvent(CustomerRiskProfile customerRiskProfile, UUID customerId) {
         final CustomerEntity customerEntity = customerRepository.findById(customerId)
-                .orElseThrow(() -> new IllegalArgumentException("Customer with ID " + customerId + " not found"));
+                .orElseThrow(CustomerNotFoundException.with(customerId));
         CustomerOnboardedEvent documentUploadedEvent =
                 customerOnboardedMapper.toCustomerOnboardedEvent(customerRiskProfile, customerEntity);
         EventData eventData = new EventData(documentUploadedEvent);

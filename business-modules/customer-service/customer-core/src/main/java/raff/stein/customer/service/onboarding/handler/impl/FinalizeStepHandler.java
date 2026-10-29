@@ -3,6 +3,7 @@ package raff.stein.customer.service.onboarding.handler.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import raff.stein.customer.exception.CustomerNotFoundException;
 import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.customer.model.entity.customer.enumeration.CustomerStatus;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStatus;
@@ -43,7 +44,7 @@ public class FinalizeStepHandler extends BaseOnboardingStepHandler {
         // the customer status follows the onboarding outcome; this runs only while the onboarding is IN_PROGRESS,
         // so a replayed event can't flip an already closed onboarding
         final CustomerEntity customerEntity = customerRepository.findById(context.getCustomerId())
-                .orElseThrow(() -> new IllegalStateException("Customer not found for ID: " + context.getCustomerId()));
+                .orElseThrow(CustomerNotFoundException.with(context.getCustomerId()));
         customerEntity.setCustomerStatus(amlPassed ? CustomerStatus.ACTIVE : CustomerStatus.REJECTED);
         log.info("Finalized onboarding for customer ID: [{}] with customer status: [{}]",
                 context.getCustomerId(), customerEntity.getCustomerStatus());

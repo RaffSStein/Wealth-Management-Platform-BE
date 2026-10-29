@@ -5,6 +5,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import raff.stein.customer.exception.CustomerNotFoundException;
 import raff.stein.customer.model.bo.mifid.filling.CustomerRiskProfile;
 import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
 import raff.stein.customer.model.bo.mifid.filling.MifidResponse;
@@ -75,7 +76,7 @@ public class SubmitMifidCommand implements MifidCommand {
         mifidFillingEntity.setCalculatedRiskProfile(riskProfile);
         mifidFillingEntity.setRiskScore(totalScore);
         final CustomerEntity customerEntity = customerRepository.findById(customerId)
-                .orElseThrow(GenericObjectNotFoundException.with(customerId.toString()));
+                .orElseThrow(CustomerNotFoundException.with(customerId));
         customerEntity.setRiskProfile(riskProfile);
         customerEntity.setRiskScore(totalScore);
         return mifidFilling;

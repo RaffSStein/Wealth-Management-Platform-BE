@@ -3,6 +3,7 @@ package raff.stein.customer.service.update.visitor.impl;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
+import raff.stein.customer.exception.CustomerNotFoundException;
 import raff.stein.customer.model.bo.customer.Customer;
 import raff.stein.customer.model.bo.customer.CustomerPersonalDetails;
 import raff.stein.customer.model.entity.customer.CustomerEntity;
@@ -31,7 +32,7 @@ public class CustomerPersonalDetailsVisitor implements CustomerVisitor<CustomerP
         UUID customerId = customer.getId();
 
         CustomerEntity customerEntity = customerRepository.findById(customerId)
-                .orElseThrow(() -> new IllegalArgumentException("Customer not found with ID: " + customerId));
+                .orElseThrow(CustomerNotFoundException.with(customerId));
 
         applyPersonalDetailsUpdate(customerEntity, payload);
 
