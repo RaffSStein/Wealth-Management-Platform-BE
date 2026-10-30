@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+import raff.stein.platformcore.model.tenant.TenantScopedEntity;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FileValidationEntity  extends BaseDateEntity<Long> {
+public class FileValidationEntity  extends TenantScopedEntity<Long> {
 
     /**
      * Unique identifier for the file validation.

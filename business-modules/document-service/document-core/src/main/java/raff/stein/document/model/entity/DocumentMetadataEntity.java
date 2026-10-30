@@ -2,7 +2,7 @@ package raff.stein.document.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+import raff.stein.platformcore.model.tenant.TenantScopedEntity;
 
 /**
  * Entity representing metadata associated with a document.
@@ -16,7 +16,7 @@ import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DocumentMetadataEntity extends BaseDateEntity<Long> {
+public class DocumentMetadataEntity extends TenantScopedEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -3,7 +3,7 @@ package raff.stein.document.model.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+import raff.stein.platformcore.model.tenant.TenantScopedEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +19,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DocumentEntity extends BaseDateEntity<UUID> {
+public class DocumentEntity extends TenantScopedEntity<UUID> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

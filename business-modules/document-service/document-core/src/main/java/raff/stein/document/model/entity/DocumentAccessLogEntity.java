@@ -2,7 +2,7 @@ package raff.stein.document.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+import raff.stein.platformcore.model.tenant.TenantScopedEntity;
 
 /**
  * Entity representing a log of actions performed on a document.
@@ -15,7 +15,7 @@ import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DocumentAccessLogEntity extends BaseDateEntity<Long> {
+public class DocumentAccessLogEntity extends TenantScopedEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

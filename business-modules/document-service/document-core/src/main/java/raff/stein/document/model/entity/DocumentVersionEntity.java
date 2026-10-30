@@ -2,7 +2,7 @@ package raff.stein.document.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+import raff.stein.platformcore.model.tenant.TenantScopedEntity;
 
 import java.time.OffsetDateTime;
 
@@ -18,7 +18,7 @@ import java.time.OffsetDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DocumentVersionEntity extends BaseDateEntity<Long> {
+public class DocumentVersionEntity extends TenantScopedEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
