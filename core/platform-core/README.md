@@ -204,6 +204,28 @@ The `jwt/` resource subtree documents and supports the platform JWT model:
 Services should follow these conventions when building authentication filters and WMP context handling, so that JWT behavior is
 consistent across the platform.
 
+Custom claims (names in `WmpJwtClaims`): `userId`, `email`, `roles`, `tenantId` (bank code of the active membership) and
+`branchCode` (its branch). `JwtTokenParser` maps them into `WMPContext`; `SecurityContextFilter` also puts `tenantId` and
+`branchCode` in the MDC, so every log line carries them.
+
+## Multi-tenancy
+
+A tenant is a bank, identified by its bank code. All services share tables, and tenant-owned rows carry a `tenant_id` column.
+
+- **Where the tenant comes from:** HTTP requests read the token's `tenantId` claim, which user-service sets from the
+  user's active branch membership. Kafka consumers read the `tenantid` CloudEvents extension, which `WMPBaseEventPublisher`
+  adds and `WMPBaseEventConsumer` restores, so a consumer writes under the producer's tenant.
+- **`TenantScopedEntity<I>`** (extends `BaseDateEntity<I>`): base class for business entities owned by a bank.
+  Its `@TenantId` column is filled by Hibernate on insert, and Hibernate adds `tenant_id = :current` to every JPQL/Criteria
+  query, so a bank can't read or update another bank's rows. Configuration and reference data (questionnaires, types,
+  sitemaps) stay on `BaseDateEntity` and are shared.
+- **`WmpTenantIdentifierResolver`** (registered by `TenantConfiguration`) returns the context tenant. With no tenant it
+  returns the placeholder `__none__`: reads of tenant data return nothing, and persisting a `TenantScopedEntity` fails with
+  `MISSING_HEADER_TOKEN_FIELD [tenantId]` (HTTP 401).
+- **Native SQL is not filtered.** Add `tenant_id = :tenantId` yourself, or prefer JPQL.
+- Not yet supported: a root tenant for group-level users and a "run as tenant" helper for scheduled jobs. Both come with
+  the visibility-scope and scheduled-job work.
+
 ## Cross-cutting patterns for business microservices
 
 ### Validation and request handling

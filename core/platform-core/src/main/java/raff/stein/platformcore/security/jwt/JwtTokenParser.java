@@ -42,11 +42,11 @@ public class JwtTokenParser {
                     .orElse(null);
 
             WMPContext context = WMPContext.builder()
-                    .userId(claims.get("userId", String.class))
-                    .email(claims.get("email", String.class))
+                    .userId(claims.get(WmpJwtClaims.USER_ID, String.class))
+                    .email(claims.get(WmpJwtClaims.EMAIL, String.class))
                     .roles(extractRoles(claims))
-                    //TODO: probably not needed, as we can get it from the user-service
-                    .bankCode(claims.get("bankCode", String.class))
+                    .tenantId(claims.get(WmpJwtClaims.TENANT_ID, String.class))
+                    .branchCode(claims.get(WmpJwtClaims.BRANCH_CODE, String.class))
                     .correlationId(correlationId)
                     .rawToken(token)
                     .jti(claims.getId())
@@ -60,7 +60,7 @@ public class JwtTokenParser {
     }
 
     private Set<String> extractRoles(Claims claims) {
-        Object raw = claims.get("roles");
+        Object raw = claims.get(WmpJwtClaims.ROLES);
         switch (raw) {
             case null -> {
                 return Collections.emptySet();

@@ -14,7 +14,10 @@ public class WMPContext {
     private final String userId;
     private final String email;
     private final Set<String> roles;
-    private final String bankCode;          //TODO: rename to branchCode
+    // tenant = bank code of the active membership; scopes every tenant-scoped entity (see TenantScopedEntity)
+    private final String tenantId;
+    // branch of the active membership, within the tenant
+    private final String branchCode;
     private final String correlationId;
     // Raw JWT token for downstream services that need to re-validate specific flows (e.g., password setup)
     private final String rawToken;

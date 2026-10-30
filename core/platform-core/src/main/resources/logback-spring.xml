@@ -14,7 +14,7 @@
     <property name="LOG_PATH" value="./logs" />
     <property name="LOG_FILE_NAME" value="${APP_NAME}" />
     <!-- Print full stack traces in console when a Throwable is logged -->
-    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{correlationId}] [%X{userId}] [%X{bankCode}] %-5level %logger{36} - %msg%n%ex{full}"/>
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{correlationId}] [%X{userId}] [%X{tenantId}/%X{branchCode}] %-5level %logger{36} - %msg%n%ex{full}"/>
 
     <!-- JSON encoder for Splunk compatibility -->
     <appender name="SPLUNK_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -27,7 +27,8 @@
             <customFields>{"app":"${APP_NAME}"}</customFields>
             <includeMdcKeyName>correlationId</includeMdcKeyName>
             <includeMdcKeyName>userId</includeMdcKeyName>
-            <includeMdcKeyName>bankCode</includeMdcKeyName>
+            <includeMdcKeyName>tenantId</includeMdcKeyName>
+            <includeMdcKeyName>branchCode</includeMdcKeyName>
             <includeMdcKeyName>email</includeMdcKeyName>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">

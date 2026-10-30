@@ -10,6 +10,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import raff.stein.platformcore.messaging.CloudEventExtensions;
 import raff.stein.platformcore.messaging.publisher.model.EventData;
 import raff.stein.platformcore.security.context.SecurityContextHolder;
 import raff.stein.platformcore.security.context.WMPContext;
@@ -81,16 +82,20 @@ public class WMPBaseEventPublisher implements EventPublisher {
         if (wmpContext != null) {
             // add extensions only if values are present to avoid builder errors
             if (StringUtils.hasText(wmpContext.getUserId())) {
-                cloudEventBuilder.withExtension("userid", wmpContext.getUserId());
+                cloudEventBuilder.withExtension(CloudEventExtensions.USER_ID, wmpContext.getUserId());
             }
             if (StringUtils.hasText(wmpContext.getEmail())) {
-                cloudEventBuilder.withExtension("email", wmpContext.getEmail());
+                cloudEventBuilder.withExtension(CloudEventExtensions.EMAIL, wmpContext.getEmail());
             }
-            if (StringUtils.hasText(wmpContext.getBankCode())) {
-                cloudEventBuilder.withExtension("bankcode", wmpContext.getBankCode());
+            // consumers restore the tenant from here, so their writes stay in the producer's tenant
+            if (StringUtils.hasText(wmpContext.getTenantId())) {
+                cloudEventBuilder.withExtension(CloudEventExtensions.TENANT_ID, wmpContext.getTenantId());
+            }
+            if (StringUtils.hasText(wmpContext.getBranchCode())) {
+                cloudEventBuilder.withExtension(CloudEventExtensions.BRANCH_CODE, wmpContext.getBranchCode());
             }
             if (StringUtils.hasText(wmpContext.getCorrelationId())) {
-                cloudEventBuilder.withExtension("correlationid", wmpContext.getCorrelationId());
+                cloudEventBuilder.withExtension(CloudEventExtensions.CORRELATION_ID, wmpContext.getCorrelationId());
             }
         }
         return cloudEventBuilder.build();

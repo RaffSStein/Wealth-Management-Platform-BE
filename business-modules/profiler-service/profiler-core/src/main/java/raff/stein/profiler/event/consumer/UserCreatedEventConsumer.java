@@ -53,7 +53,7 @@ public class UserCreatedEventConsumer extends WMPBaseEventConsumer {
                 userEmail,
                 bankBranches.stream()
                         .map(branch -> new ImmutablePair<>(
-                                branch.getBankCode(),
+                                branch.getBranchCode(),
                                 branch.getRole())
                         )
                         .toList());

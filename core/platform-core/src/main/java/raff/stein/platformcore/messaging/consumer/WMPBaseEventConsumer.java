@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import raff.stein.platformcore.messaging.CloudEventExtensions;
 import raff.stein.platformcore.security.context.SecurityContextHolder;
 import raff.stein.platformcore.security.context.WMPContext;
 import tools.jackson.databind.ObjectMapper;
@@ -85,10 +86,12 @@ public class WMPBaseEventConsumer implements EventConsumer {
 
     private WMPContext getContextFromCloudEvent(CloudEvent cloudEvent) {
         return WMPContext.builder()
-                .email((String) cloudEvent.getExtension("email"))
-                .userId((String) cloudEvent.getExtension("userid"))
-                .bankCode((String) cloudEvent.getExtension("bankcode"))
-                .correlationId((String) cloudEvent.getExtension("correlationid"))
+                .email((String) cloudEvent.getExtension(CloudEventExtensions.EMAIL))
+                .userId((String) cloudEvent.getExtension(CloudEventExtensions.USER_ID))
+                // the consumer's writes are scoped to the producer's tenant
+                .tenantId((String) cloudEvent.getExtension(CloudEventExtensions.TENANT_ID))
+                .branchCode((String) cloudEvent.getExtension(CloudEventExtensions.BRANCH_CODE))
+                .correlationId((String) cloudEvent.getExtension(CloudEventExtensions.CORRELATION_ID))
                 .build();
     }
 

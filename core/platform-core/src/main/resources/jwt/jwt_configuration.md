@@ -12,7 +12,8 @@ Valid payload
 "sub": "John Doe",
 "userId": "John Doe",
 "email": "john@doe.com",
-"bankCode": "code",
+"tenantId": "LOCAL-BANK",
+"branchCode": "LOCAL-BRANCH-01",
 "roles": [
 "ADMIN",
 "SUPERVISOR"

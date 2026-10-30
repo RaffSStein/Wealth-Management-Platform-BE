@@ -57,18 +57,19 @@ public class PermissionService {
         }
         // Retrieve user permissions based on the user ID from the context
         final String email = context.getEmail();
-        final String bankCode = context.getBankCode();
-        if (StringUtils.isBlank(email) || StringUtils.isBlank(bankCode)) {
-            log.info("User email or bank code is not available in the context.");
+        // permissions are stored per branch (the active membership's branch in the token)
+        final String branchCode = context.getBranchCode();
+        if (StringUtils.isBlank(email) || StringUtils.isBlank(branchCode)) {
+            log.info("User email or branch code is not available in the context.");
             return new UserPermission();
         }
         List<UserFeaturePermissionEntity> userPermissions =
-                userFeaturePermissionRepository.findAllByUserEmailAndBranchCode(email, bankCode);
+                userFeaturePermissionRepository.findAllByUserEmailAndBranchCode(email, branchCode);
         if (userPermissions.isEmpty()) {
-            log.info("No user permissions found for email: [{}] and bankCode: [{}]", email, bankCode);
+            log.info("No user permissions found for email: [{}] and branchCode: [{}]", email, branchCode);
             return new UserPermission();
         }
-        return userFeaturePermissionMapper.toUserPermission(email, bankCode, userPermissions);
+        return userFeaturePermissionMapper.toUserPermission(email, branchCode, userPermissions);
     }
 
     /**
