@@ -35,10 +35,14 @@ public class MifidController implements MifidApi {
     public ResponseEntity<MifidFillingDTO> getMifidFillingForCustomer(
             UUID customerId,
             Long fillingId) {
-        final MifidFilling mifidFilling = mifidService.handleFilling(
-                MifidActionType.GET,
-                customerId,
-                null);
+        final MifidFilling mifidFilling = mifidService.getMifidFilling(customerId, fillingId);
+        final MifidFillingDTO outputDTO = mifidFillingToMifidFillingDTOMapper.toMifidFillingDTO(mifidFilling);
+        return ResponseEntity.ok(outputDTO);
+    }
+
+    @Override
+    public ResponseEntity<MifidFillingDTO> getCurrentMifidFillingForCustomer(UUID customerId) {
+        final MifidFilling mifidFilling = mifidService.getCurrentSubmittedMifidFilling(customerId);
         final MifidFillingDTO outputDTO = mifidFillingToMifidFillingDTOMapper.toMifidFillingDTO(mifidFilling);
         return ResponseEntity.ok(outputDTO);
     }

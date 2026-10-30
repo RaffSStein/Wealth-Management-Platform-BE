@@ -54,7 +54,7 @@ public class UpdateMifidCommand implements MifidCommand {
         if (mifidFilling == null) {
             log.warn("Called UpdateMifidCommand with null MifidFilling, returning latest filling from DB...");
             return mifidFillingRepository
-                    .findTopByCustomerIdAndStatusNotOrderByFillingDateDesc(customerId, MifidFillingStatus.DEPRECATED)
+                    .findTopByCustomerIdAndStatusNotOrderByIdDesc(customerId, MifidFillingStatus.DEPRECATED)
                     .map(mifidFillingEntityToMifidFillingMapper::toMifidFilling)
                     .orElse(null);
         }
@@ -62,7 +62,7 @@ public class UpdateMifidCommand implements MifidCommand {
         final Optional<MifidFillingEntity> targetFillingOpt = mifidFilling.getFillingId() != null
                 ? Optional.of(mifidFillingRepository.findByIdAndCustomerId(mifidFilling.getFillingId(), customerId)
                         .orElseThrow(GenericObjectNotFoundException.with(String.valueOf(mifidFilling.getFillingId()))))
-                : mifidFillingRepository.findTopByCustomerIdAndStatusNotOrderByFillingDateDesc(customerId, MifidFillingStatus.DEPRECATED);
+                : mifidFillingRepository.findTopByCustomerIdAndStatusNotOrderByIdDesc(customerId, MifidFillingStatus.DEPRECATED);
         // perform upsert based on FE provided filling
         return targetFillingOpt
                 .map(targetFilling -> updateFilling(targetFilling, mifidFilling))

@@ -56,7 +56,7 @@ public abstract class BaseMifidStateHandler implements MifidStateHandler {
             return Optional.of(mifidFillingRepository.findByIdAndCustomerId(fillingId, customerId)
                     .orElseThrow(GenericObjectNotFoundException.with(String.valueOf(fillingId))));
         }
-        return mifidFillingRepository.findTopByCustomerIdAndStatusNotOrderByFillingDateDesc(customerId, MifidFillingStatus.DEPRECATED);
+        return mifidFillingRepository.findTopByCustomerIdAndStatusNotOrderByIdDesc(customerId, MifidFillingStatus.DEPRECATED);
     }
 
     private MifidFillingStatus calculateStatus(MifidFilling mifidFilling) {

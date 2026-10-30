@@ -11,6 +11,7 @@ import raff.stein.customer.model.entity.mifid.mapper.MifidFillingEntityToMifidFi
 import raff.stein.customer.repository.mifid.MifidFillingRepository;
 import raff.stein.customer.service.mifid.enumeration.MifidActionType;
 import raff.stein.customer.service.mifid.command.MifidCommand;
+import raff.stein.platformcore.exception.types.notfound.GenericObjectNotFoundException;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -31,12 +32,14 @@ public class GetMifidCommand implements MifidCommand {
 
     @Override
     public MifidFilling execute(@NonNull UUID customerId, @Nullable MifidFilling mifidFilling) {
-        // retrieve the latest valid MifidFilling for the given customerId
-        Optional<MifidFillingEntity> optionalFilling = mifidFillingRepository
-                .findTopByCustomerIdAndStatusNotOrderByFillingDateDesc(customerId, MifidFillingStatus.DEPRECATED);
+        // the filling identified by fillingId when provided, otherwise the latest non-deprecated one
+        final Long fillingId = mifidFilling != null ? mifidFilling.getFillingId() : null;
+        final Optional<MifidFillingEntity> optionalFilling = fillingId != null
+                ? mifidFillingRepository.findByIdAndCustomerId(fillingId, customerId)
+                : mifidFillingRepository.findTopByCustomerIdAndStatusNotOrderByIdDesc(customerId, MifidFillingStatus.DEPRECATED);
 
         return optionalFilling
                 .map(mifidFillingEntityToMifidFillingMapper::toMifidFilling)
-                .orElseThrow(() -> new IllegalStateException("No valid Mifid filling found for customer with ID: " + customerId));
+                .orElseThrow(GenericObjectNotFoundException.with(fillingId != null ? String.valueOf(fillingId) : customerId.toString()));
     }
 }

@@ -17,6 +17,9 @@ public interface MifidResponseEntityToMifidResponseMapper {
 
     MifidResponse toMifidResponse(MifidResponseEntity mifidResponseEntity);
 
+    // only used to insert new responses: a client id (e.g. a renewal pre-filled from the submitted filling)
+    // would otherwise merge into and move the existing response to the new filling
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "answerOptionId", source = "answerOption.id")
     @Mapping(target = "questionId", source = "question.id")
     @Mapping(target = "answerOption", ignore = true)

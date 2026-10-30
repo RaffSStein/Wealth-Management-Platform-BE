@@ -9,7 +9,10 @@ import raff.stein.customer.controller.mapper.mifid.MifidFillingToMifidFillingDTO
 import raff.stein.customer.model.bo.mifid.config.MifidQuestionnaireConfig;
 import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
 import raff.stein.customer.model.entity.mifid.MifidQuestionnaireEntity;
+import raff.stein.customer.model.entity.mifid.enumeration.MifidFillingStatus;
+import raff.stein.customer.model.entity.mifid.mapper.MifidFillingEntityToMifidFillingMapper;
 import raff.stein.customer.model.entity.mifid.mapper.MifidQuestionnaireEntityToMifidQuestionnaireMapper;
+import raff.stein.customer.repository.mifid.MifidFillingRepository;
 import raff.stein.customer.repository.mifid.MifidQuestionnaireRepository;
 import raff.stein.customer.service.mifid.enumeration.MifidActionType;
 import raff.stein.customer.service.mifid.workflow.MifidWorkflowDispatcher;
@@ -27,7 +30,10 @@ public class MifidService {
     private final MifidWorkflowDispatcher mifidWorkflowDispatcher;
 
     private final MifidQuestionnaireRepository mifidQuestionnaireRepository;
+    private final MifidFillingRepository mifidFillingRepository;
 
+    private static final MifidFillingEntityToMifidFillingMapper mifidFillingEntityToMifidFillingMapper =
+            MifidFillingEntityToMifidFillingMapper.MAPPER;
     private static final MifidQuestionnaireEntityToMifidQuestionnaireMapper mifidQuestionnaireEntityToMifidQuestionnaireMapper =
             MifidQuestionnaireEntityToMifidQuestionnaireMapper.MAPPER;
     private static final MifidFillingToMifidFillingDTOMapper mifidFillingToMifidFillingDTOMapper =
@@ -43,6 +49,24 @@ public class MifidService {
                         "No valid Mifid questionnaire configuration found for date: [" + today + "]"));
 
         return mifidQuestionnaireEntityToMifidQuestionnaireMapper.toMifidQuestionnaireConfig(mifidQuestionnaireEntity);
+    }
+
+    @Transactional(readOnly = true)
+    public MifidFilling getMifidFilling(UUID customerId, Long fillingId) {
+        return mifidWorkflowDispatcher.dispatch(
+                MifidActionType.GET,
+                customerId,
+                MifidFilling.builder().fillingId(fillingId).build());
+    }
+
+    // the latest SUBMITTED filling: during a renewal the newer DRAFT/COMPLETED filling is ignored
+    @Transactional(readOnly = true)
+    public MifidFilling getCurrentSubmittedMifidFilling(UUID customerId) {
+        log.info("Fetching current submitted Mifid filling for customerId: [{}]", customerId);
+        return mifidFillingRepository
+                .findTopByCustomerIdAndStatusOrderByIdDesc(customerId, MifidFillingStatus.SUBMITTED)
+                .map(mifidFillingEntityToMifidFillingMapper::toMifidFilling)
+                .orElseThrow(GenericObjectNotFoundException.with(customerId.toString()));
     }
 
     @Transactional

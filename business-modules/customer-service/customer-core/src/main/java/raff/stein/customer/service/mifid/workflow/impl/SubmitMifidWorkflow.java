@@ -1,15 +1,19 @@
 package raff.stein.customer.service.mifid.workflow.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import raff.stein.customer.event.producer.CustomerOnboardedEventPublisher;
+import raff.stein.customer.exception.CustomerNotFoundException;
 import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
 import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.customer.model.entity.customer.enumeration.CustomerStatus;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
 import raff.stein.customer.model.entity.mifid.MifidFillingEntity;
+import raff.stein.customer.model.entity.mifid.enumeration.MifidFillingStatus;
 import raff.stein.customer.model.entity.mifid.mapper.MifidFillingEntityToMifidFillingMapper;
 import raff.stein.customer.repository.customer.CustomerRepository;
+import raff.stein.customer.repository.mifid.MifidFillingRepository;
 import raff.stein.customer.repository.mifid.MifidQuestionnaireRepository;
 import raff.stein.customer.service.mifid.command.impl.SubmitMifidCommand;
 import raff.stein.customer.service.mifid.enumeration.MifidActionType;
@@ -25,6 +29,7 @@ import raff.stein.platformcore.exception.types.notfound.GenericObjectNotFoundExc
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class SubmitMifidWorkflow implements MifidWorkflow {
@@ -35,6 +40,7 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
     private final OnboardingService onboardingService;
     private final CustomerOnboardedEventPublisher customerOnboardedEventPublisher;
     private final CustomerRepository customerRepository;
+    private final MifidFillingRepository mifidFillingRepository;
 
     private static final MifidFillingEntityToMifidFillingMapper mifidFillingEntityToMifidFillingMapper =
             MifidFillingEntityToMifidFillingMapper.MAPPER;
@@ -49,7 +55,8 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
         return List.of(
                 validatePreviousStatus(),
                 loadPersistedFilling(),
-                validateAnswers());
+                validateAnswers(),
+                detectRenewal());
     }
 
     @Override
@@ -65,9 +72,34 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
     public List<MifidWorkflowStep> postHooks() {
         return List.of(
                 calculateNextStatus(),              // set and save status on MifidFilling
+                deprecatePreviousSubmittedFillings(), // the new filling supersedes the old ones, kept for history
                 markCustomerPendingVerification(),  // customer awaits the AML check
                 updateOnboardingStatus(),           // update onboarding step status
                 publishCustomerOnboardedEvent());
+    }
+
+    private MifidWorkflowStep detectRenewal() {
+        return context -> {
+            final CustomerEntity customerEntity = customerRepository.findById(context.getCustomerId())
+                    .orElseThrow(CustomerNotFoundException.with(context.getCustomerId()));
+            context.setRenewal(customerEntity.getCustomerStatus() == CustomerStatus.ACTIVE);
+            return context;
+        };
+    }
+
+    private MifidWorkflowStep deprecatePreviousSubmittedFillings() {
+        return context -> {
+            final List<MifidFillingEntity> previousFillings = mifidFillingRepository.findByCustomerIdAndStatusAndIdNot(
+                    context.getCustomerId(),
+                    MifidFillingStatus.SUBMITTED,
+                    context.getInputBo().getFillingId());
+            // managed entities are dirty-checked: no explicit save needed
+            previousFillings.forEach(filling -> filling.setStatus(MifidFillingStatus.DEPRECATED));
+            if (!previousFillings.isEmpty()) {
+                log.info("Deprecated [{}] previous Mifid filling(s) for customerId: [{}]", previousFillings.size(), context.getCustomerId());
+            }
+            return context;
+        };
     }
 
     private MifidWorkflowStep markCustomerPendingVerification() {
@@ -133,6 +165,9 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
 
     private MifidWorkflowStep updateOnboardingStatus() {
         return context -> {
+            if (context.isRenewal()) {
+                return context;
+            }
             // call for submit (end) of the MIFID onboarding step
             onboardingService.proceedToStep(
                     OnboardingStep.MIFID,
@@ -148,6 +183,12 @@ public class SubmitMifidWorkflow implements MifidWorkflow {
 
     private MifidWorkflowStep publishCustomerOnboardedEvent() {
         return context -> {
+            // the onboarded event triggers the AML check: a renewal only updates the risk profile
+            //TODO: publish a dedicated risk-profile-updated event on renewal if downstream services need it
+            if (context.isRenewal()) {
+                log.info("Mifid renewal submitted for customerId: [{}], skipping onboarding event", context.getCustomerId());
+                return context;
+            }
             customerOnboardedEventPublisher.publishCustomerOnboardedEvent(
                     context.getResultBo().getCustomerRiskProfile(),
                     context.getCustomerId());

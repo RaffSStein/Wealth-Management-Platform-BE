@@ -16,5 +16,7 @@ public class MifidWorkflowContext {
     private UUID customerId;
     private MifidFilling inputBo;
     private MifidFilling resultBo;
+    // the customer is already ACTIVE: the filling re-profiles them and must not re-run the onboarding
+    private boolean renewal;
 
 }
