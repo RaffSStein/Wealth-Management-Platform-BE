@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import raff.stein.customer.model.entity.financial.FinancialTypeEntity;
-import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+import raff.stein.platformcore.model.tenant.TenantScopedEntity;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -15,7 +15,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CustomerFinancialEntity extends BaseDateEntity<Long> {
+public class CustomerFinancialEntity extends TenantScopedEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

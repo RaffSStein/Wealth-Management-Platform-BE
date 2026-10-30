@@ -8,7 +8,7 @@ import raff.stein.customer.model.entity.customer.enumeration.CustomerStatus;
 import raff.stein.customer.model.entity.customer.enumeration.CustomerType;
 import raff.stein.customer.model.entity.mifid.MifidFillingEntity;
 import raff.stein.customer.model.entity.onboarding.CustomerOnboardingEntity;
-import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+import raff.stein.platformcore.model.tenant.TenantScopedEntity;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -20,7 +20,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CustomerEntity extends BaseDateEntity<UUID> {
+public class CustomerEntity extends TenantScopedEntity<UUID> {
 
     //TODO: split customer types specific fields into separate entities if needed
 

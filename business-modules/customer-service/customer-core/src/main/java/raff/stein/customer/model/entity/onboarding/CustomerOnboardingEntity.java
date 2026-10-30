@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStatus;
-import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+import raff.stein.platformcore.model.tenant.TenantScopedEntity;
 
 import java.util.Set;
 import java.util.UUID;
@@ -16,7 +16,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CustomerOnboardingEntity extends BaseDateEntity<Long> {
+public class CustomerOnboardingEntity extends TenantScopedEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

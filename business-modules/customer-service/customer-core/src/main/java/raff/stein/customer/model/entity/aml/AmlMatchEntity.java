@@ -3,7 +3,7 @@ package raff.stein.customer.model.entity.aml;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+import raff.stein.platformcore.model.tenant.TenantScopedEntity;
 
 @Entity
 @Table(name = "aml_match")
@@ -11,7 +11,7 @@ import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AmlMatchEntity extends BaseDateEntity<Long> {
+public class AmlMatchEntity extends TenantScopedEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

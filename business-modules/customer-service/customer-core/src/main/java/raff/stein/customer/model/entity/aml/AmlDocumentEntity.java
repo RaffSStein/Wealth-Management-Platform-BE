@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+import raff.stein.platformcore.model.tenant.TenantScopedEntity;
 
 @Entity
 @Table(
@@ -16,7 +16,7 @@ import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AmlDocumentEntity extends BaseDateEntity<Long> {
+public class AmlDocumentEntity extends TenantScopedEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

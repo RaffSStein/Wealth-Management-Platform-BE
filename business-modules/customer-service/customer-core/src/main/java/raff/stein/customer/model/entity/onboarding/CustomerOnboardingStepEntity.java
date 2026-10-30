@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
-import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+import raff.stein.platformcore.model.tenant.TenantScopedEntity;
 
 @Entity
 @Table(name = "customer_onboarding_step")
@@ -12,7 +12,7 @@ import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CustomerOnboardingStepEntity extends BaseDateEntity<Long> {
+public class CustomerOnboardingStepEntity extends TenantScopedEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

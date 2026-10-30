@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.customer.model.entity.mifid.enumeration.MifidFillingStatus;
-import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+import raff.stein.platformcore.model.tenant.TenantScopedEntity;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MifidFillingEntity extends BaseDateEntity<Long> {
+public class MifidFillingEntity extends TenantScopedEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

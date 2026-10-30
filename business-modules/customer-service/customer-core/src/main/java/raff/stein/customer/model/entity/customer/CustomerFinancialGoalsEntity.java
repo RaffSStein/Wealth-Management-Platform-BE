@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import raff.stein.customer.model.entity.goals.GoalTypeEntity;
 import raff.stein.customer.model.entity.goals.enumeration.GoalTimeline;
-import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
+import raff.stein.platformcore.model.tenant.TenantScopedEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CustomerFinancialGoalsEntity extends BaseDateEntity<Long> {
+public class CustomerFinancialGoalsEntity extends TenantScopedEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
