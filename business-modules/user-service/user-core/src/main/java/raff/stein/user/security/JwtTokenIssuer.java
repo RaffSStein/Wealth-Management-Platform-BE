@@ -1,5 +1,6 @@
 package raff.stein.user.security;
 
+import raff.stein.platformcore.security.jwt.WmpJwtClaims;
 import io.jsonwebtoken.Jwts;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,8 +55,8 @@ public class JwtTokenIssuer {
 
     public String issuePasswordSetupToken(String userId, String email) {
         Map<String, Object> extra = new HashMap<>();
-        extra.put("email", email);
-        extra.put("purpose", "PASSWORD_SETUP");
+        extra.put(WmpJwtClaims.EMAIL, email);
+        extra.put(WmpJwtClaims.PURPOSE, WmpJwtClaims.PURPOSE_PASSWORD_SETUP);
         // no roles for this token
         return buildJwt(userId, extra, passwordSetupExpirationSeconds);
     }
@@ -66,10 +67,10 @@ public class JwtTokenIssuer {
             claims.putAll(extraClaims);
         }
         if (email != null) {
-            claims.put("email", email);
+            claims.put(WmpJwtClaims.EMAIL, email);
         }
         if (roles != null) {
-            claims.put("roles", roles);
+            claims.put(WmpJwtClaims.ROLES, roles);
         }
         return buildJwt(subject, claims, expirationSeconds);
     }

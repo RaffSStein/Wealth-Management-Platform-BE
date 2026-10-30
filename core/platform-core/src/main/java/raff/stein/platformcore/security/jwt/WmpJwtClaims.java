@@ -16,4 +16,7 @@ public final class WmpJwtClaims {
     public static final String TENANT_ID = "tenantId";
     // branch of the active membership
     public static final String BRANCH_CODE = "branchCode";
+    // set only on single-purpose tokens: they are accepted on their own endpoint and nowhere else
+    public static final String PURPOSE = "purpose";
+    public static final String PURPOSE_PASSWORD_SETUP = "PASSWORD_SETUP";
 }

@@ -6,9 +6,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.util.StringUtils;
+import raff.stein.platformcore.security.filter.PasswordConfirmJwtFilter;
 import raff.stein.platformcore.security.jwt.JwtProperties;
 import raff.stein.platformcore.security.jwt.JwtTokenParser;
 import raff.stein.platformcore.security.jwt.TokenRevocationService;
+import raff.stein.platformcore.security.jwt.WmpJwtClaims;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -56,6 +58,14 @@ public class SecurityContextFilter implements Filter {
                         httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                         return; // Stop chain for revoked token
                     }
+                    // a single-purpose token (e.g. password setup) is signed like a session token:
+                    // without this check every authenticated endpoint would accept it
+                    if (isUsedOutsideItsEndpoint(context.getPurpose(), httpRequest)) {
+                        log.warn("Rejected [{}] token used on [{} {}]",
+                                context.getPurpose(), httpRequest.getMethod(), httpRequest.getServletPath());
+                        httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        return;
+                    }
                     SecurityContextHolder.setContext(context);
                     // Set MDC for logging
                     MDC.put("userId", context.getUserId());
@@ -70,6 +80,19 @@ public class SecurityContextFilter implements Filter {
             SecurityContextHolder.clear();
             MDC.clear();
         }
+    }
+
+    /**
+     * True when the token carries a purpose and the request is not that purpose's endpoint.
+     * Unknown purposes are accepted nowhere.
+     */
+    private boolean isUsedOutsideItsEndpoint(String purpose, HttpServletRequest request) {
+        if (!StringUtils.hasText(purpose)) {
+            return false;
+        }
+        final boolean isPasswordSetupCall = "POST".equalsIgnoreCase(request.getMethod())
+                && PasswordConfirmJwtFilter.TARGET_PATH.equals(request.getServletPath());
+        return !(WmpJwtClaims.PURPOSE_PASSWORD_SETUP.equals(purpose) && isPasswordSetupCall);
     }
 
     /**

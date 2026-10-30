@@ -1,5 +1,6 @@
 package raff.stein.platformcore.security.filter;
 
+import raff.stein.platformcore.security.jwt.WmpJwtClaims;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -34,7 +35,7 @@ import java.util.Map;
 @Component
 public class PasswordConfirmJwtFilter extends OncePerRequestFilter {
 
-    private static final String TARGET_PATH = "/auth/password/setup";
+    public static final String TARGET_PATH = "/auth/password/setup";
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Value("${security.jwt.public-key-path:classpath:keys/public_key.pem}")
@@ -68,8 +69,8 @@ public class PasswordConfirmJwtFilter extends OncePerRequestFilter {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            Object purpose = claims.get("purpose");
-            if (purpose == null || !"PASSWORD_SETUP".equals(purpose.toString())) {
+            Object purpose = claims.get(WmpJwtClaims.PURPOSE);
+            if (purpose == null || !WmpJwtClaims.PURPOSE_PASSWORD_SETUP.equals(purpose.toString())) {
                 sendUnauthorized(response, "Invalid token purpose");
                 return;
             }

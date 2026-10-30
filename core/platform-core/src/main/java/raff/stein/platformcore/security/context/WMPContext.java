@@ -25,5 +25,7 @@ public class WMPContext {
     private final String jti;
     // Token expiration epoch seconds (for revocation TTL and audit)
     private final Long tokenExpEpochSeconds;
+    // Purpose of a single-purpose token (e.g. PASSWORD_SETUP); null for session tokens
+    private final String purpose;
 
 }

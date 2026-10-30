@@ -51,6 +51,7 @@ public class JwtTokenParser {
                     .rawToken(token)
                     .jti(claims.getId())
                     .tokenExpEpochSeconds(expEpoch)
+                    .purpose(claims.get(WmpJwtClaims.PURPOSE, String.class))
                     .build();
             return Optional.of(context);
         } catch (JwtException e) {
