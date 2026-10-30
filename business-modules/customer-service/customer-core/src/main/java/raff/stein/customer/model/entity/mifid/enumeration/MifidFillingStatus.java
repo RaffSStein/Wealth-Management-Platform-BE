@@ -8,17 +8,18 @@ import java.util.Set;
  */
 public enum MifidFillingStatus {
 
-    // not all questions answered yet; the only status that accepts updates
+    // not all questions answered yet
     DRAFT,
-    // all questions answered but not submitted yet: no risk profile calculated, can still be submitted
+    // all questions answered but not submitted yet: no risk profile calculated, can still be edited or submitted
     COMPLETED,
     // superseded by a newer filling (e.g. MiFID renewal); kept for history and ignored by lookups
     DEPRECATED,
     // explicitly submitted by the customer: risk profile calculated and persisted, MiFID onboarding step done
     SUBMITTED;
 
+    // every update recalculates DRAFT/COMPLETED from the answers, so a COMPLETED filling can go back to DRAFT
     public static Set<MifidFillingStatus> updatableStatuses() {
-        return Set.of(DRAFT);
+        return Set.of(DRAFT, COMPLETED);
     }
 
     public static Set<MifidFillingStatus> finalStatuses() {

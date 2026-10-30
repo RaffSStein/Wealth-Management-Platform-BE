@@ -59,9 +59,20 @@ class MifidStateHandlerTest {
     }
 
     @Test
-    void shouldRejectUpdateOfCompletedFillingWithConflict() {
+    void shouldAllowUpdateOfCompletedFilling() {
+        assertDoesNotThrow(() -> updateMifidStateHandler.validateStatus(MifidFillingStatus.COMPLETED, MifidActionType.UPDATE));
+    }
+
+    @Test
+    void shouldRejectUpdateOfSubmittedFillingWithConflict() {
         assertThrows(InvalidStateTransitionException.class,
-                () -> updateMifidStateHandler.validateStatus(MifidFillingStatus.COMPLETED, MifidActionType.UPDATE));
+                () -> updateMifidStateHandler.validateStatus(MifidFillingStatus.SUBMITTED, MifidActionType.UPDATE));
+    }
+
+    @Test
+    void shouldRejectUpdateOfDeprecatedFillingWithConflict() {
+        assertThrows(InvalidStateTransitionException.class,
+                () -> updateMifidStateHandler.validateStatus(MifidFillingStatus.DEPRECATED, MifidActionType.UPDATE));
     }
 
     @Test
