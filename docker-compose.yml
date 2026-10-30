@@ -244,6 +244,16 @@ services:
       - "1025:1025"  # SMTP
       - "8025:8025"  # Web UI
 
+  # WireMock stubs for external providers (local only), one path prefix per provider
+  wiremock:
+    image: wiremock/wiremock:3.9.2
+    container_name: wiremock
+    ports:
+      - "8094:8080"  # stubs under /<provider>/..., admin API under /__admin
+    volumes:
+      - ./integration/wiremock:/home/wiremock
+    command: --global-response-templating --verbose
+
 
 
 networks:

@@ -1,0 +1,16 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "url": "/sanction/screen-client",
+    "bodyPatterns": [
+      { "matchesJsonPath": "$[?(@.lastName =~ /.*-HIT$/)]" }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "body": "{\"correlationId\":\"{{jsonPath request.body '$.correlationId'}}\",\"requestId\":\"{{jsonPath request.body '$.requestId'}}\",\"screenedAt\":\"{{now}}\",\"engineVersion\":\"wiremock-local\",\"status\":\"SUCCESS\",\"decision\":\"HIT\",\"rulesTriggered\":[\"EXACT_NAME_MATCH\"],\"matchFound\":true,\"maxMatchScore\":90,\"matchesCount\":1,\"matches\":[{\"matchId\":\"local-hit-1\",\"listType\":\"EU\",\"provider\":\"wiremock\",\"entityName\":\"{{jsonPath request.body '$.firstName'}} {{jsonPath request.body '$.lastName'}}\",\"score\":90,\"matchMode\":\"EXACT\",\"pep\":false,\"sanction\":true,\"adverseMedia\":false}]}",
+    "transformers": ["response-template"]
+  }
+}

@@ -8,9 +8,10 @@ spring:
     rest:
       client:
         sanction:
-          host: http://localhost:8082
+          # local WireMock stub (docker-compose `wiremock`), see integration/README.md
+          host: http://localhost:8094/sanction
           token:
-            url: http://localhost:8082/oauth/token
+            url: http://localhost:8094/sanction/oauth/token
             client-id: client-id
             client-secret: client-secret
   jpa:

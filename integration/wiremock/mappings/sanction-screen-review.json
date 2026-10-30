@@ -1,0 +1,16 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "url": "/sanction/screen-client",
+    "bodyPatterns": [
+      { "matchesJsonPath": "$[?(@.lastName =~ /.*-REVIEW$/)]" }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "body": "{\"correlationId\":\"{{jsonPath request.body '$.correlationId'}}\",\"requestId\":\"{{jsonPath request.body '$.requestId'}}\",\"screenedAt\":\"{{now}}\",\"engineVersion\":\"wiremock-local\",\"status\":\"SUCCESS\",\"decision\":\"REVIEW\",\"rulesTriggered\":[\"FUZZY_NAME_MATCH\"],\"matchFound\":true,\"maxMatchScore\":40,\"matchesCount\":1,\"matches\":[{\"matchId\":\"local-review-1\",\"listType\":\"PEP\",\"provider\":\"wiremock\",\"entityName\":\"{{jsonPath request.body '$.firstName'}} {{jsonPath request.body '$.lastName'}}\",\"score\":40,\"matchMode\":\"FUZZY\",\"pep\":true,\"sanction\":false,\"adverseMedia\":false}]}",
+    "transformers": ["response-template"]
+  }
+}

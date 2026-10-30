@@ -1,0 +1,13 @@
+{
+  "priority": 10,
+  "request": {
+    "method": "POST",
+    "url": "/sanction/screen-client"
+  },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "body": "{\"correlationId\":\"{{jsonPath request.body '$.correlationId'}}\",\"requestId\":\"{{jsonPath request.body '$.requestId'}}\",\"screenedAt\":\"{{now}}\",\"engineVersion\":\"wiremock-local\",\"status\":\"SUCCESS\",\"decision\":\"CLEAR\",\"matchFound\":false,\"maxMatchScore\":0,\"matchesCount\":0,\"matches\":[]}",
+    "transformers": ["response-template"]
+  }
+}
