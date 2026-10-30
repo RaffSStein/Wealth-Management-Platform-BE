@@ -7,9 +7,8 @@ import lombok.Data;
 public class BranchRoleRequest {
     @NotBlank
     private String bankCode;
-    // In current domain naming, this maps to event's branchCode
     @NotBlank
-    private String bankId;
+    private String branchCode;
     @NotBlank
     private String role;
 }

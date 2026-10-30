@@ -4,24 +4,29 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import raff.stein.platformcore.exception.ErrorCode;
+import raff.stein.platformcore.exception.types.forbidden.AccessDeniedException;
+import raff.stein.platformcore.exception.types.notfound.GenericObjectNotFoundException;
+import raff.stein.platformcore.exception.types.unauthorized.WmpContextException;
 import raff.stein.platformcore.security.context.SecurityContextHolder;
 import raff.stein.platformcore.security.context.WMPContext;
 import raff.stein.platformcore.security.jwt.TokenRevocationService;
+import raff.stein.platformcore.security.jwt.WmpJwtClaims;
 import raff.stein.user.model.BranchRole;
 import raff.stein.user.model.auth.*;
+import raff.stein.user.model.entity.BranchUserEntity;
 import raff.stein.user.model.entity.UserEntity;
 import raff.stein.user.model.user.User;
 import raff.stein.user.repository.UserRepository;
 import raff.stein.user.security.JwtTokenIssuer;
-import raff.stein.user.security.WmpUserDetails;
 import raff.stein.user.service.PasswordService;
 import raff.stein.user.service.PasswordSetupTokenService;
 import raff.stein.user.service.UserService;
 
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -57,32 +62,36 @@ public class AuthenticationService {
         userService.publishUser(user, setupToken);
     }
 
+    @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        Authentication auth = authenticationManager.authenticate(
+        // password check only: the token content comes from the active membership below
+        authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
                         request.getPassword())
         );
-
-        WmpUserDetails principal = (WmpUserDetails) auth.getPrincipal();
-        List<String> tokenRoles = auth.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .filter(a -> a.startsWith("ROLE_"))
-                .map(a -> a.substring("ROLE_".length()))
-                .distinct()
-                .toList();
-        if (tokenRoles.isEmpty()) {
-            log.warn("Role fallback applied during login auth: assigning CUSTOMER for email [{}] (no authorities found)",
-                    request.getEmail());
-            tokenRoles = List.of(WmpRole.CUSTOMER.name());
-        }
-        String token = jwtTokenIssuer.issueToken(
-                principal.getUserId(),
-                principal.getUsername(),
-                tokenRoles,
-                buildExtraClaims(principal.getUserId()));
+        final UserEntity user = userRepository.findByEmailIgnoreCase(request.getEmail())
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + request.getEmail()));
+        final String token = issueTokenForMembership(user, request.getBankCode(), request.getBranchCode());
         log.info("User [{}] logged in successfully", request.getEmail());
+        return new AuthResponse(token, "Bearer", jwtTokenIssuer.getExpirationSeconds());
+    }
+
+    /**
+     * Issues a token for another membership of the current user and revokes the current token.
+     */
+    @Transactional(readOnly = true)
+    public AuthResponse switchBranch(String bankCode, String branchCode) {
+        final WMPContext context = SecurityContextHolder.getContext();
+        if (context == null || context.getEmail() == null) {
+            throw WmpContextException.forMissingField("email").get();
+        }
+        final UserEntity user = userRepository.findByEmailIgnoreCase(context.getEmail())
+                .orElseThrow(GenericObjectNotFoundException.with(context.getEmail()));
+        final String token = issueTokenForMembership(user, bankCode, branchCode);
+        // only after the new token is issued, so a refused switch keeps the current session
+        logout();
+        log.info("User [{}] switched to branch [{}]", context.getEmail(), branchCode);
         return new AuthResponse(token, "Bearer", jwtTokenIssuer.getExpirationSeconds());
     }
 
@@ -123,13 +132,53 @@ public class AuthenticationService {
         return requests.stream()
                 .map(br -> BranchRole.builder()
                         .bankCode(br.getBankCode())
-                        .bankId(br.getBankId())
+                        .branchCode(br.getBranchCode())
                         .role(br.getRole())
                         .build())
                 .toList();
     }
 
-    private Map<String, Object> buildExtraClaims(String userId) {
-        return Map.of("userId", userId);
+    /**
+     * Builds the token for one active membership: tenantId = its bank, branchCode = its branch,
+     * roles = only the roles held in that membership.
+     * Without a requested branch the first membership (lowest id) is used.
+     */
+    private String issueTokenForMembership(UserEntity user, String requestedBankCode, String requestedBranchCode) {
+        final String userId = String.valueOf(user.getId());
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put(WmpJwtClaims.USER_ID, userId);
+        final List<BranchUserEntity> memberships = user.getBankBranchUsers().stream()
+                .sorted(Comparator.comparing(BranchUserEntity::getId))
+                .toList();
+        if (memberships.isEmpty()) {
+            if (requestedBranchCode != null) {
+                throw membershipDenied(user.getEmail(), requestedBranchCode);
+            }
+            // no membership means no tenant: the user can't touch tenant-scoped data
+            log.warn("Role fallback applied during token issuance: assigning CUSTOMER without tenant for user [{}] (no branch memberships)",
+                    user.getEmail());
+            return jwtTokenIssuer.issueToken(userId, user.getEmail(), List.of(WmpRole.CUSTOMER.name()), claims);
+        }
+        final BranchUserEntity active = requestedBranchCode == null
+                ? memberships.getFirst()
+                : memberships.stream()
+                        .filter(m -> requestedBranchCode.equals(m.getBranchCode()))
+                        .filter(m -> requestedBankCode == null || requestedBankCode.equals(m.getBankCode()))
+                        .findFirst()
+                        .orElseThrow(() -> membershipDenied(user.getEmail(), requestedBranchCode));
+        final List<String> roles = memberships.stream()
+                .filter(m -> m.getBankCode().equals(active.getBankCode()) && m.getBranchCode().equals(active.getBranchCode()))
+                .map(m -> WmpRole.fromString(m.getRole()).name())
+                .distinct()
+                .toList();
+        claims.put(WmpJwtClaims.TENANT_ID, active.getBankCode());
+        claims.put(WmpJwtClaims.BRANCH_CODE, active.getBranchCode());
+        return jwtTokenIssuer.issueToken(userId, user.getEmail(), roles, claims);
+    }
+
+    private static AccessDeniedException membershipDenied(String email, String branchCode) {
+        return new AccessDeniedException(
+                ErrorCode.ACCESS_DENIED,
+                String.format(ErrorCode.ACCESS_DENIED.getMessageTemplate(), email, branchCode));
     }
 }

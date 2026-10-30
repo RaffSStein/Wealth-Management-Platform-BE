@@ -12,7 +12,7 @@ import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 @Entity
 @Table(
         name = "branch_users",
-        uniqueConstraints = {@UniqueConstraint(name = "uk_branch_user_role", columnNames = {"user_id", "branchId", "role"})}
+        uniqueConstraints = {@UniqueConstraint(name = "uk_branch_user_role", columnNames = {"user_id", "bankCode", "branchCode", "role"})}
 )
 @Getter
 @Setter
@@ -36,10 +36,17 @@ public class BranchUserEntity extends BaseDateEntity<Long> {
     private UserEntity user;
 
     /**
+     * The bank (tenant) of this membership. It becomes the token's tenantId when the membership is active.
+     * Plain column, not @TenantId: login must read the memberships of every bank.
+     */
+    @Column(nullable = false)
+    private String bankCode;
+
+    /**
      * The bank branch where the user operates.
      */
     @Column(nullable = false)
-    private String branchId;
+    private String branchCode;
 
     /**
      * The role of the user within the bank branch (e.g., SUPERVISOR, HANDLER, MANAGER, AUDITOR, etc.).

@@ -28,7 +28,7 @@ public interface UserToUserCreatedEventMapper {
 
     // Map a single BranchRole -> UserBankBranch
     @Mapping(target = "bankCode", source = "bankCode")
-    @Mapping(target = "branchCode", source = "bankId")
+    @Mapping(target = "branchCode", source = "branchCode")
     @Mapping(target = "role", source = "role")
     UserBankBranch toUserBankBranch(BranchRole role);
 

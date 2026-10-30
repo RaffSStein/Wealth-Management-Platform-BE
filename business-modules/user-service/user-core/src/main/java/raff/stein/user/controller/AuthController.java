@@ -32,6 +32,14 @@ public class AuthController implements AuthApi {
     }
 
     @Override
+    public ResponseEntity<AuthResponseDTO> switchBranch(SwitchBranchRequestDTO switchBranchRequestDTO) {
+        AuthResponse response = authenticationService.switchBranch(
+                switchBranchRequestDTO.getBankCode(),
+                switchBranchRequestDTO.getBranchCode());
+        return ResponseEntity.ok(authDtoMapper.toAuthResponseDTO(response));
+    }
+
+    @Override
     public ResponseEntity<Void> registerUser(RegisterRequestDTO registerRequestDTO) {
         RegisterRequest request = authDtoMapper.toRegisterRequest(registerRequestDTO);
         authenticationService.register(request);

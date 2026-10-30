@@ -59,6 +59,15 @@ Technical overview and developer notes for the user-service module. This documen
   - `security.jwt.private-key-path` (user-service, for token issuance when applicable)
 - CORS/CSRF: configured for stateless APIs in platform-core, inherited by user-core.
 
+## Authentication, memberships and tenants
+- A user has one or more branch memberships (`branch_users`: `bankCode`, `branchCode`, `role`).
+- `POST /auth/login` issues a JWT for one **active membership**: the requested `bankCode`/`branchCode`, otherwise the first
+  membership. The token carries `tenantId` (the membership's bank code), `branchCode`, and only the roles held in that
+  membership. A user without memberships gets a CUSTOMER token with no tenant, so they can't access bank-owned data.
+- `POST /auth/switch-branch` issues a token for another membership of the current user and revokes the current token.
+  A branch the user doesn't belong to returns 403.
+- Claim names are shared with every service through `WmpJwtClaims` (platform-core).
+
 ## Database
 - Postgres is the default RDBMS; JPA/Hibernate used in `user-core`.
 - Ensure datasource properties are provided via environment or `application-*.yml` profiles.

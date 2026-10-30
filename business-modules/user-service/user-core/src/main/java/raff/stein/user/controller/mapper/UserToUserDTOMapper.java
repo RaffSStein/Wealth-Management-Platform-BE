@@ -27,14 +27,8 @@ public interface UserToUserDTOMapper {
     UserDTO toUserDto(User user);
 
     // Element mappings for branch roles
-    @Mapping(target = "bankCode", source = "bankCode")
-    @Mapping(target = "role", source = "role")
-    // bankId is not present in DTO and will remain null in domain
     BranchRole toBranchRole(UserBranchRoleDTO userBranchRoleDTO);
 
-    @Mapping(target = "bankCode", source = "bankCode")
-    @Mapping(target = "role", source = "role")
-    // bankId is ignored on DTO side (not present)
     UserBranchRoleDTO toUserBranchRoleDto(BranchRole branchRole);
 
     // List mappings to ensure null lists become empty (safer for downstream usage)

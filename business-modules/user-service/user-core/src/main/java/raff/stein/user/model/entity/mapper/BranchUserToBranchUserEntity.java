@@ -11,14 +11,11 @@ public interface BranchUserToBranchUserEntity {
 
     BranchUserToBranchUserEntity MAPPER = Mappers.getMapper(BranchUserToBranchUserEntity.class);
 
-    //TODO: maybe fix the inconsistent naming (branchId vs bankCode)
-    @Mapping(target = "branchId", source = "bankCode")
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "notes", ignore = true)
     BranchUserEntity toBranchUserEntity(BranchRole branchRole);
 
-    @Mapping(target = "bankCode", source = "branchId")
     BranchRole toBranchRole(BranchUserEntity branchUserEntity);
 
 }
