@@ -67,6 +67,9 @@ Technical overview and developer notes for the user-service module. This documen
 - `POST /auth/switch-branch` issues a token for another membership of the current user and revokes the current token.
   A branch the user doesn't belong to returns 403.
 - Claim names are shared with every service through `WmpJwtClaims` (platform-core).
+- `GET /me` returns every membership and flags the one the token was issued for with `active: true`.
+- The password-setup token (`purpose: PASSWORD_SETUP`) is accepted only on `POST /auth/password/setup`.
+- Full flow with diagrams: [JWT authentication guide](../../docs/domain/process/security/jwt-authentication.md).
 
 ## Database
 - Postgres is the default RDBMS; JPA/Hibernate used in `user-core`.

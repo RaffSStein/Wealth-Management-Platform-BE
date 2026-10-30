@@ -204,6 +204,9 @@ The `jwt/` resource subtree documents and supports the platform JWT model:
 Services should follow these conventions when building authentication filters and WMP context handling, so that JWT behavior is
 consistent across the platform.
 
+The full lifecycle (issuance, validation, branch switch, password setup, event propagation, revocation), with diagrams,
+is in [docs/domain/process/security/jwt-authentication.md](../../docs/domain/process/security/jwt-authentication.md).
+
 Custom claims (names in `WmpJwtClaims`): `userId`, `email`, `roles`, `tenantId` (bank code of the active membership) and
 `branchCode` (its branch). `JwtTokenParser` maps them into `WMPContext`; `SecurityContextFilter` also puts `tenantId` and
 `branchCode` in the MDC, so every log line carries them.

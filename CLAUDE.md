@@ -142,4 +142,6 @@ docs/domain/                   functional docs: process/ (markdown) + assets/ (d
 - When adding endpoints, events or config, update the service `README.md`. Its section order follows `document-service`/`email-service`:
   Overview, Module Structure, Setup, Data Model, Capabilities & APIs, Topics & Events, Key Processes, Miscellaneous, Work in Progress.
 - Functional/process documentation goes in `docs/domain/process/<area>/`, with diagrams in `docs/domain/assets/<area>/`.
+  New docs may use inline Mermaid diagrams instead (as in `docs/domain/process/security/jwt-authentication.md`, the
+  reference for how tokens are issued, validated and propagated).
 - Prefer cross-platform commands in docs, giving Windows equivalents next to Unix ones.
