@@ -13,6 +13,7 @@ import raff.stein.user.model.entity.mapper.UserToUserEntityMapper;
 import raff.stein.user.model.user.User;
 import raff.stein.user.repository.UserRepository;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -69,7 +70,20 @@ public class UserService {
         final UserEntity userEntity = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + userEmail));
         log.debug("Found user entity: [{}]", userEntity);
-        return userToUserEntityMapper.toUser(userEntity);
+        final User user = userToUserEntityMapper.toUser(userEntity);
+        markActiveMembership(user, context);
+        return user;
+    }
+
+    // the token is issued for one membership: flag it so clients don't derive roles from the others
+    private static void markActiveMembership(User user, WMPContext context) {
+        if (user.getBranchRoles() == null) {
+            return;
+        }
+        user.getBranchRoles().forEach(branchRole -> branchRole.setActive(
+                context.getTenantId() != null
+                        && context.getTenantId().equals(branchRole.getBankCode())
+                        && Objects.equals(context.getBranchCode(), branchRole.getBranchCode())));
     }
 
     public User getUserById(UUID id) {

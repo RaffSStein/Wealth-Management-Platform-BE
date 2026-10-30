@@ -438,6 +438,12 @@ components:
           type: string
         branchCode:
           type: string
+        active:
+          type: boolean
+          readOnly: true
+          description: >
+            True for the membership the current token was issued for (its tenantId/branchCode).
+            Use this membership's role for UI decisions; switch with POST /auth/switch-branch.
         role:
           type: string
 
