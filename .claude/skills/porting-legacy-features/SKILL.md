@@ -28,7 +28,7 @@ Ports **behaviour**, never code. The legacy system is the functional reference. 
 
 | Prerequisite | Needed before |
 |---|---|
-| Multi-tenancy in platform-core (tenant + branch in `WMPContext`, tenant-scoped base entity, automatic query filter, tenant id on events) | **every** domain port |
+| ✓ **Built.** Multi-tenancy in platform-core: new business entities extend `TenantScopedEntity` (see `core/platform-core/README.md`, "Multi-tenancy") | **every** domain port |
 | Per-bank settings: typed values in `bank-service` tables (not files), feature flags in `profiler-service`, cached reader in platform-core | any port with `[TENANT-POLICY]` items |
 | Transactional outbox in platform-core | ports whose events create, execute or change orders or holdings (proposal, order, the order-side suitability re-check). Derived snapshots fed by files (AUM, valuations) don't need it: a failed run is simply re-run. |
 | Scheduled-job support in platform-core (single runner across instances; the lock library is a new dependency the user must approve) | any port with a scheduled job (feeds, expiry, end-of-day) |

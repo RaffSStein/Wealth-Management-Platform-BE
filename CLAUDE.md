@@ -109,6 +109,10 @@ docs/domain/                   functional docs: process/ (markdown) + assets/ (d
   New platform-wide codes go into `ErrorCode` with a `[%s]` message template.
 - Security (JWT resource server, `WMPContext`, `SecurityContextFilter`) is centralized in `platform-core`. Don't reimplement it in services.
   The JWT keys and `local_token.txt` in `platform-core/src/main/resources/jwt` are **local-dev only**.
+- Multi-tenancy: a tenant is a bank (bank code). It comes from the token's `tenantId` claim (or the `tenantid` CloudEvents
+  extension in consumers) and lives in `WMPContext`. Business entities owned by a bank extend `TenantScopedEntity`, which
+  Hibernate fills and filters automatically. Configuration and reference data stay on `BaseDateEntity`. Native SQL is not
+  filtered, so add the tenant predicate yourself. See `core/platform-core/README.md`.
 - Use Lombok `@Slf4j`. Log messages wrap values in brackets, e.g. `log.info("Processing X for customerId: [{}]", id)`.
   Use `warn` for expected/client issues and `error` for failures. Never log secrets, tokens or full PII payloads.
 - Logback config is shared in `platform-core` (`logback-spring.xml`, JSON with traceId/spanId/correlation). Don't add per-service logback files.

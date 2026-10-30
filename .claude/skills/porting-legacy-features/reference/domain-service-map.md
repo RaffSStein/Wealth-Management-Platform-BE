@@ -34,7 +34,7 @@ A **new service** means: create it with the 3-submodule split, register it in th
 
 | REQ | Target |
 |---|---|
-| XC-001 multi-tenancy | `platform-core`: tenant and branch in `WMPContext`, tenant-scoped base entity, tenant id in CloudEvents. **decided: Phase 0, blocks every domain port.** |
+| XC-001 multi-tenancy | `platform-core`: tenant and branch in `WMPContext`, tenant-scoped base entity, tenant id in CloudEvents. **built** (`TenantScopedEntity`, `WmpTenantIdentifierResolver`, `tenantid` CloudEvents extension). |
 | XC-002 / 003 per-tenant config, feature flags | **decided**: typed per-bank values in `bank-service` database tables (bank = tenant registry; one table or a set of tables per area, with history; never YAML or files); per-bank on/off features in `profiler-service` (next to its sections/features/permissions); platform-core provides a cached reader, refreshed by a `bank-settings-updated` / `feature-flags-updated` event. No new service. |
 | XC-004 audit log | platform-core aspect publishes `user-action-performed`; **new service** `audit-service` (**decided**) stores and exports it. |
 | XC-005 DISPOSITIVE / SIMULATED | `proposal-service` only. |
