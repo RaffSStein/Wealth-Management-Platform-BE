@@ -54,7 +54,9 @@ docs/domain/                   functional docs: process/ (markdown) + assets/ (d
 - Generated classes go to `org.openapitools.model` / `org.openapitools.api` in **every** module, so schema names must be
   unique platform-wide. Suffix REST models with `DTO` (`CustomerDTO`) and events with `Event` (`CustomerCreatedEvent`).
 - Every operation has an `operationId` (camelCase), `summary`, `description` and `tags`. Paths are prefixed with the domain (`/customer/...`).
-- Shared types (`ErrorResponse`, `ErrorCategory`, pagination) live in `platform-core/src/main/resources/api-data.yaml`. Reuse them.
+- Shared types (`ErrorResponse`, `ErrorCategory`) live in `platform-core/src/main/resources/api-data.yaml`. Reuse them.
+  There is no shared pagination type yet: `Pageable` is defined only in `bank-api-data.yaml`. Move it to platform-core
+  when another service needs paging.
 
 ### Layering and mapping (customer-service is the reference implementation)
 - Flow: `DTO (api-data) -> controller mapper -> BO (model/bo) -> service -> entity mapper -> Entity (model/entity) -> repository`.
