@@ -1,0 +1,41 @@
+[
+  {
+    "id": "product-catalogue-basic",
+    "skills": ["porting-legacy-features"],
+    "query": "Port the instrument search and product sheet requirements from the legacy product catalogue.",
+    "files": ["C:/Users/Raffaele/Desktop/WMP/legacy-wmp-requirements/01-product-catalogue.md"],
+    "expected_behavior": [
+      "Checks Phase 0 prerequisites first and reports that tenancy is missing, instead of silently skipping it",
+      "Reads 00-index.md and 01-product-catalogue.md in full; from other domain files only the grep-scoped REQ sections listed under Spans (e.g. the 08 shelf), never whole files",
+      "Places the feature in product-service and plans its migration to the api-data / event-data / core split as step 0",
+      "Produces a port spec from the template, cites every in-scope REQ id, and waits for approval before writing code",
+      "Plans an F-<Feature> artboard on the existing Design canvas (no new canvas) with an n<Area> endpoint note"
+    ]
+  },
+  {
+    "id": "suitability-rules-hard",
+    "skills": ["porting-legacy-features"],
+    "query": "Port the suitability checks used by proposals, including re-checking a signed proposal before execution.",
+    "files": ["C:/Users/Raffaele/Desktop/WMP/legacy-wmp-requirements/03-proposal-advisory-suitability.md"],
+    "expected_behavior": [
+      "Places the rules and evidence in the new suitability-service, not in proposal-service",
+      "Models each check (credit, market, concentration, complexity, ...) as its own rule component with its own test",
+      "Treats suitability evidence as append-only and numbered, never updated in place",
+      "Justifies the synchronous call from proposal-service; the re-check before execution reacts to an event",
+      "Flags that the proposal/order side waits for the outbox (Phase 0); asks the legacy session (or reads the legacy code) for the exact rule thresholds instead of inventing them"
+    ]
+  },
+  {
+    "id": "data-feed-be-only",
+    "skills": ["porting-legacy-features"],
+    "query": "Port one of the legacy position feeds from the data-ingestion catalogue.",
+    "files": ["C:/Users/Raffaele/Desktop/WMP/legacy-wmp-requirements/11-data-ingestion-dq-dashboard.md"],
+    "expected_behavior": [
+      "Places the feed in data-ingestion-service and asks before creating that new module (new services need approval to be scaffolded)",
+      "Puts the vendor format behind an adapter in integration/ and translates it into domain events consumed by portfolio-service",
+      "Makes the consumer idempotent and keeps a scheduled job only for the time trigger",
+      "Skips the UI mocks step and says it is BE-only",
+      "Contains no bank, vendor or host names"
+    ]
+  }
+]
