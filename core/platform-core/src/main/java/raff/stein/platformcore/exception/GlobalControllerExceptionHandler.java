@@ -23,6 +23,7 @@ import raff.stein.platformcore.exception.types.notimplemented.NotImplementedExce
 import raff.stein.platformcore.exception.types.unauthorized.AuthenticationException;
 import raff.stein.platformcore.exception.types.unauthorized.JwtTokenException;
 import raff.stein.platformcore.exception.types.unauthorized.WmpContextException;
+import raff.stein.platformcore.exception.types.unavailable.TokenStoreUnavailableException;
 import tools.jackson.databind.DatabindException;
 import tools.jackson.databind.exc.InvalidFormatException;
 
@@ -165,6 +166,19 @@ public class GlobalControllerExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_IMPLEMENTED)
     public ErrorResponse handleNotImplementedExceptions(GenericException ex) {
         log.warn("Not implemented [code={}, category={}] traceId={}", getErrorCode(ex), getErrorCategory(ex), getTraceId(), ex);
+        return getErrorResponse(ex);
+    }
+
+    /**
+     * ============= SERVICE UNAVAILABLE (503) exception handlers =============
+     */
+    @ExceptionHandler({
+            TokenStoreUnavailableException.class
+            // Add any specific unavailable dependency exceptions here
+    })
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ErrorResponse handleServiceUnavailableExceptions(GenericException ex) {
+        log.error("Service unavailable [code={}, category={}] traceId={}", getErrorCode(ex), getErrorCategory(ex), getTraceId(), ex);
         return getErrorResponse(ex);
     }
 

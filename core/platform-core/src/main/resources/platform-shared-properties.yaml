@@ -4,7 +4,20 @@ security:
     header: Authorization
     prefix: Bearer
 
+platform:
+  security:
+    token-store:
+      # shared revocation / single-use token store; IN_MEMORY only for tests or isolated runs
+      type: REDIS
+
 spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      # fail fast: the revocation check runs on every authenticated request
+      timeout: 500ms
+      connect-timeout: 1s
   mustache:
     check-template-location: false
   config:

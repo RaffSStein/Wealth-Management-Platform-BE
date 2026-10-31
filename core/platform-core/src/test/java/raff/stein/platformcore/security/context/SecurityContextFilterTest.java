@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import raff.stein.platformcore.exception.types.unavailable.TokenStoreUnavailableException;
 import raff.stein.platformcore.security.jwt.JwtProperties;
 import raff.stein.platformcore.security.jwt.JwtTokenParser;
 import raff.stein.platformcore.security.jwt.TokenRevocationService;
@@ -97,6 +98,20 @@ class SecurityContextFilterTest {
 
         assertEquals(401, response.getStatus());
         verify(chain, never()).doFilter(any(), any());
+    }
+
+    @Test
+    void shouldFailClosedWhenTokenStoreIsUnavailable() throws Exception {
+        givenToken(context(null));
+        when(tokenRevocationService.isRevoked("jti-1"))
+                .thenThrow(new TokenStoreUnavailableException("check revoked", new RuntimeException("connection refused")));
+        final MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request("GET", "/customer/42"), response, chain);
+
+        assertEquals(503, response.getStatus());
+        verify(chain, never()).doFilter(any(), any());
+        assertNull(SecurityContextHolder.getContext());
     }
 
     private void givenToken(WMPContext context) {

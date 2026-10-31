@@ -16,6 +16,7 @@ public enum ErrorCode {
     OPTIMISTIC_LOCKING_ERROR("The resource has been modified by another transaction. Please retry", ErrorCategory.VALIDATION_ERROR),
     NOT_IMPLEMENTED_ERROR("This feature [%s] is not implemented yet", ErrorCategory.GENERIC_ERROR),
     INVALID_STATE_TRANSITION("Cannot [%s] when current state is [%s]. Allowed states: [%s]", ErrorCategory.VALIDATION_ERROR),
+    TOKEN_STORE_UNAVAILABLE("Token store unavailable during [%s]", ErrorCategory.SERVER_ERROR),
 
     // TODO: move to specific modules
     // Domain specific errors

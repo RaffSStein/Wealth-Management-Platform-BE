@@ -1,27 +1,29 @@
 package raff.stein.platformcore.security.jwt;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import raff.stein.platformcore.security.jwt.revocation.TokenStore;
 
 /**
- * In-memory token revocation store. Keeps track of revoked JWT IDs (jti) until they expire.
+ * Tracks token ids (jti) that must no longer be accepted: revoked session tokens and consumed single-use tokens.
+ * Backed by the shared {@link TokenStore}, so a token revoked by one service is rejected by all of them.
+ * Every method throws {@code TokenStoreUnavailableException} when the store can't be reached: callers fail closed.
  */
-
 @Service
+@RequiredArgsConstructor
 public class TokenRevocationService {
 
-    private final Map<String, Long> revoked = new ConcurrentHashMap<>(); // jti -> expEpochSeconds
+    static final String REVOKED = "revoked";
+    static final String SINGLE_USE_CONSUMED = "setup-used";
+
+    private final TokenStore tokenStore;
 
     /**
      * Revoke a token given its jti and expiration epoch seconds.
      */
     public void revoke(String jti, long expEpochSeconds) {
         if (jti == null || jti.isBlank()) return;
-        // TODO: in production, consider a persistent store or distributed cache
-        revoked.putIfAbsent(jti, expEpochSeconds);
+        tokenStore.markIfAbsent(REVOKED, jti, expEpochSeconds);
     }
 
     /**
@@ -29,15 +31,14 @@ public class TokenRevocationService {
      */
     public boolean isRevoked(String jti) {
         if (jti == null || jti.isBlank()) return false;
-        Long exp = revoked.get(jti);
-        if (exp == null) return false;
-        long now = Instant.now().getEpochSecond();
-        if (now >= exp) {
-            // cleanup expired entry lazily
-            revoked.remove(jti);
-            return false;
-        }
-        return true;
+        return tokenStore.contains(REVOKED, jti);
+    }
+
+    /**
+     * Consumes a single-use token. Returns true on the first use only, across all instances.
+     */
+    public boolean consumeOnce(String jti, long expEpochSeconds) {
+        if (jti == null || jti.isBlank()) return false;
+        return tokenStore.markIfAbsent(SINGLE_USE_CONSUMED, jti, expEpochSeconds);
     }
 }
-

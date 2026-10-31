@@ -244,6 +244,18 @@ services:
       - "1025:1025"  # SMTP
       - "8025:8025"  # Web UI
 
+  # Redis: shared token store (revoked / consumed JWT ids), also usable as cache provider
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   # WireMock stubs for external providers (local only), one path prefix per provider
   wiremock:
     image: wiremock/wiremock:3.9.2

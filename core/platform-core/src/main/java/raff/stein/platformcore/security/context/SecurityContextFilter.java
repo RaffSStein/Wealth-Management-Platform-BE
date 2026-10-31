@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.util.StringUtils;
+import raff.stein.platformcore.exception.types.unavailable.TokenStoreUnavailableException;
 import raff.stein.platformcore.security.filter.PasswordConfirmJwtFilter;
 import raff.stein.platformcore.security.jwt.JwtProperties;
 import raff.stein.platformcore.security.jwt.JwtTokenParser;
@@ -54,7 +55,17 @@ public class SecurityContextFilter implements Filter {
                 if (wmpContextOptional.isPresent()) {
                     WMPContext context = wmpContextOptional.get();
                     // Use jti from context to check revocation without reparsing/reflection
-                    if (tokenRevocationService.isRevoked(context.getJti())) {
+                    final boolean revoked;
+                    try {
+                        revoked = tokenRevocationService.isRevoked(context.getJti());
+                    } catch (TokenStoreUnavailableException e) {
+                        // fail closed: a revoked token must not slip through while the store is down
+                        log.error("Token store unavailable, rejecting request [{} {}]",
+                                httpRequest.getMethod(), httpRequest.getServletPath(), e);
+                        httpResponse.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+                        return;
+                    }
+                    if (revoked) {
                         httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                         return; // Stop chain for revoked token
                     }
