@@ -15,8 +15,8 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      # fail fast: the revocation check runs on every authenticated request
-      timeout: 500ms
+      # fail fast, since the check runs on every authenticated request, but tolerate a one-off stall (GC, Docker)
+      timeout: 2s
       connect-timeout: 1s
   mustache:
     check-template-location: false
