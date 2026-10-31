@@ -211,6 +211,26 @@ Custom claims (names in `WmpJwtClaims`): `userId`, `email`, `roles`, `tenantId` 
 `branchCode` (its branch). `JwtTokenParser` maps them into `WMPContext`; `SecurityContextFilter` also puts `tenantId` and
 `branchCode` in the MDC, so every log line carries them.
 
+### Token store (revocation and single-use tokens)
+
+`TokenRevocationService` records token ids (`jti`) that must no longer be accepted, in a `TokenStore`
+(`security/jwt/revocation`):
+
+- `revoke(jti, exp)` / `isRevoked(jti)`: namespace `revoked`. Written by user-service on logout and branch switch;
+  checked by `SecurityContextFilter` on every authenticated request in every service.
+- `consumeOnce(jti, exp)`: namespace `setup-used`. Atomic first-use check for single-use tokens (password setup).
+
+| `platform.security.token-store.type` | Store | Use |
+|---|---|---|
+| `REDIS` (default) | `RedisTokenStore`: `SET <prefix>:<namespace>:<jti> NX` with TTL = remaining token life + `clock-skew` | shared by every service and instance |
+| `IN_MEMORY` | `InMemoryTokenStore`: per-instance map | unit tests and isolated runs only: a revocation isn't seen by other services |
+
+Entries expire with the token, so no cleanup job is needed. When Redis is unreachable the store throws
+`TokenStoreUnavailableException` (`TOKEN_STORE_UNAVAILABLE`, 503) and callers **fail closed**: the filter answers 503,
+and a single-use token is never accepted twice. Connection defaults (`spring.data.redis.*`, overridable with
+`REDIS_HOST` / `REDIS_PORT`) are in `platform-shared-properties.yaml`; locally, run the `redis` container from
+`docker-compose.yml`.
+
 ## Multi-tenancy
 
 A tenant is a bank, identified by its bank code. All services share tables, and tenant-owned rows carry a `tenant_id` column.
@@ -728,7 +748,8 @@ spring:
       timeout: 2000ms
 ```
 
-`platform-core` does not hard-code Redis hosts or credentials; those remain the responsibility of each microservice and environment.
+`platform-shared-properties.yaml` defaults the connection to `${REDIS_HOST:localhost}:${REDIS_PORT:6379}`, because the
+token store uses the same Redis. Credentials and non-local hosts remain the responsibility of each environment.
 
 ### Local development
 

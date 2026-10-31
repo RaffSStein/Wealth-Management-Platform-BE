@@ -24,6 +24,7 @@ docker compose -f docker-compose.yml up -d                               # local
 - The build regenerates OpenAPI code; a broken YAML spec breaks every dependent module.
 - Local infra (`docker-compose.yml` + `.env`): Kafka + Kafka Connect + Kafbat UI, one `postgres-<service>` container per service
   (user/pass `test`/`test`), Splunk + forwarder, MinIO and fake-GCS (document storage), MailHog (SMTP `1025`, UI `8025`),
+  Redis (`6379`, shared JWT revocation store: services answer 503 to authenticated calls while it's down),
   WireMock external-provider stubs (`8094`, mappings in `integration/wiremock/mappings`, one path prefix per provider).
 - Each service has its own HTTP port, context path `/<service-name>` and DB port. Check the service's `application.yaml`
   and `docker-compose.yml` before choosing a new port, so ports don't collide.

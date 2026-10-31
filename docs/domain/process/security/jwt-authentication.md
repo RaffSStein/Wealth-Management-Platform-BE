@@ -148,7 +148,9 @@ sequenceDiagram
     RS->>RS: roles claim to authorities ROLE_*
     PC->>PC: only on POST /auth/password/setup:<br/>require purpose PASSWORD_SETUP
     SC->>SC: parse claims into WMPContext
-    alt jti revoked in this service
+    alt token store (Redis) unreachable
+        SC-->>FE: 503, fail closed
+    else jti revoked (shared store)
         SC-->>FE: 401
     else purpose token outside its endpoint
         SC-->>FE: 401
@@ -185,7 +187,7 @@ sequenceDiagram
     participant AS as user-service<br/>AuthenticationService
     participant DB as branch_users
     participant JI as JwtTokenIssuer
-    participant RV as TokenRevocationService<br/>user-service memory
+    participant RV as TokenRevocationService<br/>shared Redis store
 
     FE->>AS: POST /auth/switch-branch {branchCode, bankCode?}<br/>Authorization: Bearer current JWT
     AS->>DB: memberships of the current user (from WMPContext.email)
@@ -217,7 +219,7 @@ sequenceDiagram
     participant K as Kafka<br/>user-created
     participant ES as email-service
     participant PR as profiler-service
-    participant PS as PasswordSetupTokenService<br/>user-service memory
+    participant PS as PasswordSetupTokenService<br/>consumes the jti in Redis
 
     FE->>US: POST /auth/register {email, names, branchRoles}
     US->>US: save user and memberships (bankCode, branchCode, role)
@@ -232,8 +234,10 @@ sequenceDiagram
     US->>US: PasswordConfirmJwtFilter: signature, purpose, exp
     US->>US: SecurityContextFilter: purpose allowed on this endpoint
     US->>PS: validateAndConsume(token)
-    alt jti already used
+    alt jti already used (on any instance, also after a restart)
         PS-->>FE: error, the link works once
+    else token store unreachable
+        PS-->>FE: 503, the setup is refused, never accepted twice
     end
     US->>US: validate password policy, store bcrypt hash
     US-->>FE: 202
@@ -274,14 +278,29 @@ the topics.
 
 ```mermaid
 flowchart TB
-    A["POST /auth/logout or /auth/switch-branch<br/>handled by user-service"] --> B["jti added to TokenRevocationService<br/>in-memory map of THIS user-service instance"]
-    B --> C{"same token sent to..."}
-    C -- "user-service, same instance" --> D["401 revoked"]
-    C -- "customer-service, document-service, ...<br/>or another user-service instance" --> E["accepted until exp<br/>(default 1 hour)"]
+    A["POST /auth/logout or /auth/switch-branch<br/>handled by user-service"] --> B["TokenRevocationService.revoke<br/>SET wmp:jwt:revoked:&lt;jti&gt; NX<br/>TTL = remaining token life + 60 s"]
+    B --> R[("Redis<br/>shared by every service and instance")]
+    C["same token sent to any service"] --> F["SecurityContextFilter<br/>EXISTS wmp:jwt:revoked:&lt;jti&gt;"]
+    F --> R
+    F -- "key present" --> D["401 revoked"]
+    F -- "key absent" --> G["request continues"]
+    F -- "Redis unreachable" --> H["503, fail closed"]
 ```
 
-Revocation is local to the instance that handled the logout. **Clients must discard the token on logout and on branch
-switch**; the platform can't yet guarantee that every service rejects it (see section 10).
+- **Revocation is platform-wide.** A token revoked by user-service is rejected by every service and instance, because
+  they all check the same Redis store.
+- **Entries clean themselves up.** Each key expires shortly after the token itself would, so nothing needs a cleanup
+  job.
+- **Fail closed.** If Redis can't be reached, authenticated requests get 503 instead of risking a revoked token being
+  accepted. Requests without a token are not affected.
+- The store also holds consumed single-use tokens (`wmp:jwt:setup-used:<jti>`), so a password-setup link works once.
+
+| Namespace | Key | Written by | Read by |
+|---|---|---|---|
+| `revoked` | `wmp:jwt:revoked:<jti>` | user-service on logout and branch switch | `SecurityContextFilter` in every service |
+| `setup-used` | `wmp:jwt:setup-used:<jti>` | `PasswordSetupTokenService` on first use (atomic `SET NX`) | the same call: a second write fails |
+
+Clients should still discard the token on logout and branch switch.
 
 ---
 
@@ -320,6 +339,9 @@ Then call a service with it: `curl -H "Authorization: Bearer <token>" http://loc
 | `security.jwt.expiration-seconds` | user-service | `3600` | Session token lifetime |
 | `security.jwt.password-setup-expiration-seconds` | user-service | `900` | Setup token lifetime |
 | `wmp.onboarding.password-setup-link` | email-service | `http://localhost:4200/onboarding/setup-password` | Link in the onboarding email |
+| `platform.security.token-store.type` | every service | `REDIS` | `REDIS` (shared) or `IN_MEMORY` (per instance, for tests or isolated runs) |
+| `platform.security.token-store.key-prefix` / `clock-skew` | every service | `wmp:jwt` / `60s` | Redis key prefix; extra TTL on top of the token's remaining life |
+| `spring.data.redis.host` / `port` / `timeout` | every service | `localhost` / `6379` / `500ms` (env `REDIS_HOST`, `REDIS_PORT`) | Token store connection; a short timeout so a dead Redis fails fast |
 
 ---
 
@@ -327,8 +349,8 @@ Then call a service with it: `curl -H "Authorization: Bearer <token>" http://loc
 
 | Limitation | Impact | Proposed fix |
 |---|---|---|
-| Revocation is an in-memory map per service instance | A logged-out or switched-away token keeps working on other services until `exp` | Shared revocation store (Redis is already configured in platform-core) checked by `SecurityContextFilter` |
-| Consumed password-setup `jti`s are in memory too | After a user-service restart a setup link could be reused until it expires (15 min) | Same shared store |
+| Only single tokens can be revoked | No "log out everywhere"; a password change or a disabled user doesn't invalidate tokens already issued | Per-user "tokens issued before T are invalid" timestamp in the same store, checked by `SecurityContextFilter`; build it with disable/enable user |
+| Redis is a hard dependency of authenticated traffic | A Redis outage answers 503 on every authenticated call (fail closed, by design) | Run Redis highly available (replica + sentinel, or a managed service) outside local |
 | One static key pair, no `kid` header | Rotating the key invalidates every token at once | Publish keys with ids (JWKS) and add `kid` to the header |
 | Keys and `jwt_configuration.md` (which contains a private key) are in the repo | Fine for local development only | Load keys from a secret manager outside local profiles |
 | No root tenant | Group-level users can't see several banks at once | Comes with visibility scopes (Hibernate `isRoot`) |

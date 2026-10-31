@@ -68,7 +68,10 @@ Technical overview and developer notes for the user-service module. This documen
   A branch the user doesn't belong to returns 403.
 - Claim names are shared with every service through `WmpJwtClaims` (platform-core).
 - `GET /me` returns every membership and flags the one the token was issued for with `active: true`.
-- The password-setup token (`purpose: PASSWORD_SETUP`) is accepted only on `POST /auth/password/setup`.
+- The password-setup token (`purpose: PASSWORD_SETUP`) is accepted only on `POST /auth/password/setup`, and only once:
+  its `jti` is consumed in the shared Redis token store (platform-core), so the link can't be reused on another
+  instance or after a restart.
+- Logout and branch switch revoke the token in the same store, so every service rejects it from then on.
 - Full flow with diagrams: [JWT authentication guide](../../docs/domain/process/security/jwt-authentication.md).
 
 ## Database
