@@ -40,6 +40,9 @@ public class JwtTokenParser {
             Long expEpoch = Optional.ofNullable(claims.getExpiration())
                     .map(d -> d.toInstant().getEpochSecond())
                     .orElse(null);
+            Long issuedAtEpoch = Optional.ofNullable(claims.getIssuedAt())
+                    .map(d -> d.toInstant().getEpochSecond())
+                    .orElse(null);
 
             WMPContext context = WMPContext.builder()
                     .userId(claims.get(WmpJwtClaims.USER_ID, String.class))
@@ -51,6 +54,7 @@ public class JwtTokenParser {
                     .rawToken(token)
                     .jti(claims.getId())
                     .tokenExpEpochSeconds(expEpoch)
+                    .tokenIssuedAtEpochSeconds(issuedAtEpoch)
                     .purpose(claims.get(WmpJwtClaims.PURPOSE, String.class))
                     .build();
             return Optional.of(context);

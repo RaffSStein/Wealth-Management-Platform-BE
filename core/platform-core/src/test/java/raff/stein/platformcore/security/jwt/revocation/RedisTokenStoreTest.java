@@ -83,4 +83,21 @@ class RedisTokenStoreTest {
 
         assertEquals("test:revoked:jti-1", new RedisTokenStore(redisTemplate, properties).key("revoked", "jti-1"));
     }
+
+    @Test
+    void shouldStoreValueWithTtlAndReadItBack() {
+        store.put("user-revoked-before", "user-1", 42L, Instant.now().getEpochSecond() + 3600);
+        when(valueOperations.get("wmp:jwt:user-revoked-before:user-1")).thenReturn("42");
+
+        verify(valueOperations).set(eq("wmp:jwt:user-revoked-before:user-1"), eq("42"), any(Duration.class));
+        assertEquals(42L, store.get("user-revoked-before", "user-1").getAsLong());
+        assertTrue(store.get("user-revoked-before", "user-2").isEmpty());
+    }
+
+    @Test
+    void shouldFailClosedWhenReadingValueWithRedisDown() {
+        when(valueOperations.get(anyString())).thenThrow(new RedisConnectionFailureException("down"));
+
+        assertThrows(TokenStoreUnavailableException.class, () -> store.get("user-revoked-before", "user-1"));
+    }
 }

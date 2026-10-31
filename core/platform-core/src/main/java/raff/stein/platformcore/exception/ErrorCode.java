@@ -17,6 +17,7 @@ public enum ErrorCode {
     NOT_IMPLEMENTED_ERROR("This feature [%s] is not implemented yet", ErrorCategory.GENERIC_ERROR),
     INVALID_STATE_TRANSITION("Cannot [%s] when current state is [%s]. Allowed states: [%s]", ErrorCategory.VALIDATION_ERROR),
     TOKEN_STORE_UNAVAILABLE("Token store unavailable during [%s]", ErrorCategory.SERVER_ERROR),
+    REAUTHENTICATION_REQUIRED("This operation requires a login within the last [%s] seconds", ErrorCategory.AUTHENTICATION_ERROR),
     PASSWORD_SETUP_TOKEN_INVALID("Password setup token is expired, already used or invalid", ErrorCategory.AUTHENTICATION_ERROR),
 
     // TODO: move to specific modules

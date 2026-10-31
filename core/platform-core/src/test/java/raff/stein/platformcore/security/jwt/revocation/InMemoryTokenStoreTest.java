@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -34,5 +35,14 @@ class InMemoryTokenStoreTest {
 
         assertFalse(store.contains("revoked", "jti-1"));
         assertTrue(store.markIfAbsent("revoked", "jti-1", Instant.now().getEpochSecond() + 60));
+    }
+
+    @Test
+    void shouldStoreAndExpireValues() {
+        store.put("user-revoked-before", "user-1", 42L, Instant.now().getEpochSecond() + 60);
+        store.put("user-revoked-before", "user-2", 7L, Instant.now().getEpochSecond() - 1);
+
+        assertEquals(42L, store.get("user-revoked-before", "user-1").getAsLong());
+        assertTrue(store.get("user-revoked-before", "user-2").isEmpty());
     }
 }

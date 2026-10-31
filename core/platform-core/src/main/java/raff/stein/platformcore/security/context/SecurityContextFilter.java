@@ -57,7 +57,9 @@ public class SecurityContextFilter implements Filter {
                     // Use jti from context to check revocation without reparsing/reflection
                     final boolean revoked;
                     try {
-                        revoked = tokenRevocationService.isRevoked(context.getJti());
+                        revoked = tokenRevocationService.isRevoked(context.getJti())
+                                || tokenRevocationService.isRevokedForUser(
+                                        context.getUserId(), context.getTokenIssuedAtEpochSeconds());
                     } catch (TokenStoreUnavailableException e) {
                         // fail closed: a revoked token must not slip through while the store is down
                         log.error("Token store unavailable, rejecting request [{} {}]",

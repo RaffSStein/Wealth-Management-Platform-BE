@@ -24,6 +24,12 @@ public class TokenStoreProperties {
      */
     private Duration clockSkew = Duration.ofSeconds(60);
 
+    /**
+     * Longest lifetime of a session token. A user-wide revocation is kept this long: afterwards every token issued
+     * before it has expired anyway.
+     */
+    private Duration maxTokenLifetime = Duration.ofHours(1);
+
     public enum Type {
         REDIS,
         IN_MEMORY

@@ -10,6 +10,7 @@ import raff.stein.platformcore.exception.types.unavailable.TokenStoreUnavailable
 import raff.stein.platformcore.security.jwt.TokenRevocationService;
 import raff.stein.platformcore.security.jwt.WmpJwtClaims;
 import raff.stein.platformcore.security.jwt.revocation.InMemoryTokenStore;
+import raff.stein.platformcore.security.jwt.revocation.TokenStoreProperties;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
@@ -39,7 +40,7 @@ class PasswordSetupTokenServiceTest {
 
     @Test
     void shouldAcceptSetupTokenOnlyOnce() {
-        final PasswordSetupTokenService service = service(new TokenRevocationService(new InMemoryTokenStore()));
+        final PasswordSetupTokenService service = service(new TokenRevocationService(new InMemoryTokenStore(), new TokenStoreProperties()));
         final String token = setupToken(WmpJwtClaims.PURPOSE_PASSWORD_SETUP);
 
         assertEquals("user-1", service.validateAndConsume(token));
@@ -48,7 +49,7 @@ class PasswordSetupTokenServiceTest {
 
     @Test
     void shouldRejectTokenWithoutSetupPurpose() {
-        final PasswordSetupTokenService service = service(new TokenRevocationService(new InMemoryTokenStore()));
+        final PasswordSetupTokenService service = service(new TokenRevocationService(new InMemoryTokenStore(), new TokenStoreProperties()));
 
         assertThrows(JwtTokenException.class, () -> service.validateAndConsume(setupToken("OTHER")));
     }

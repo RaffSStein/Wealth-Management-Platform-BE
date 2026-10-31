@@ -7,6 +7,7 @@ import raff.stein.platformcore.exception.types.unavailable.TokenStoreUnavailable
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.OptionalLong;
 
 /**
  * Store shared by every service and instance. Each entry lives until the token expires (plus the clock skew),
@@ -37,6 +38,25 @@ public class RedisTokenStore implements TokenStore {
             return Boolean.TRUE.equals(redisTemplate.hasKey(key(namespace, jti)));
         } catch (DataAccessException e) {
             throw new TokenStoreUnavailableException("check " + namespace, e);
+        }
+    }
+
+    @Override
+    public void put(String namespace, String key, long value, long expEpochSeconds) {
+        try {
+            redisTemplate.opsForValue().set(key(namespace, key), Long.toString(value), ttl(expEpochSeconds));
+        } catch (DataAccessException e) {
+            throw new TokenStoreUnavailableException("put " + namespace, e);
+        }
+    }
+
+    @Override
+    public OptionalLong get(String namespace, String key) {
+        try {
+            final String value = redisTemplate.opsForValue().get(key(namespace, key));
+            return value == null ? OptionalLong.empty() : OptionalLong.of(Long.parseLong(value));
+        } catch (DataAccessException e) {
+            throw new TokenStoreUnavailableException("get " + namespace, e);
         }
     }
 

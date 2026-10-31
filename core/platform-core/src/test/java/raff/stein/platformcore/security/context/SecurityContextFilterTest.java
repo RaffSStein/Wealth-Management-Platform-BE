@@ -101,6 +101,18 @@ class SecurityContextFilterTest {
     }
 
     @Test
+    void shouldRejectTokenRevokedForTheWholeUser() throws Exception {
+        givenToken(context(null));
+        when(tokenRevocationService.isRevokedForUser("user-1", 1_000L)).thenReturn(true);
+        final MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request("GET", "/customer/42"), response, chain);
+
+        assertEquals(401, response.getStatus());
+        verify(chain, never()).doFilter(any(), any());
+    }
+
+    @Test
     void shouldFailClosedWhenTokenStoreIsUnavailable() throws Exception {
         givenToken(context(null));
         when(tokenRevocationService.isRevoked("jti-1"))
@@ -120,8 +132,10 @@ class SecurityContextFilterTest {
 
     private static WMPContext context(String purpose) {
         return WMPContext.builder()
+                .userId("user-1")
                 .email("user@bank.test")
                 .tenantId("BANK_A")
+                .tokenIssuedAtEpochSeconds(1_000L)
                 .jti("jti-1")
                 .purpose(purpose)
                 .build();
