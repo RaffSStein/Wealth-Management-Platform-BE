@@ -5,8 +5,12 @@ import io.micrometer.tracing.Tracer;
 import org.junit.jupiter.api.Test;
 import org.openapitools.model.ErrorCategory;
 import org.openapitools.model.ErrorResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -54,6 +58,18 @@ class GlobalControllerExceptionHandlerTest {
         final ErrorResponse response = handle("{\"gender\":\"NOT_SPECIFIED\"}", PlainRequest.class);
 
         assertEquals("For field [gender] value [NOT_SPECIFIED] is not valid", response.getErrorMessage());
+    }
+
+    @Test
+    void shouldAnswerForbiddenForARoleDeniedByMethodSecurity() throws NoSuchMethodException {
+        final ErrorResponse response = handler.handleSpringSecurityAccessDenied(
+                new AuthorizationDeniedException("Access Denied"));
+
+        assertEquals("ACCESS_DENIED", response.getErrorCode());
+        assertEquals(ErrorCategory.AUTHORIZATION_ERROR, response.getCategory());
+        assertEquals(HttpStatus.FORBIDDEN, GlobalControllerExceptionHandler.class
+                .getMethod("handleSpringSecurityAccessDenied", AccessDeniedException.class)
+                .getAnnotation(ResponseStatus.class).value());
     }
 
     @Test

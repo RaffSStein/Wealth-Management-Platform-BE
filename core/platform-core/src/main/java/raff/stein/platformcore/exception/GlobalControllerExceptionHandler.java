@@ -129,6 +129,19 @@ public class GlobalControllerExceptionHandler {
         return getErrorResponse(ex);
     }
 
+    // a role denied by @PreAuthorize: without this handler it fell into the catch-all and answered 500.
+    // Fully qualified: the platform's own AccessDeniedException (imported above) has the same simple name.
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleSpringSecurityAccessDenied(org.springframework.security.access.AccessDeniedException ex) {
+        log.warn("Forbidden by method security traceId={}", getTraceId());
+        return new ErrorResponse()
+                .errorMessage("The caller's role may not use this operation")
+                .errorCode(ErrorCode.ACCESS_DENIED.name())
+                .category(ErrorCode.ACCESS_DENIED.getErrorCategory())
+                .traceId(getTraceId());
+    }
+
     /**
      * ============= UNAUTHORIZED (401) exception handlers =============
      */
