@@ -207,9 +207,16 @@ consistent across the platform.
 The full lifecycle (issuance, validation, branch switch, password setup, event propagation, revocation), with diagrams,
 is in [docs/domain/process/security/jwt-authentication.md](../../docs/domain/process/security/jwt-authentication.md).
 
-Custom claims (names in `WmpJwtClaims`): `userId`, `email`, `roles`, `tenantId` (bank code of the active membership) and
+Custom claims (names in `WmpJwtClaims`): `userId`, `email`, `roles`, `tenantId` (bank code of the active role assignment) and
 `branchCode` (its branch). `JwtTokenParser` maps them into `WMPContext`; `SecurityContextFilter` also puts `tenantId` and
 `branchCode` in the MDC, so every log line carries them.
+
+### Roles and recent login
+- `security/role/WmpRole`: the platform roles (CUSTOMER < ADVISOR < BANK_ADMIN < PLATFORM_ADMIN), parsed exactly; an
+  unknown role grants nothing. Who holds which role where is decided by profiler-service (role assignments):
+  [roles and permissions](../../docs/domain/process/security/roles-and-permissions.md).
+- `security/context/RecentAuthenticationGuard.requireAuthenticatedWithin(Duration)`: for sensitive operations; throws
+  `401 REAUTHENTICATION_REQUIRED` when the token's `iat` (in `WMPContext.tokenIssuedAtEpochSeconds`) is older.
 
 ### Token store (revocation and single-use tokens)
 
@@ -219,6 +226,9 @@ Custom claims (names in `WmpJwtClaims`): `userId`, `email`, `roles`, `tenantId` 
 - `revoke(jti, exp)` / `isRevoked(jti)`: namespace `revoked`. Written by user-service on logout and branch switch;
   checked by `SecurityContextFilter` on every authenticated request in every service.
 - `consumeOnce(jti, exp)`: namespace `setup-used`. Atomic first-use check for single-use tokens (password setup).
+- `revokeAllIssuedUpTo(userId, epochSeconds)` / `isRevokedForUser(userId, iat)`: namespace `user-revoked-before`.
+  Ends every session of a user (used when a role assignment is revoked); kept for
+  `platform.security.token-store.max-token-lifetime` (1h). `SecurityContextFilter` checks it next to the jti.
 
 | `platform.security.token-store.type` | Store | Use |
 |---|---|---|
@@ -236,12 +246,12 @@ and a single-use token is never accepted twice. Connection defaults (`spring.dat
 A tenant is a bank, identified by its bank code. All services share tables, and tenant-owned rows carry a `tenant_id` column.
 
 - **Where the tenant comes from:** HTTP requests read the token's `tenantId` claim, which user-service sets from the
-  user's active branch membership. Kafka consumers read the `tenantid` CloudEvents extension, which `WMPBaseEventPublisher`
+  user's active role assignment. Kafka consumers read the `tenantid` CloudEvents extension, which `WMPBaseEventPublisher`
   adds and `WMPBaseEventConsumer` restores, so a consumer writes under the producer's tenant.
 - **`TenantScopedEntity<I>`** (extends `BaseDateEntity<I>`): base class for business entities owned by a bank.
   Its `@TenantId` column is filled by Hibernate on insert, and Hibernate adds `tenant_id = :current` to every JPQL/Criteria
   query, so a bank can't read or update another bank's rows. Configuration and reference data (questionnaires, types,
-  sitemaps) stay on `BaseDateEntity` and are shared.
+  the permission catalogue) stay on `BaseDateEntity` or `BaseEntity` and are shared.
 - **`WmpTenantIdentifierResolver`** (registered by `TenantConfiguration`) returns the context tenant. With no tenant it
   returns the placeholder `__none__`: reads of tenant data return nothing, and persisting a `TenantScopedEntity` fails with
   `MISSING_HEADER_TOKEN_FIELD [tenantId]` (HTTP 401).

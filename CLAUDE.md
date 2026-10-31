@@ -111,6 +111,12 @@ docs/domain/                   functional docs: process/ (markdown) + assets/ (d
   `GlobalControllerExceptionHandler` maps them to `ErrorResponse` plus an HTTP status. Don't write per-controller try/catch blocks.
   New platform-wide codes go into `ErrorCode` with a `[%s]` message template.
 - Security (JWT resource server, `WMPContext`, `SecurityContextFilter`) is centralized in `platform-core`. Don't reimplement it in services.
+- Authorization: **profiler-service owns role assignments** (user + bank + branch + role, four-eyes approval for staff
+  roles) and functional permissions; user-service is the identity provider and only keeps an event-fed copy
+  (`branch_users`) for issuing tokens. Never write roles from request bodies or directly into `branch_users`. Roles are
+  `WmpRole` (platform-core); sensitive operations use `RecentAuthenticationGuard`. See
+  `docs/domain/process/security/roles-and-permissions.md` and, for the bootstrap sequence,
+  `docs/domain/process/platform/first-platform-run.md`.
   The JWT keys and `local_token.txt` in `platform-core/src/main/resources/jwt` are **local-dev only**.
 - Multi-tenancy: a tenant is a bank (bank code). It comes from the token's `tenantId` claim (or the `tenantid` CloudEvents
   extension in consumers) and lives in `WMPContext`. Business entities owned by a bank extend `TenantScopedEntity`, which
@@ -147,4 +153,6 @@ docs/domain/                   functional docs: process/ (markdown) + assets/ (d
 - Functional/process documentation goes in `docs/domain/process/<area>/`, with diagrams in `docs/domain/assets/<area>/`.
   New docs may use inline Mermaid diagrams instead (as in `docs/domain/process/security/jwt-authentication.md`, the
   reference for how tokens are issued, validated and propagated).
+- Usage of the platform must stay documented: when a change alters how someone sets up or operates it (new roles,
+  bootstrap steps, required services), update `docs/domain/process/platform/first-platform-run.md`.
 - Prefer cross-platform commands in docs, giving Windows equivalents next to Unix ones.

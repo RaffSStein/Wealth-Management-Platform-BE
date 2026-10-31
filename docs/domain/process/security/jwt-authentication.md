@@ -21,8 +21,10 @@ which bank's (tenant's) data a request can see.
 
 - **user-service is the only issuer.** It signs tokens with an RSA private key (RS256).
 - **Every service verifies** tokens with the matching public key. No service calls user-service to validate a token.
-- **One token = one active membership.** A user can belong to several branches of several banks; the token is issued for
+- **One token = one active role assignment.** A user can belong to several branches of several banks; the token is issued for
   one of them and carries its bank (`tenantId`), branch (`branchCode`) and the roles held there.
+  Role assignments are owned by profiler-service; user-service reads a copy kept in step by events (see
+  [roles and permissions](roles-and-permissions.md)).
 - **The tenant scopes the data.** Hibernate reads `tenantId` from the request context and filters every query on
   bank-owned entities. A bank never sees another bank's rows.
 - **Events carry the context.** Kafka events forward user, tenant and correlation id, so consumers act on behalf of the
@@ -62,9 +64,9 @@ anyone can read the claims, so **tokens never contain secrets**.
 | `iat` / `exp` | epoch seconds | user-service | Spring resource server | Issued at / expires at |
 | `userId` | `5f0c7b2e-...` | user-service | `WMPContext` | User id |
 | `email` | `ada@bank.test` | user-service | `WMPContext`, JPA auditing (`created_by`) | User email |
-| `roles` | `["ADVISOR"]` | user-service | Spring Security (`ROLE_ADVISOR`), `@PreAuthorize` | Roles of the **active membership only** |
-| `tenantId` | `BANK_A` | user-service | `WMPContext`, Hibernate tenant filter, MDC, events | Bank of the active membership |
-| `branchCode` | `BR_01` | user-service | `WMPContext`, profiler permissions, MDC, events | Branch of the active membership |
+| `roles` | `["ADVISOR"]` | user-service | Spring Security (`ROLE_ADVISOR`), `@PreAuthorize` | Roles of the **active role assignment only** |
+| `tenantId` | `BANK_A` | user-service | `WMPContext`, Hibernate tenant filter, MDC, events | Bank of the active role assignment |
+| `branchCode` | `BR_01` | user-service | `WMPContext`, profiler permissions, MDC, events | Branch of the active role assignment |
 | `purpose` | `PASSWORD_SETUP` | user-service | `SecurityContextFilter`, `PasswordConfirmJwtFilter` | Present only on single-purpose tokens |
 
 Custom claim names live in `WmpJwtClaims` (platform-core) and are shared by the issuer and every parser.
@@ -75,7 +77,7 @@ Custom claim names live in `WmpJwtClaims` (platform-core) and are shared by the 
 |---|---|---|
 | Issued by | `POST /auth/login`, `POST /auth/switch-branch` | `POST /auth/register` (sent by email) |
 | Lifetime | `security.jwt.expiration-seconds` (default 3600 s) | `security.jwt.password-setup-expiration-seconds` (default 900 s) |
-| `roles` / `tenantId` | yes / yes (if the user has a membership) | no / no |
+| `roles` / `tenantId` | yes / yes (if the user has a role assignment) | no / no |
 | `purpose` | — | `PASSWORD_SETUP` |
 | Accepted on | every authenticated endpoint | **only** `POST /auth/password/setup`, once |
 
@@ -102,15 +104,15 @@ sequenceDiagram
     alt wrong credentials
         AM-->>FE: 401
     end
-    AS->>DB: load the user's memberships (bankCode, branchCode, role)
-    alt branchCode requested but not a membership
+    AS->>DB: load the user's role assignments (bankCode, branchCode, role)<br/>(read-only copy of profiler's, branch_users)
+    alt branchCode requested but not one of its branches
         AS-->>FE: 403 ACCESS_DENIED
     else branch requested and found
-        AS->>AS: active = that membership
+        AS->>AS: active = that role assignment
     else no branch requested
-        AS->>AS: active = first membership (lowest id)
+        AS->>AS: active = first role assignment (lowest id)
     end
-    AS->>AS: roles = roles held in the active membership only
+    AS->>AS: roles = roles held in the active role assignment only
     AS->>JI: issueToken(sub, email, roles, userId + tenantId + branchCode)
     JI->>JI: sign RS256 with the private key, add jti, iat, exp, iss
     JI-->>AS: JWT
@@ -118,7 +120,7 @@ sequenceDiagram
     FE->>FE: store the token (one at a time)
 ```
 
-**A user without any membership** gets a `CUSTOMER` token with no `tenantId`. It works on user endpoints like `/me`, but
+**A user without any role assignment** gets a `CUSTOMER` token with no `tenantId`. It works on user endpoints like `/me`, but
 every bank-owned endpoint refuses to write (401 `MISSING_HEADER_TOKEN_FIELD [tenantId]`) and reads find nothing.
 
 ---
@@ -190,21 +192,21 @@ sequenceDiagram
     participant RV as TokenRevocationService<br/>shared Redis store
 
     FE->>AS: POST /auth/switch-branch {branchCode, bankCode?}<br/>Authorization: Bearer current JWT
-    AS->>DB: memberships of the current user (from WMPContext.email)
+    AS->>DB: role assignments of the current user (from WMPContext.email)
     alt not a member of that branch
         AS-->>FE: 403, the current token stays valid
     end
-    AS->>JI: issue a token for the new membership<br/>tenantId, branchCode, roles of that membership
+    AS->>JI: issue a token for the other role assignment<br/>tenantId, branchCode, roles held there
     JI-->>AS: new JWT
     AS->>RV: revoke(current jti, current exp)
     AS-->>FE: 200 {token, ...}
     FE->>FE: replace the stored token
     FE->>AS: GET /me
-    AS-->>FE: memberships, the new one has active = true
+    AS-->>FE: role assignments, the new one has active = true
 ```
 
-`GET /me` lists every membership and flags the one the token was issued for (`active: true`). The FE uses that
-membership's role for its UI and offers the others in a branch switcher.
+`GET /me` lists every role assignment and flags the one the token was issued for (`active: true`). The FE uses that
+role assignment's role for its UI and offers the others in a branch switcher.
 
 ---
 
@@ -222,9 +224,9 @@ sequenceDiagram
     participant PS as PasswordSetupTokenService<br/>consumes the jti in Redis
 
     FE->>US: POST /auth/register {email, names, phone}
-    US->>US: save user WITHOUT memberships<br/>(a public signup can't grant roles or bank access)
+    US->>US: save user WITHOUT role assignments<br/>(a public signup can't grant roles or bank access)
     US->>US: issue password-setup token<br/>purpose PASSWORD_SETUP, exp 15 min, no roles
-    US->>K: publish UserCreatedEvent (user, memberships, onboardingToken)
+    US->>K: publish UserCreatedEvent (user, onboardingToken)
     US-->>FE: 201
     K-->>PR: create permissions per branch (none yet)
     K-->>ES: send onboarding email
@@ -278,17 +280,23 @@ the topics.
 
 ```mermaid
 flowchart TB
-    A["POST /auth/logout or /auth/switch-branch<br/>handled by user-service"] --> B["TokenRevocationService.revoke<br/>SET wmp:jwt:revoked:&lt;jti&gt; NX<br/>TTL = remaining token life + 60 s"]
+    A["POST /auth/logout or /auth/switch-branch<br/>handled by user-service"] --> B["TokenRevocationService.revoke<br/>SET wmp:jwt:revoked:{jti} NX<br/>TTL = remaining token life + 60 s"]
     B --> R[("Redis<br/>shared by every service and instance")]
-    C["same token sent to any service"] --> F["SecurityContextFilter<br/>EXISTS wmp:jwt:revoked:&lt;jti&gt;"]
+    P["DELETE /role-assignments/{id}<br/>handled by profiler-service"] --> Q["TokenRevocationService.revokeAllIssuedUpTo<br/>SET wmp:jwt:user-revoked-before:{userId} = now<br/>TTL = longest token lifetime (1 h)"]
+    Q --> R
+    C["same token sent to any service"] --> F["SecurityContextFilter<br/>EXISTS wmp:jwt:revoked:{jti}<br/>GET wmp:jwt:user-revoked-before:{userId}"]
     F --> R
-    F -- "key present" --> D["401 revoked"]
+    F -- "jti revoked, or token iat ≤ user revocation" --> D["401 revoked"]
     F -- "key absent" --> G["request continues"]
     F -- "Redis unreachable" --> H["503, fail closed"]
 ```
 
 - **Revocation is platform-wide.** A token revoked by user-service is rejected by every service and instance, because
   they all check the same Redis store.
+- **Two kinds of revocation.** Logout and branch switch revoke **one token** (its `jti`). Revoking a role assignment
+  revokes **every token of the user** issued up to that moment (`iat` ≤ the stored time), whatever branch they were
+  for: the user is signed out everywhere and its next login only gets the roles it still holds. A token without `iat`
+  counts as revoked once its user has such an entry.
 - **Entries clean themselves up.** Each key expires shortly after the token itself would, so nothing needs a cleanup
   job.
 - **Fail closed.** If Redis can't be reached, authenticated requests get 503 instead of risking a revoked token being
@@ -299,6 +307,15 @@ flowchart TB
 |---|---|---|---|
 | `revoked` | `wmp:jwt:revoked:<jti>` | user-service on logout and branch switch | `SecurityContextFilter` in every service |
 | `setup-used` | `wmp:jwt:setup-used:<jti>` | `PasswordSetupTokenService` on first use (atomic `SET NX`) | the same call: a second write fails |
+| `user-revoked-before` | `wmp:jwt:user-revoked-before:<userId>` = epoch seconds | profiler-service when a role assignment is revoked | `SecurityContextFilter` in every service |
+
+### Recent login for sensitive actions
+Some actions also require a **recent** login: staff role assignments, four-eyes approvals and rejections, and admin
+revocations (see [roles and permissions](roles-and-permissions.md#4-who-may-assign-what)). `RecentAuthenticationGuard`
+(platform-core) compares the token's `iat` with the allowed age (10 minutes, `wmp.role-assignment.recent-login`) and
+answers `401 REAUTHENTICATION_REQUIRED` when it's older. That is not a session end: the client asks the user to sign in
+again and retries. A stolen token is therefore useless for those actions after 10 minutes, even though it stays valid
+for ordinary calls until `exp`.
 
 Clients should still discard the token on logout and branch switch.
 
@@ -340,6 +357,7 @@ Then call a service with it: `curl -H "Authorization: Bearer <token>" http://loc
 | `security.jwt.password-setup-expiration-seconds` | user-service | `900` | Setup token lifetime |
 | `wmp.onboarding.password-setup-link` | email-service | `http://localhost:4200/onboarding/setup-password` | Link in the onboarding email |
 | `platform.security.token-store.type` | every service | `REDIS` | `REDIS` (shared) or `IN_MEMORY` (per instance, for tests or isolated runs) |
+| `platform.security.token-store.max-token-lifetime` | every service | `1h` | How long a user-wide revocation is kept (must be ≥ `security.jwt.expiration-seconds`) |
 | `platform.security.token-store.key-prefix` / `clock-skew` | every service | `wmp:jwt` / `60s` | Redis key prefix; extra TTL on top of the token's remaining life |
 | `spring.data.redis.host` / `port` / `timeout` | every service | `localhost` / `6379` / `2s` (env `REDIS_HOST`, `REDIS_PORT`) | Token store connection; a short timeout so a dead Redis fails fast |
 
@@ -349,7 +367,7 @@ Then call a service with it: `curl -H "Authorization: Bearer <token>" http://loc
 
 | Limitation | Impact | Proposed fix |
 |---|---|---|
-| Only single tokens can be revoked | No "log out everywhere"; a password change or a disabled user doesn't invalidate tokens already issued | Per-user "tokens issued before T are invalid" timestamp in the same store, checked by `SecurityContextFilter`; build it with disable/enable user |
+| Password change and disable user don't end sessions yet | Tokens issued before stay valid until `exp` | Call `revokeAllIssuedUpTo(userId, now)` from those flows (the mechanism exists: role-assignment revocation uses it) |
 | Redis is a hard dependency of authenticated traffic | A Redis outage answers 503 on every authenticated call (fail closed, by design) | Run Redis highly available (replica + sentinel, or a managed service) outside local |
 | One static key pair, no `kid` header | Rotating the key invalidates every token at once | Publish keys with ids (JWKS) and add `kid` to the header |
 | Keys and `jwt_configuration.md` (which contains a private key) are in the repo | Fine for local development only | Load keys from a secret manager outside local profiles |
