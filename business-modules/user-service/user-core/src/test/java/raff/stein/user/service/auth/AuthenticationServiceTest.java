@@ -13,6 +13,8 @@ import raff.stein.platformcore.security.jwt.TokenRevocationService;
 import raff.stein.platformcore.security.jwt.WmpJwtClaims;
 import raff.stein.user.model.auth.AuthResponse;
 import raff.stein.user.model.auth.LoginRequest;
+import raff.stein.user.model.auth.RegisterRequest;
+import raff.stein.user.model.user.User;
 import raff.stein.user.model.entity.BranchUserEntity;
 import raff.stein.user.model.entity.UserEntity;
 import raff.stein.user.repository.UserRepository;
@@ -31,6 +33,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -47,6 +50,7 @@ class AuthenticationServiceTest {
     private UserRepository userRepository;
     private JwtTokenIssuer jwtTokenIssuer;
     private TokenRevocationService tokenRevocationService;
+    private UserService userService;
     private PasswordService passwordService;
     private PasswordSetupTokenService passwordSetupTokenService;
     private AuthenticationService authenticationService;
@@ -56,10 +60,11 @@ class AuthenticationServiceTest {
         userRepository = mock(UserRepository.class);
         jwtTokenIssuer = mock(JwtTokenIssuer.class);
         tokenRevocationService = mock(TokenRevocationService.class);
+        userService = mock(UserService.class);
         passwordService = mock(PasswordService.class);
         passwordSetupTokenService = mock(PasswordSetupTokenService.class);
         authenticationService = new AuthenticationService(
-                mock(UserService.class),
+                userService,
                 passwordService,
                 userRepository,
                 jwtTokenIssuer,
@@ -159,6 +164,26 @@ class AuthenticationServiceTest {
         final ArgumentCaptor<Map<String, Object>> claims = ArgumentCaptor.forClass(Map.class);
         verify(jwtTokenIssuer).issueToken(anyString(), eq(EMAIL), roles.capture(), claims.capture());
         return new IssuedToken(roles.getValue(), claims.getValue());
+    }
+
+    @Test
+    void shouldRegisterUserWithoutAnyMembership() {
+        when(userService.createUserEntity(any())).thenAnswer(invocation -> {
+            final User user = invocation.getArgument(0);
+            user.setId(UUID.randomUUID().toString());
+            return user;
+        });
+        final RegisterRequest request = new RegisterRequest();
+        request.setEmail("new@user.test");
+        request.setFirstName("New");
+        request.setLastName("User");
+        request.setPhoneNumber("000");
+
+        authenticationService.register(request);
+
+        final ArgumentCaptor<User> created = ArgumentCaptor.forClass(User.class);
+        verify(userService).createUserEntity(created.capture());
+        assertTrue(created.getValue().getBranchRoles().isEmpty());
     }
 
     @Test

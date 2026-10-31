@@ -15,7 +15,6 @@ import raff.stein.platformcore.security.context.SecurityContextHolder;
 import raff.stein.platformcore.security.context.WMPContext;
 import raff.stein.platformcore.security.jwt.TokenRevocationService;
 import raff.stein.platformcore.security.jwt.WmpJwtClaims;
-import raff.stein.user.model.BranchRole;
 import raff.stein.user.model.auth.*;
 import raff.stein.user.model.entity.BranchUserEntity;
 import raff.stein.user.model.entity.UserEntity;
@@ -46,14 +45,15 @@ public class AuthenticationService {
 
     @Transactional
     public void register(RegisterRequest request) {
-        // TODO: use a mapper, add branch roles association
+        // TODO: use a mapper
         final User user = userService.createUserEntity(
                 User.builder()
                         .email(request.getEmail())
                         .firstName(request.getFirstName())
                         .lastName(request.getLastName())
                         .phoneNumber(request.getPhoneNumber())
-                        .branchRoles(mapBranchRoleRequests(request.getBranchRoles()))
+                        // never from the request: a public signup must not grant roles or bank access
+                        .branchRoles(List.of())
                         .build());
         // Issue a dedicated password setup token
         String setupToken = jwtTokenIssuer.issuePasswordSetupToken(
@@ -130,17 +130,6 @@ public class AuthenticationService {
     }
 
     // --- Helpers --------------------------------------------------------------------
-
-    private List<BranchRole> mapBranchRoleRequests(List<BranchRoleRequest> requests) {
-        if (requests == null) return List.of();
-        return requests.stream()
-                .map(br -> BranchRole.builder()
-                        .bankCode(br.getBankCode())
-                        .branchCode(br.getBranchCode())
-                        .role(br.getRole())
-                        .build())
-                .toList();
-    }
 
     /**
      * Builds the token for one active membership: tenantId = its bank, branchCode = its branch,

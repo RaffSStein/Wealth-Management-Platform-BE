@@ -221,12 +221,12 @@ sequenceDiagram
     participant PR as profiler-service
     participant PS as PasswordSetupTokenService<br/>consumes the jti in Redis
 
-    FE->>US: POST /auth/register {email, names, branchRoles}
-    US->>US: save user and memberships (bankCode, branchCode, role)
+    FE->>US: POST /auth/register {email, names, phone}
+    US->>US: save user WITHOUT memberships<br/>(a public signup can't grant roles or bank access)
     US->>US: issue password-setup token<br/>purpose PASSWORD_SETUP, exp 15 min, no roles
     US->>K: publish UserCreatedEvent (user, memberships, onboardingToken)
     US-->>FE: 201
-    K-->>PR: create permissions per branch
+    K-->>PR: create permissions per branch (none yet)
     K-->>ES: send onboarding email
     ES->>U: link: password-setup-link?token=...
     U->>FE: open the link and choose a password
@@ -341,7 +341,7 @@ Then call a service with it: `curl -H "Authorization: Bearer <token>" http://loc
 | `wmp.onboarding.password-setup-link` | email-service | `http://localhost:4200/onboarding/setup-password` | Link in the onboarding email |
 | `platform.security.token-store.type` | every service | `REDIS` | `REDIS` (shared) or `IN_MEMORY` (per instance, for tests or isolated runs) |
 | `platform.security.token-store.key-prefix` / `clock-skew` | every service | `wmp:jwt` / `60s` | Redis key prefix; extra TTL on top of the token's remaining life |
-| `spring.data.redis.host` / `port` / `timeout` | every service | `localhost` / `6379` / `500ms` (env `REDIS_HOST`, `REDIS_PORT`) | Token store connection; a short timeout so a dead Redis fails fast |
+| `spring.data.redis.host` / `port` / `timeout` | every service | `localhost` / `6379` / `2s` (env `REDIS_HOST`, `REDIS_PORT`) | Token store connection; a short timeout so a dead Redis fails fast |
 
 ---
 

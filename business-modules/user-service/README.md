@@ -60,7 +60,9 @@ Technical overview and developer notes for the user-service module. This documen
 - CORS/CSRF: configured for stateless APIs in platform-core, inherited by user-core.
 
 ## Authentication, memberships and tenants
-- A user has one or more branch memberships (`branch_users`: `bankCode`, `branchCode`, `role`).
+- A user has zero or more branch memberships (`branch_users`: `bankCode`, `branchCode`, `role`).
+- `POST /auth/register` is public, so it never creates memberships: any `branchRoles` in the body is ignored.
+  Memberships come from authorized flows only (bank administration, customer onboarding; not built yet).
 - `POST /auth/login` issues a JWT for one **active membership**: the requested `bankCode`/`branchCode`, otherwise the first
   membership. The token carries `tenantId` (the membership's bank code), `branchCode`, and only the roles held in that
   membership. A user without memberships gets a CUSTOMER token with no tenant, so they can't access bank-owned data.

@@ -9,6 +9,10 @@ paths:
   /auth/register:
     post:
       summary: Self-signup registration (public)
+      description: >
+        Creates a user without any branch membership: a public endpoint can't grant roles or bank access. Until a
+        membership is assigned, login issues a CUSTOMER token without tenant, which can't access bank data.
+        Memberships are assigned by an authorized flow (bank administration, customer onboarding).
       operationId: registerUser
       tags:
         - Auth
@@ -350,10 +354,6 @@ components:
           type: string
         phoneNumber:
           type: string
-        branchRoles:
-          type: array
-          items:
-            $ref: '#/components/schemas/BranchRoleDTO'
 
     BranchRoleDTO:
       type: object
