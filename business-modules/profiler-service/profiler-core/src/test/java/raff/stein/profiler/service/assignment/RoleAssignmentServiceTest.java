@@ -41,6 +41,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -200,7 +201,7 @@ class RoleAssignmentServiceTest {
                 .grantedBy("ba-1@bank.test").build()));
 
         assertThrows(AccessDeniedException.class, () -> service.revoke(5L));
-        verify(tokenRevocationService, never()).revokeAllIssuedUpTo(anyString(), org.mockito.ArgumentMatchers.anyLong());
+        verify(tokenRevocationService, never()).revokeAllIssuedUpTo(anyString(), anyLong());
     }
 
     private RoleAssignmentRequestEntity givenPendingRequest(String requesterId, Instant requestedAt) {

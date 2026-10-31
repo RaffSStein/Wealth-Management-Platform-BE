@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -25,7 +26,7 @@ public class AssignmentPolicyDispatcher {
     }
 
     public AssignmentPolicy forCaller(WMPContext caller) {
-        return Optional.ofNullable(caller.getRoles()).orElse(java.util.Set.of()).stream()
+        return Optional.ofNullable(caller.getRoles()).orElse(Set.of()).stream()
                 .map(WmpRole::parse)
                 .flatMap(Optional::stream)
                 .filter(policies::containsKey)
