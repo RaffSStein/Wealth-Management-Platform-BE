@@ -29,7 +29,7 @@ flowchart TB
     S1["1. Bootstrap<br/>2 PLATFORM_ADMINs from configuration"]
     S2["2. PLATFORM_ADMIN requests BANK_ADMIN of bank X<br/>another PLATFORM_ADMIN approves (×2 admins per bank)"]
     S3["3. BANK_ADMIN requests ADVISOR at a branch<br/>another BANK_ADMIN of the same bank approves"]
-    S4["4. Customer signs up (no bank yet)<br/>an ADVISOR of the branch assigns CUSTOMER"]
+    S4["4. Customer signs up (no bank yet)<br/>a BANK_ADMIN finds it and assigns CUSTOMER"]
     S5["Customer logs in again: token for bank X / branch<br/>customer onboarding can start"]
     S0 --> S1 --> S2 --> S3 --> S4 --> S5
 ```
@@ -152,7 +152,9 @@ curl -X POST $P/role-assignment-requests/1/approve -H "Authorization: Bearer $PA
 # 200 {"id":..,"role":"BANK_ADMIN","grantedBy":"platform-admin-1@...","approvedBy":"platform-admin-2@..."}
 ```
 
-The user id is the `id` returned by `GET /me` (the user's own) or known to the admin UI. **Repeat for a second bank
+The user id comes from `GET /user/lookup?email=` (see step 4). The bank and branch come from bank-service: a platform
+admin lists every bank with `GET /bank/banks` and its branches with
+`GET /bank/branches?bankCode=BANK_A&status=ACTIVE`, which is what the FE's dropdowns show. **Repeat for a second bank
 admin** of the same bank (the platform admins swap roles): advisors need a second bank admin to approve them.
 
 ## 5. Step 3: create advisors
@@ -173,21 +175,26 @@ Both calls need the **calling bank admin** to have logged in within the last 10 
 
 ## 6. Step 4: a customer signs up and gets linked
 
+A self-registered customer belongs to no bank yet. Only **bank admins** (and platform admins) can find such users, so
+linking a new customer is a bank admin task. An advisor can't see users who aren't in its branch.
+
 ```mermaid
 sequenceDiagram
     autonumber
     actor C as Customer
     participant US as user-service
     participant FE as Frontend
-    actor A as Advisor (BANK_A / BR_01)
+    actor BA as Bank admin (BANK_A)
     participant PS as profiler-service
     participant K as Kafka
 
     C->>US: POST /auth/register, password from the email
     C->>US: login → token without tenantId (CUSTOMER, no bank)
     Note over C,FE: no tenantId in the token: the FE shows<br/>"your account isn't linked to a bank yet"
-    A->>PS: POST /role-assignments {userId, role: CUSTOMER, branchCode: BR_01}
-    PS-->>A: 201 ASSIGNED (immediate, no approval)
+    BA->>US: GET /user/lookup?email=... or GET /user/search?query=...&linked=false
+    US-->>BA: 200 {id, email, names, roleAssignments: []}
+    BA->>PS: POST /role-assignments {userId, role: CUSTOMER, branchCode: BR_01}
+    PS-->>BA: 201 ASSIGNED (immediate, no approval)
     PS->>K: role-assignment-granted
     K-->>US: copy into branch_users
     C->>US: login again → token {tenantId: BANK_A, branchCode: BR_01, roles: [CUSTOMER]}
@@ -195,18 +202,27 @@ sequenceDiagram
 ```
 
 ```bash
-curl -X POST $P/role-assignments -H "Authorization: Bearer $ADVISOR_TOKEN" -H "Content-Type: application/json" \
+U=http://localhost:8083/user-service
+# find the customer: exact email, or a search among users not linked to any bank yet
+curl "$U/user/lookup?email=ada@bank.test" -H "Authorization: Bearer $BANK_ADMIN_TOKEN"
+# 200 {"id":"<customer user id>","email":"ada@bank.test",...,"roleAssignments":[]}
+curl "$U/user/search?query=bank.test&linked=false&page=0&size=20" -H "Authorization: Bearer $BANK_ADMIN_TOKEN"
+# 200 {"content":[...],"page":0,"size":20,"totalElements":..,"totalPages":..}
+
+# link it to a branch of the bank
+curl -X POST $P/role-assignments -H "Authorization: Bearer $BANK_ADMIN_TOKEN" -H "Content-Type: application/json" \
   -d '{"userId":"<customer user id>","role":"CUSTOMER","branchCode":"BR_01"}'
 # 201 {"outcome":"ASSIGNED","assignment":{"id":5,...}}
 ```
 
-An advisor can only link customers **to its own branch** and only as CUSTOMER: another branch or another role answers
-403, a second identical assignment 409. A bank admin can link customers to any branch of its bank.
+- A bank admin can link customers to any active branch of its bank; a second identical assignment answers 409.
+- Once linked, the customer is in that branch, so its advisors can find it (`GET /user/lookup`) and work with it.
+  An advisor may also assign CUSTOMER in its own branch to a user it already knows (for example, a second role).
 
 ## 7. Step 5: revoking access
 
 ```bash
-curl -X DELETE $P/role-assignments/5 -H "Authorization: Bearer $ADVISOR_TOKEN"
+curl -X DELETE $P/role-assignments/5 -H "Authorization: Bearer $BANK_ADMIN_TOKEN"
 # 204
 ```
 

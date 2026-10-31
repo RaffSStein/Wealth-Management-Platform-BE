@@ -112,6 +112,32 @@ Rules that apply to everyone:
 - **Recent login** for sensitive actions: the token's `iat` must be at most 10 minutes old, otherwise
   `401 REAUTHENTICATION_REQUIRED`. The FE asks the admin to sign in again and retries. This is not a session end.
 
+### Who can see which users
+
+Finding users (`GET /user/lookup`, `GET /user/search`) and reading one by id (`GET /user/{id}`) follow one rule,
+in user-service (`UserVisibilityPolicy`), based on its copy of the role assignments:
+
+| Caller (active role) | Sees |
+|---|---|
+| anyone | itself |
+| CUSTOMER | only itself |
+| ADVISOR | users with a role assignment in the **bank and branch** of its token |
+| BANK_ADMIN | users with a role assignment in **its bank**, plus users **not linked** to any bank |
+| PLATFORM_ADMIN | everyone |
+
+- **Out of scope looks like "not found" (404),** so nobody learns whether an email is registered somewhere else.
+- **Only admins see unlinked users.** That's why a bank admin, not an advisor, links a self-registered customer (see
+  [first platform run](../platform/first-platform-run.md#6-step-4-a-customer-signs-up-and-gets-linked)).
+- **The listed role assignments are filtered too.** A bank admin sees only the assignments of a user in its own bank.
+- **The search is for admins only.** It matches part of an email or name (at least 3 characters), it's paged (at most
+  50 per page) and sorted by email, and `linked=false` lists the users waiting to be linked. The scope is applied in
+  the query itself, so page counts are exact.
+- The summary returned by lookup and search has no phone, address or birth date: it's for finding and linking.
+
+Banks and branches (bank-service, `GET /bank/banks`, `GET /bank/branches`, `GET /bank/{bankCode}/branches/{branchCode}`)
+follow the same idea: a PLATFORM_ADMIN sees every bank, any other role only the bank of its token, which is exactly
+where it may assign roles. That's what the FE's bank and branch dropdowns show.
+
 ## 5. Assigning a role
 
 ```mermaid
@@ -325,6 +351,14 @@ platform `ErrorResponse` (`errorCode`, `category`, `errorMessage`, `traceId`).
 | 503 | `DEPENDENCY_UNAVAILABLE` / `TOKEN_STORE_UNAVAILABLE` | bank-service or Redis down; nothing changed | retry later |
 
 Full contract: `business-modules/profiler-service/profiler-api-data/profiler-api-data.yaml`.
+
+Finding users (user-service, base URL `http://localhost:8083/user-service`):
+
+| Method and path | Roles | Query | Success |
+|---|---|---|---|
+| `GET /user/lookup` | ADVISOR, BANK_ADMIN, PLATFORM_ADMIN | `email` (exact, case-insensitive) | 200 `UserSummaryDTO`; 404 when not found or out of scope |
+| `GET /user/search` | BANK_ADMIN, PLATFORM_ADMIN | `query` (≥ 3 chars), `linked`, `page`, `size` (≤ 50) | 200 `UserSummaryPageDTO` |
+| `GET /user/{id}` | any | | 200 `UserDTO` within the caller's scope; 404 otherwise |
 
 ## 11. Events
 
