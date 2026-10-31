@@ -67,7 +67,7 @@ public class AuthenticationService {
 
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        // password check only: the token content comes from the active membership below
+        // password check only: the token content comes from the active role assignment below
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -75,13 +75,13 @@ public class AuthenticationService {
         );
         final UserEntity user = userRepository.findByEmailIgnoreCase(request.getEmail())
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + request.getEmail()));
-        final String token = issueTokenForMembership(user, request.getBankCode(), request.getBranchCode());
+        final String token = issueTokenForAssignment(user, request.getBankCode(), request.getBranchCode());
         log.info("User [{}] logged in successfully", request.getEmail());
         return new AuthResponse(token, "Bearer", jwtTokenIssuer.getExpirationSeconds());
     }
 
     /**
-     * Issues a token for another membership of the current user and revokes the current token.
+     * Issues a token for another role assignment of the current user and revokes the current token.
      */
     @Transactional(readOnly = true)
     public AuthResponse switchBranch(String bankCode, String branchCode) {
@@ -91,7 +91,7 @@ public class AuthenticationService {
         }
         final UserEntity user = userRepository.findByEmailIgnoreCase(context.getEmail())
                 .orElseThrow(GenericObjectNotFoundException.with(context.getEmail()));
-        final String token = issueTokenForMembership(user, bankCode, branchCode);
+        final String token = issueTokenForAssignment(user, bankCode, branchCode);
         // only after the new token is issued, so a refused switch keeps the current session
         logout();
         log.info("User [{}] switched to branch [{}]", context.getEmail(), branchCode);
@@ -134,34 +134,34 @@ public class AuthenticationService {
     // --- Helpers --------------------------------------------------------------------
 
     /**
-     * Builds the token for one active membership: tenantId = its bank, branchCode = its branch,
-     * roles = only the roles held in that membership.
-     * Without a requested branch the first membership (lowest id) is used.
+     * Builds the token for one active role assignment: tenantId = its bank, branchCode = its branch,
+     * roles = only the roles held in that role assignment.
+     * Without a requested branch the first role assignment (lowest id) is used.
      */
-    private String issueTokenForMembership(UserEntity user, String requestedBankCode, String requestedBranchCode) {
+    private String issueTokenForAssignment(UserEntity user, String requestedBankCode, String requestedBranchCode) {
         final String userId = String.valueOf(user.getId());
         final Map<String, Object> claims = new HashMap<>();
         claims.put(WmpJwtClaims.USER_ID, userId);
-        final List<BranchUserEntity> memberships = user.getBankBranchUsers().stream()
+        final List<BranchUserEntity> assignments = user.getBankBranchUsers().stream()
                 .sorted(Comparator.comparing(BranchUserEntity::getId))
                 .toList();
-        if (memberships.isEmpty()) {
+        if (assignments.isEmpty()) {
             if (requestedBranchCode != null) {
-                throw membershipDenied(user.getEmail(), requestedBranchCode);
+                throw assignmentDenied(user.getEmail(), requestedBranchCode);
             }
-            // no membership means no tenant: the user can't touch tenant-scoped data
-            log.warn("Role fallback applied during token issuance: assigning CUSTOMER without tenant for user [{}] (no branch memberships)",
+            // no role assignment means no tenant: the user can't touch tenant-scoped data
+            log.warn("Role fallback applied during token issuance: assigning CUSTOMER without tenant for user [{}] (no role assignments)",
                     user.getEmail());
             return jwtTokenIssuer.issueToken(userId, user.getEmail(), List.of(WmpRole.CUSTOMER.name()), claims);
         }
         final BranchUserEntity active = requestedBranchCode == null
-                ? memberships.getFirst()
-                : memberships.stream()
+                ? assignments.getFirst()
+                : assignments.stream()
                         .filter(m -> requestedBranchCode.equals(m.getBranchCode()))
                         .filter(m -> requestedBankCode == null || requestedBankCode.equals(m.getBankCode()))
                         .findFirst()
-                        .orElseThrow(() -> membershipDenied(user.getEmail(), requestedBranchCode));
-        final List<String> roles = memberships.stream()
+                        .orElseThrow(() -> assignmentDenied(user.getEmail(), requestedBranchCode));
+        final List<String> roles = assignments.stream()
                 .filter(m -> m.getBankCode().equals(active.getBankCode()) && m.getBranchCode().equals(active.getBranchCode()))
                 .map(m -> WmpRole.parse(m.getRole()))
                 // an unknown stored role grants nothing
@@ -174,7 +174,7 @@ public class AuthenticationService {
         return jwtTokenIssuer.issueToken(userId, user.getEmail(), roles, claims);
     }
 
-    private static AccessDeniedException membershipDenied(String email, String branchCode) {
+    private static AccessDeniedException assignmentDenied(String email, String branchCode) {
         return new AccessDeniedException(
                 ErrorCode.ACCESS_DENIED,
                 String.format(ErrorCode.ACCESS_DENIED.getMessageTemplate(), email, branchCode));

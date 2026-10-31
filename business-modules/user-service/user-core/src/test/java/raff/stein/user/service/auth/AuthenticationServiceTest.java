@@ -80,8 +80,8 @@ class AuthenticationServiceTest {
     }
 
     @Test
-    void shouldIssueTokenForFirstMembershipWhenNoBranchRequested() {
-        givenUser(membership(1L, "BANK_A", "BR_01", "ADVISOR"), membership(2L, "BANK_B", "BR_09", "CUSTOMER"));
+    void shouldIssueTokenForFirstAssignmentWhenNoBranchRequested() {
+        givenUser(assignment(1L, "BANK_A", "BR_01", "ADVISOR"), assignment(2L, "BANK_B", "BR_09", "CUSTOMER"));
 
         authenticationService.login(loginRequest(null, null));
 
@@ -93,7 +93,7 @@ class AuthenticationServiceTest {
 
     @Test
     void shouldIssueTokenWithOnlyTheRequestedBranchRoles() {
-        givenUser(membership(1L, "BANK_A", "BR_01", "ADVISOR"), membership(2L, "BANK_B", "BR_09", "CUSTOMER"));
+        givenUser(assignment(1L, "BANK_A", "BR_01", "ADVISOR"), assignment(2L, "BANK_B", "BR_09", "CUSTOMER"));
 
         authenticationService.login(loginRequest(null, "BR_09"));
 
@@ -105,7 +105,7 @@ class AuthenticationServiceTest {
 
     @Test
     void shouldUseBankCodeToDisambiguateSameBranchCodeInTwoBanks() {
-        givenUser(membership(1L, "BANK_A", "BR_01", "ADVISOR"), membership(2L, "BANK_B", "BR_01", "CUSTOMER"));
+        givenUser(assignment(1L, "BANK_A", "BR_01", "ADVISOR"), assignment(2L, "BANK_B", "BR_01", "CUSTOMER"));
 
         authenticationService.login(loginRequest("BANK_B", "BR_01"));
 
@@ -115,14 +115,14 @@ class AuthenticationServiceTest {
     }
 
     @Test
-    void shouldDenyLoginToBranchWithoutMembership() {
-        givenUser(membership(1L, "BANK_A", "BR_01", "ADVISOR"));
+    void shouldDenyLoginToBranchWithoutAssignment() {
+        givenUser(assignment(1L, "BANK_A", "BR_01", "ADVISOR"));
 
         assertThrows(AccessDeniedException.class, () -> authenticationService.login(loginRequest(null, "BR_99")));
     }
 
     @Test
-    void shouldIssueCustomerTokenWithoutTenantWhenUserHasNoMembership() {
+    void shouldIssueCustomerTokenWithoutTenantWhenUserHasNoAssignment() {
         givenUser();
 
         authenticationService.login(loginRequest(null, null));
@@ -134,7 +134,7 @@ class AuthenticationServiceTest {
 
     @Test
     void shouldSwitchBranchAndRevokeCurrentToken() {
-        givenUser(membership(1L, "BANK_A", "BR_01", "ADVISOR"), membership(2L, "BANK_B", "BR_09", "ADVISOR"));
+        givenUser(assignment(1L, "BANK_A", "BR_01", "ADVISOR"), assignment(2L, "BANK_B", "BR_09", "ADVISOR"));
         SecurityContextHolder.setContext(currentSession());
 
         final AuthResponse response = authenticationService.switchBranch(null, "BR_09");
@@ -146,7 +146,7 @@ class AuthenticationServiceTest {
 
     @Test
     void shouldKeepCurrentTokenWhenSwitchIsDenied() {
-        givenUser(membership(1L, "BANK_A", "BR_01", "ADVISOR"));
+        givenUser(assignment(1L, "BANK_A", "BR_01", "ADVISOR"));
         SecurityContextHolder.setContext(currentSession());
 
         assertThrows(AccessDeniedException.class, () -> authenticationService.switchBranch(null, "BR_99"));
@@ -167,7 +167,7 @@ class AuthenticationServiceTest {
     }
 
     @Test
-    void shouldRegisterUserWithoutAnyMembership() {
+    void shouldRegisterUserWithoutAnyRoleAssignment() {
         when(userService.createUserEntity(any())).thenAnswer(invocation -> {
             final User user = invocation.getArgument(0);
             user.setId(UUID.randomUUID().toString());
@@ -197,16 +197,16 @@ class AuthenticationServiceTest {
         verify(passwordSetupTokenService, never()).validateAndConsume(anyString());
     }
 
-    private void givenUser(BranchUserEntity... memberships) {
+    private void givenUser(BranchUserEntity... assignments) {
         final UserEntity user = UserEntity.builder()
                 .id(UUID.randomUUID())
                 .email(EMAIL)
-                .bankBranchUsers(new HashSet<>(Set.of(memberships)))
+                .bankBranchUsers(new HashSet<>(Set.of(assignments)))
                 .build();
         when(userRepository.findByEmailIgnoreCase(EMAIL)).thenReturn(Optional.of(user));
     }
 
-    private static BranchUserEntity membership(Long id, String bankCode, String branchCode, String role) {
+    private static BranchUserEntity assignment(Long id, String bankCode, String branchCode, String role) {
         return BranchUserEntity.builder()
                 .id(id)
                 .bankCode(bankCode)

@@ -59,22 +59,36 @@ Technical overview and developer notes for the user-service module. This documen
   - `security.jwt.private-key-path` (user-service, for token issuance when applicable)
 - CORS/CSRF: configured for stateless APIs in platform-core, inherited by user-core.
 
-## Authentication, memberships and tenants
-- A user has zero or more branch memberships (`branch_users`: `bankCode`, `branchCode`, `role`).
-- `POST /auth/register` is public, so it never creates memberships: any `branchRoles` in the body is ignored.
-  Memberships come from authorized flows only (bank administration, customer onboarding; not built yet).
-- `POST /auth/login` issues a JWT for one **active membership**: the requested `bankCode`/`branchCode`, otherwise the first
-  membership. The token carries `tenantId` (the membership's bank code), `branchCode`, and only the roles held in that
-  membership. A user without memberships gets a CUSTOMER token with no tenant, so they can't access bank-owned data.
-- `POST /auth/switch-branch` issues a token for another membership of the current user and revokes the current token.
-  A branch the user doesn't belong to returns 403.
-- Claim names are shared with every service through `WmpJwtClaims` (platform-core).
-- `GET /me` returns every membership and flags the one the token was issued for with `active: true`.
+## Authentication, role assignments and tenants
+user-service is the **identity provider**: signup, password, login and tokens. Who holds which role where is decided
+by **profiler-service**, which owns role assignments; user-service keeps a read-only copy to build tokens.
+
+- **Role assignments** (user + bank + branch + role) are created and revoked only in profiler-service
+  (`POST/DELETE /role-assignments`). Its `role-assignment-granted` / `role-assignment-revoked` events are applied to
+  `branch_users` by `RoleAssignmentGrantedEventConsumer` / `RoleAssignmentRevokedEventConsumer`
+  (`RoleAssignmentReadModelService`, idempotent by `assignment_id`). Never edit `branch_users` by hand.
+- `POST /auth/register` (public) and `POST /user` / `PUT /user/{id}` never create role assignments: roles sent in the body
+  are ignored.
+- `POST /auth/login` issues a JWT for one **active role assignment**: the requested `bankCode`/`branchCode`, otherwise
+  the first one. The token carries `tenantId` (its bank code), `branchCode`, and only the roles held there. A user
+  without role assignments gets a CUSTOMER token with no tenant, so they can't access bank-owned data. A new
+  assignment shows up at the next login or branch switch.
+- `POST /auth/switch-branch` issues a token for another role assignment of the current user and revokes the current
+  token. A branch the user doesn't belong to returns 403.
+- `GET /me` returns every role assignment (`userBranchRoles`, with the profiler `id` used to revoke it) and flags the
+  one the token was issued for with `active: true`.
+- Claim names are shared with every service through `WmpJwtClaims`, roles through `WmpRole` (platform-core).
 - The password-setup token (`purpose: PASSWORD_SETUP`) is accepted only on `POST /auth/password/setup`, and only once:
   its `jti` is consumed in the shared Redis token store (platform-core), so the link can't be reused on another
   instance or after a restart.
-- Logout and branch switch revoke the token in the same store, so every service rejects it from then on.
-- Full flow with diagrams: [JWT authentication guide](../../docs/domain/process/security/jwt-authentication.md).
+- Logout and branch switch revoke the token in the same store; revoking a role assignment (profiler) ends every
+  session of the user. Every service rejects those tokens from then on.
+- **First platform run**: `wmp.bootstrap.platform-admins` (env `WMP_BOOTSTRAP_PLATFORM_ADMINS`) lists users created at
+  startup if missing (`PlatformAdminUserBootstrap`); they receive the onboarding email and profiler makes them
+  PLATFORM_ADMIN.
+- Guides: [first platform run](../../docs/domain/process/platform/first-platform-run.md),
+  [roles and permissions](../../docs/domain/process/security/roles-and-permissions.md),
+  [JWT authentication](../../docs/domain/process/security/jwt-authentication.md).
 
 ## Database
 - Postgres is the default RDBMS; JPA/Hibernate used in `user-core`.

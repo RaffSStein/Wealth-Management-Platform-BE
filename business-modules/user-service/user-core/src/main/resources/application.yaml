@@ -30,3 +30,9 @@ security:
     private-key-path: classpath:keys/private_key.pem
     issuer: user-service
     expiration-seconds: 3600
+
+wmp:
+  bootstrap:
+    # first platform run: users created at startup if missing; profiler-service makes them PLATFORM_ADMIN.
+    # At least two: with four-eyes approval one platform admin alone can't create a bank admin.
+    platform-admins: ${WMP_BOOTSTRAP_PLATFORM_ADMINS:platform-admin-1@wmp.local,platform-admin-2@wmp.local}

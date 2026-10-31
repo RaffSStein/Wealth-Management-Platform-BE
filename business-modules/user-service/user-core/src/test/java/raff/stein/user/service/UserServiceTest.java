@@ -20,6 +20,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -28,10 +29,11 @@ class UserServiceTest {
     private static final String EMAIL = "advisor@bank.test";
 
     private UserService userService;
+    private UserRepository userRepository;
 
     @BeforeEach
     void setUp() {
-        final UserRepository userRepository = mock(UserRepository.class);
+        userRepository = mock(UserRepository.class);
         userService = new UserService(userRepository, mock(UserCreatedEventPublisher.class));
         final UserEntity user = UserEntity.builder()
                 .id(UUID.randomUUID())
@@ -40,8 +42,8 @@ class UserServiceTest {
                 .lastName("Rossi")
                 .phoneNumber("000")
                 .bankBranchUsers(new HashSet<>(Set.of(
-                        membership(1L, "BANK_A", "BR_01", "ADVISOR"),
-                        membership(2L, "BANK_B", "BR_09", "CUSTOMER"))))
+                        assignment(1L, "BANK_A", "BR_01", "ADVISOR"),
+                        assignment(2L, "BANK_B", "BR_09", "CUSTOMER"))))
                 .build();
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
     }
@@ -52,7 +54,7 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldMarkOnlyTheMembershipOfTheCurrentToken() {
+    void shouldMarkOnlyTheAssignmentOfTheCurrentToken() {
         SecurityContextHolder.setContext(WMPContext.builder()
                 .email(EMAIL)
                 .tenantId("BANK_B")
@@ -67,7 +69,7 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldMarkNoMembershipForTokenWithoutTenant() {
+    void shouldMarkNoAssignmentForTokenWithoutTenant() {
         SecurityContextHolder.setContext(WMPContext.builder().email(EMAIL).build());
 
         final User user = userService.getCurrentUser();
@@ -76,7 +78,20 @@ class UserServiceTest {
         assertTrue(user.getBranchRoles().stream().noneMatch(BranchRole::isActive));
     }
 
-    private static BranchUserEntity membership(Long id, String bankCode, String branchCode, String role) {
+    @Test
+    void shouldIgnoreRolesSentToCreateUser() {
+        when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        final User request = User.builder()
+                .email("new@bank.test").firstName("New").lastName("User").phoneNumber("000")
+                .branchRoles(List.of(BranchRole.builder().bankCode("BANK_X").branchCode("BR_X").role("BANK_ADMIN").build()))
+                .build();
+
+        final User created = userService.createUser(request);
+
+        assertTrue(created.getBranchRoles() == null || created.getBranchRoles().isEmpty());
+    }
+
+    private static BranchUserEntity assignment(Long id, String bankCode, String branchCode, String role) {
         return BranchUserEntity.builder()
                 .id(id)
                 .bankCode(bankCode)

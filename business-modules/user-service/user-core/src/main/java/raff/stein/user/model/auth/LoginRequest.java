@@ -11,7 +11,7 @@ public class LoginRequest {
     private String email;
     @NotBlank
     private String password;
-    // optional active membership; the first one is used when absent
+    // optional active role assignment; the first one is used when absent
     private String bankCode;
     private String branchCode;
 }

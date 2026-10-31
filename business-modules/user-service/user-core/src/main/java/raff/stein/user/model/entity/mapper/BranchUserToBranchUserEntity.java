@@ -14,8 +14,10 @@ public interface BranchUserToBranchUserEntity {
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "notes", ignore = true)
+    @Mapping(target = "assignmentId", ignore = true)
     BranchUserEntity toBranchUserEntity(BranchRole branchRole);
 
+    @Mapping(target = "id", source = "assignmentId")
     BranchRole toBranchRole(BranchUserEntity branchUserEntity);
 
 }

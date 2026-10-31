@@ -70,6 +70,12 @@
             <artifactId>user-event-data</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <!-- role-assignment events: user-service keeps a read-only copy for issuing tokens -->
+        <dependency>
+            <groupId>raff.stein</groupId>
+            <artifactId>profiler-event-data</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
         <!-- Dependency for the core module -->
         <dependency>
             <groupId>raff.stein</groupId>

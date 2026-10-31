@@ -6,8 +6,8 @@ import lombok.*;
 import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 
 /**
- * Entity representing the association between a user and a bank branch, including the user's role within that branch.
- * Each user can operate for multiple bank branches, with a specific role for each association.
+ * Read-only copy of a role assignment owned by profiler-service: the user holds a role in a bank branch.
+ * Written only by the role-assignment event consumers; login and /me read it to issue the token. Never edit it here.
  */
 @Entity
 @Table(
@@ -36,8 +36,8 @@ public class BranchUserEntity extends BaseDateEntity<Long> {
     private UserEntity user;
 
     /**
-     * The bank (tenant) of this membership. It becomes the token's tenantId when the membership is active.
-     * Plain column, not @TenantId: login must read the memberships of every bank.
+     * The bank (tenant) of this assignment. It becomes the token's tenantId when the assignment is active.
+     * Plain column, not @TenantId: login must read the assignments of every bank.
      */
     @Column(nullable = false)
     private String bankCode;
@@ -49,7 +49,7 @@ public class BranchUserEntity extends BaseDateEntity<Long> {
     private String branchCode;
 
     /**
-     * The role of the user within the bank branch (e.g., SUPERVISOR, HANDLER, MANAGER, AUDITOR, etc.).
+     * The role held in the bank branch: a {@link raff.stein.platformcore.security.role.WmpRole} name.
      */
     @Column(nullable = false, length = 30)
     private String role;
@@ -59,4 +59,11 @@ public class BranchUserEntity extends BaseDateEntity<Long> {
      */
     @Column
     private String notes;
+
+    /**
+     * Id of the role assignment in profiler-service: makes event replays idempotent. Null only for rows created
+     * before role assignments existed.
+     */
+    @Column(unique = true)
+    private Long assignmentId;
 }

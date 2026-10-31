@@ -27,3 +27,14 @@ kafka:
         enabled: true
         name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.user-service.domain}.enable-user"
         groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${spring.application.name}.enable-user.sa.${kafka.broker.serviceAccount}"
+    profiler-service:
+      domain: profiler-service
+      # consumed topics: role assignments owned by profiler, copied into branch_users for issuing tokens
+      role-assignment-granted:
+        enabled: true
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.profiler-service.domain}.role-assignment-granted"
+        groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${spring.application.name}.role-assignment-granted.sa.${kafka.broker.serviceAccount}"
+      role-assignment-revoked:
+        enabled: true
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.profiler-service.domain}.role-assignment-revoked"
+        groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${spring.application.name}.role-assignment-revoked.sa.${kafka.broker.serviceAccount}"

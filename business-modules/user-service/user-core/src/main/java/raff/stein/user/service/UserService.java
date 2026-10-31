@@ -13,6 +13,7 @@ import raff.stein.user.model.entity.mapper.UserToUserEntityMapper;
 import raff.stein.user.model.user.User;
 import raff.stein.user.repository.UserRepository;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -28,6 +29,8 @@ public class UserService {
 
     @Transactional
     public User createUser(User user) {
+        // roles come only from role assignments (profiler-service), never from a create request
+        user.setBranchRoles(List.of());
         final User savedUser = createUserEntity(user);
         // TODO: generate onboarding token for user creation request that comes from an advisor
         publishUser(savedUser, null);
@@ -71,12 +74,12 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + userEmail));
         log.debug("Found user entity: [{}]", userEntity);
         final User user = userToUserEntityMapper.toUser(userEntity);
-        markActiveMembership(user, context);
+        markActiveAssignment(user, context);
         return user;
     }
 
-    // the token is issued for one membership: flag it so clients don't derive roles from the others
-    private static void markActiveMembership(User user, WMPContext context) {
+    // the token is issued for one role assignment: flag it so clients don't derive roles from the others
+    private static void markActiveAssignment(User user, WMPContext context) {
         if (user.getBranchRoles() == null) {
             return;
         }
