@@ -19,3 +19,20 @@ INSERT INTO bank_branches (
   '+39-02-5555-2200', 'milanocentral@eurocapital.com',
   'system', NOW(), NULL, NULL, 0
 );
+
+-- Local test banks used by the local users and the first-platform-run guide (BANK_A/BR_01, BANK_B/BR_09)
+INSERT INTO bank_branches (
+  id, bank_code, branch_code, bank_name, branch_name, swift_code, country_code, bank_type, status,
+  bank_description, branch_description, branch_city, address, zip_code, phone_number, email,
+  created_by, creation_date, last_modified_by, last_modified_date, version
+) VALUES (
+  gen_random_uuid(), 'BANK_A', 'BR_01', 'Local Test Bank A', 'Branch 01', 'TESTAAXX', 'IT', 'PRIVATE', 'ACTIVE',
+  'Local development bank', 'Local development branch', 'Milano', 'Via Example 1, Milano', '20100',
+  '+39-02-0000-0001', 'br01@bank-a.local',
+  'system', NOW(), NULL, NULL, 0
+), (
+  gen_random_uuid(), 'BANK_B', 'BR_09', 'Local Test Bank B', 'Branch 09', 'TESTBBXX', 'IT', 'RETAIL', 'ACTIVE',
+  'Local development bank', 'Local development branch', 'Roma', 'Via Example 9, Roma', '00100',
+  '+39-06-0000-0009', 'br09@bank-b.local',
+  'system', NOW(), NULL, NULL, 0
+);

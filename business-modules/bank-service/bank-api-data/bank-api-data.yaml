@@ -108,6 +108,35 @@ paths:
         '400':
           description: Invalid filter combination or parameter format
 
+  /bank/{bankCode}/branches/{branchCode}:
+    get:
+      tags:
+        - Bank
+      summary: Get a branch of a bank
+      description: >
+        Branch codes are unique only within a bank, so a branch is identified by bank code and branch code.
+        Used by user-service to validate memberships.
+      operationId: getBankBranchOfBank
+      parameters:
+        - name: bankCode
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: branchCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bank branch found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankBranchDto'
+        '404':
+          description: No branch with this code in this bank
   /bank/branches/{branchCode}:
     get:
       tags:

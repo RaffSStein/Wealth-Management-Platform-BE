@@ -7,6 +7,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import raff.stein.platformcore.exception.types.notfound.GenericObjectNotFoundException;
 import raff.stein.bank.model.bo.BankBranch;
 import raff.stein.bank.model.bo.BankSearchRequest;
 import raff.stein.bank.model.entity.BankBranchEntity;
@@ -31,5 +33,12 @@ public class BankService {
         Specification<BankBranchEntity> spec = FindBankBranchesSpecification.from(bankSearchRequest);
         Page<BankBranchEntity> page = bankRepository.findAll(spec, pageable);
         return page.map(bankBranchToBranchEntityMapper::toModel);
+    }
+
+    @Transactional(readOnly = true)
+    public BankBranch getBankBranch(String bankCode, String branchCode) {
+        return bankRepository.findByBankCodeAndBranchCode(bankCode, branchCode)
+                .map(bankBranchToBranchEntityMapper::toModel)
+                .orElseThrow(GenericObjectNotFoundException.with(bankCode + "/" + branchCode));
     }
 }

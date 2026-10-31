@@ -5,8 +5,11 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 import raff.stein.bank.model.entity.BankBranchEntity;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface BankRepository  extends JpaRepository<BankBranchEntity, UUID>, JpaSpecificationExecutor<BankBranchEntity> {
+
+    Optional<BankBranchEntity> findByBankCodeAndBranchCode(String bankCode, String branchCode);
 }

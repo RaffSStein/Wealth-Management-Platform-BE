@@ -53,6 +53,12 @@ public class BankController implements BankApi {
     }
 
     @Override
+    public ResponseEntity<BankBranchDto> getBankBranchOfBank(String bankCode, String branchCode) {
+        return ResponseEntity.ok(bankBranchDtoToBankBranchMapper.toBankBranchDto(
+                bankService.getBankBranch(bankCode, branchCode)));
+    }
+
+    @Override
     public ResponseEntity<BankBranchDto> getBankBranchByCode(String branchCode) {
         return null;
     }
