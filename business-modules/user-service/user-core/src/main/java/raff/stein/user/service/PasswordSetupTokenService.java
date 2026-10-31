@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import raff.stein.platformcore.security.jwt.TokenRevocationService;
+import raff.stein.platformcore.security.jwt.WmpJwtClaims;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -18,13 +20,12 @@ import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Validates and consumes password setup tokens to prevent reuse.
- * Mirrors the checks done by the PasswordConfirmJwtFilter, and additionally tracks JTI consumption.
+ * Mirrors the checks done by the PasswordConfirmJwtFilter, and additionally consumes the JTI in the shared token
+ * store, so a setup link works once across all instances and restarts.
  */
 @Service
 @RequiredArgsConstructor
@@ -34,9 +35,8 @@ public class PasswordSetupTokenService {
     @Value("${security.jwt.public-key-path:classpath:keys/public_key.pem}")
     private Resource publicKeyResource;
 
+    private final TokenRevocationService tokenRevocationService;
     private final AtomicReference<RSAPublicKey> publicKeyRef = new AtomicReference<>();
-    // Track consumed JTIs with their expiration to allow future cleanup
-    private final Map<String, Long> consumedJtis = new ConcurrentHashMap<>();
 
     /**
      * Validates the token purpose/exp/signature and consumes its JTI so it cannot be reused.
@@ -64,17 +64,9 @@ public class PasswordSetupTokenService {
         }
     }
 
-    /**
-     * Optional: removes expired JTI entries. Should be called periodically by a scheduler.
-     */
-    public void cleanupExpiredJtis() {
-        long now = Instant.now().getEpochSecond();
-        consumedJtis.entrySet().removeIf(e -> e.getValue() <= now);
-    }
-
     private void validatePurpose(Claims claims) {
-        Object purpose = claims.get("purpose");
-        if (purpose == null || !"PASSWORD_SETUP".equals(purpose.toString())) {
+        Object purpose = claims.get(WmpJwtClaims.PURPOSE);
+        if (purpose == null || !WmpJwtClaims.PURPOSE_PASSWORD_SETUP.equals(purpose.toString())) {
             throw new IllegalArgumentException("Invalid token");
         }
     }
@@ -106,8 +98,8 @@ public class PasswordSetupTokenService {
         if (jti == null || jti.isBlank()) {
             throw new IllegalArgumentException("Invalid token");
         }
-        // TODO: use redis or database for distributed environments, also add a scheduler to cleanup expired entries.
-        boolean firstUse = consumedJtis.putIfAbsent(jti, exp) == null;
+        // the store entry expires with the token, so no cleanup is needed; a store outage fails closed
+        boolean firstUse = tokenRevocationService.consumeOnce(jti, exp);
         if (!firstUse) {
             throw new IllegalArgumentException("Invalid token");
         }
