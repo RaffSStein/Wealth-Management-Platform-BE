@@ -27,7 +27,16 @@ logging:
 
 map:
   types:
-    - type: Pageable => org.springframework.data.domain.Pageable
     - type: Page => org.springframework.data.domain.Page<java.lang.Object>
     - type: PageBankBranchDto => org.springframework.data.domain.Page<{package-name}.model.BankBranchDto>
   result: org.springframework.http.ResponseEntity
+
+  paths:
+    # clients send flat page/size/sort query params; the server keeps receiving one Spring Pageable
+    /bank/branches:
+      get:
+        parameters:
+          - drop: page
+          - drop: size
+          - drop: sort
+          - add: pageable => org.springframework.data.domain.Pageable

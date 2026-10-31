@@ -1,9 +1,11 @@
 package raff.stein.bank.controller.mapper;
 
 import io.openapiprocessor.openapi.model.BankBranchDto;
+import io.openapiprocessor.openapi.model.BankDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 import org.springframework.data.domain.Pageable;
+import raff.stein.bank.model.bo.Bank;
 import raff.stein.bank.model.bo.BankBranch;
 import raff.stein.bank.model.bo.BankSearchRequest;
 
@@ -26,7 +28,10 @@ public interface BankBranchDtoToBankBranchMapper {
             String countryCode,
             String bankType,
             String branchCity,
-            String zipCode);
+            String zipCode,
+            String status);
+
+    BankDto toBankDto(Bank bank);
 
 
 

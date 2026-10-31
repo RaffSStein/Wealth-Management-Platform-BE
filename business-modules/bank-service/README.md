@@ -2,8 +2,13 @@
 
 ## Overview
 Registry of banks (tenants) and their branches. A tenant in the platform is a bank, identified by its bank code; a
-branch is identified by **bank code + branch code** (branch codes are unique only within a bank). Other services use
-it as reference data, e.g. user-service validates that a membership points at an existing, active branch.
+branch is identified by **bank code + branch code** (branch codes are unique only within a bank). There is no bank
+table: a bank is derived from its branches. Other services use it as reference data, e.g. profiler-service checks that
+a role assignment points at an existing, ACTIVE branch, and the FE fills its bank and branch dropdowns from it.
+
+**Visibility** (`BankVisibilityPolicy`): a PLATFORM_ADMIN reads every bank; any other role only the bank of its token
+(the banks it may assign roles in); a token without a bank reads nothing. Another bank's branch answers 404, and lists
+simply leave other banks out.
 
 ## Module Structure
 - `bank-api-data`: OpenAPI spec `bank-api-data.yaml` (generated with openapi-processor: `io.openapiprocessor.openapi.*`,
@@ -24,8 +29,13 @@ it as reference data, e.g. user-service validates that a membership points at an
 ## Capabilities & APIs
 | Method and path | Purpose |
 |---|---|
-| `GET /bank/branches` | Paged search by bank code, name, branch code, SWIFT, country, type, city, ZIP |
-| `GET /bank/{bankCode}/branches/{branchCode}` | One branch of a bank; 404 if that bank has no such branch |
+| `GET /bank/banks` | Banks visible to the caller, one per bank (code, name, country, type), sorted by code |
+| `GET /bank/branches` | Paged search by bank code, name, branch code, SWIFT, country, type, city, ZIP, **status**; flat `page` (zero-based), `size` (1 to 100, default 20), `sort` (`property,asc\|desc`) |
+| `GET /bank/{bankCode}/branches/{branchCode}` | One branch of a bank; 404 if that bank has no such branch or it's outside the caller's scope |
+
+Pages serialize as `{"content": [...], "page": {"size", "number", "totalElements", "totalPages"}}` (Spring Data
+`PagedModel`, `BankWebConfig`). In the spec the paging parameters are flat; openapi-processor turns them into one
+Spring `Pageable` for the controller (`mapping.yaml`).
 
 ## Work in Progress
 - `POST /bank/branches`, `GET/PUT/DELETE /bank/branches/{branchCode}` are declared but not implemented (they return

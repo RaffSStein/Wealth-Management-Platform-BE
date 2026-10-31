@@ -34,6 +34,9 @@ public final class FindBankBranchesSpecification {
             if (hasText(request.getBankType())) {
                 predicates.add(cb.equal(root.get("bankType"), request.getBankType()));
             }
+            if (hasText(request.getStatus())) {
+                predicates.add(cb.equal(root.get("status"), request.getStatus()));
+            }
             if (hasText(request.getZipCode())) {
                 predicates.add(cb.equal(root.get("zipCode"), request.getZipCode()));
             }

@@ -17,4 +17,5 @@ public class BankSearchRequest {
     private String bankType;
     private String branchCity;
     private String zipCode;
+    private String status;
 }

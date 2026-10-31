@@ -2,6 +2,7 @@ package raff.stein.bank.controller;
 
 import io.openapiprocessor.openapi.api.BankApi;
 import io.openapiprocessor.openapi.model.BankBranchDto;
+import io.openapiprocessor.openapi.model.BankDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,8 +27,15 @@ public class BankController implements BankApi {
     }
 
     @Override
+    public ResponseEntity<BankDto[]> getBanks() {
+        return ResponseEntity.ok(bankService.listBanks().stream()
+                .map(bankBranchDtoToBankBranchMapper::toBankDto)
+                .toArray(BankDto[]::new));
+    }
+
+    @Override
     public ResponseEntity<Page<BankBranchDto>> getBankBranches(
-            Pageable pageable,
+            String status,
             String bankCode,
             String bankName,
             String branchCode,
@@ -35,7 +43,8 @@ public class BankController implements BankApi {
             String countryCode,
             String bankType,
             String branchCity,
-            String zipCode) {
+            String zipCode,
+            Pageable pageable) {
         final BankSearchRequest bankSearchRequest = bankBranchDtoToBankBranchMapper.toBankSearchRequest(
                 pageable,
                 bankCode,
@@ -45,8 +54,8 @@ public class BankController implements BankApi {
                 countryCode,
                 bankType,
                 branchCity,
-                zipCode
-        );
+                zipCode,
+                status);
         final Page<BankBranchDto> bankBranchDtos = bankService.findBankBranches(bankSearchRequest)
                 .map(bankBranchDtoToBankBranchMapper::toBankBranchDto);
         return ResponseEntity.ok(bankBranchDtos);
