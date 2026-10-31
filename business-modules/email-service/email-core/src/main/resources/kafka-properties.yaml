@@ -10,4 +10,4 @@ kafka:
       user-created:
         enabled: true
         name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.user-service.domain}.user-created"
-        groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${kafka.topics.user-service.domain}.user-created.sa.${kafka.broker.serviceAccount}"
+        groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${spring.application.name}.user-created.sa.${kafka.broker.serviceAccount}"

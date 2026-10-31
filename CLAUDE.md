@@ -90,7 +90,9 @@ docs/domain/                   functional docs: process/ (markdown) + assets/ (d
   payload via `withEventPayload(...)` / `getEventPayload(...)`. Validate the payload defensively: on bad input, log a warning and return.
 - Topics are declared per service in `<x>-core/src/main/resources/kafka-properties.yaml` under `kafka.topics.<owner-domain>`, using the naming pattern:
   - name: `${kafka.broker.environment}.${kafka.broker.tenant}.<domain>.<event-name>`
-  - groupId: `${kafka.broker.environment}.${kafka.broker.tenant}.t.<domain>.<event-name>.sa.${kafka.broker.serviceAccount}`
+  - groupId: `${kafka.broker.environment}.${kafka.broker.tenant}.t.${spring.application.name}.<event-name>.sa.${kafka.broker.serviceAccount}`.
+    The group is named after the **consuming** service, not the topic owner: services that share a group split the
+    events between them, so each one would only see part of them.
   - Event names are kebab-case past tense (`customer-created`, `file-validated`, `user-created`).
 
 ### Configuration
