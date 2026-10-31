@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import raff.stein.platformcore.exception.types.GenericException;
 import raff.stein.platformcore.exception.types.badrequest.RequestValidationException;
 import raff.stein.platformcore.exception.types.conflict.InvalidStateTransitionException;
+import raff.stein.platformcore.exception.types.conflict.ResourceConflictException;
 import raff.stein.platformcore.exception.types.conflict.VersionLockingException;
 import raff.stein.platformcore.exception.types.forbidden.AccessDeniedException;
 import raff.stein.platformcore.exception.types.notfound.GenericObjectNotFoundException;
@@ -23,6 +24,7 @@ import raff.stein.platformcore.exception.types.notimplemented.NotImplementedExce
 import raff.stein.platformcore.exception.types.unauthorized.AuthenticationException;
 import raff.stein.platformcore.exception.types.unauthorized.JwtTokenException;
 import raff.stein.platformcore.exception.types.unauthorized.WmpContextException;
+import raff.stein.platformcore.exception.types.unavailable.DependencyUnavailableException;
 import raff.stein.platformcore.exception.types.unavailable.TokenStoreUnavailableException;
 import tools.jackson.databind.DatabindException;
 import tools.jackson.databind.exc.InvalidFormatException;
@@ -147,7 +149,8 @@ public class GlobalControllerExceptionHandler {
      */
     @ExceptionHandler({
             VersionLockingException.class,
-            InvalidStateTransitionException.class
+            InvalidStateTransitionException.class,
+            ResourceConflictException.class
             // Add any specific conflict exceptions here
     })
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -173,7 +176,8 @@ public class GlobalControllerExceptionHandler {
      * ============= SERVICE UNAVAILABLE (503) exception handlers =============
      */
     @ExceptionHandler({
-            TokenStoreUnavailableException.class
+            TokenStoreUnavailableException.class,
+            DependencyUnavailableException.class
             // Add any specific unavailable dependency exceptions here
     })
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)

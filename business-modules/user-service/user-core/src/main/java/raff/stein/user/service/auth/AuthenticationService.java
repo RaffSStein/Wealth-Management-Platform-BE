@@ -15,6 +15,7 @@ import raff.stein.platformcore.security.context.SecurityContextHolder;
 import raff.stein.platformcore.security.context.WMPContext;
 import raff.stein.platformcore.security.jwt.TokenRevocationService;
 import raff.stein.platformcore.security.jwt.WmpJwtClaims;
+import raff.stein.platformcore.security.role.WmpRole;
 import raff.stein.user.model.auth.*;
 import raff.stein.user.model.entity.BranchUserEntity;
 import raff.stein.user.model.entity.UserEntity;
@@ -29,6 +30,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -161,7 +163,10 @@ public class AuthenticationService {
                         .orElseThrow(() -> membershipDenied(user.getEmail(), requestedBranchCode));
         final List<String> roles = memberships.stream()
                 .filter(m -> m.getBankCode().equals(active.getBankCode()) && m.getBranchCode().equals(active.getBranchCode()))
-                .map(m -> WmpRole.fromString(m.getRole()).name())
+                .map(m -> WmpRole.parse(m.getRole()))
+                // an unknown stored role grants nothing
+                .flatMap(Optional::stream)
+                .map(WmpRole::name)
                 .distinct()
                 .toList();
         claims.put(WmpJwtClaims.TENANT_ID, active.getBankCode());

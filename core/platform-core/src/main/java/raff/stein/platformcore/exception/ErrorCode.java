@@ -18,6 +18,10 @@ public enum ErrorCode {
     INVALID_STATE_TRANSITION("Cannot [%s] when current state is [%s]. Allowed states: [%s]", ErrorCategory.VALIDATION_ERROR),
     TOKEN_STORE_UNAVAILABLE("Token store unavailable during [%s]", ErrorCategory.SERVER_ERROR),
     REAUTHENTICATION_REQUIRED("This operation requires a login within the last [%s] seconds", ErrorCategory.AUTHENTICATION_ERROR),
+    DEPENDENCY_UNAVAILABLE("Service [%s] is unavailable", ErrorCategory.SERVER_ERROR),
+    ROLE_ASSIGNMENT_NOT_ALLOWED("Not allowed: [%s]", ErrorCategory.AUTHORIZATION_ERROR),
+    ROLE_ASSIGNMENT_ALREADY_EXISTS("User [%s] already has or awaits role [%s] in [%s/%s]", ErrorCategory.VALIDATION_ERROR),
+    ROLE_ASSIGNMENT_REQUEST_NOT_PENDING("Role assignment request [%s] is [%s], not PENDING", ErrorCategory.VALIDATION_ERROR),
     PASSWORD_SETUP_TOKEN_INVALID("Password setup token is expired, already used or invalid", ErrorCategory.AUTHENTICATION_ERROR),
 
     // TODO: move to specific modules

@@ -8,12 +8,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import raff.stein.user.model.auth.WmpRole;
+import raff.stein.platformcore.security.role.WmpRole;
 import raff.stein.user.model.entity.BranchUserEntity;
 import raff.stein.user.model.entity.UserEntity;
 import raff.stein.user.repository.UserRepository;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -52,7 +53,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private Set<WmpRole> resolvePlatformRoles(UserEntity entity) {
         Set<WmpRole> roles = entity.getBankBranchUsers().stream()
                 .map(BranchUserEntity::getRole)
-                .map(WmpRole::fromString)
+                .map(WmpRole::parse)
+                // an unknown stored role grants nothing
+                .flatMap(Optional::stream)
                 .collect(Collectors.toSet());
         if (roles.isEmpty()) {
             log.warn("Role fallback applied in UserDetailsService: assigning CUSTOMER for user [{}] (no branch associations)", entity.getEmail());
