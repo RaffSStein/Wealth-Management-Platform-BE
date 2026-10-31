@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
+import raff.stein.platformcore.security.context.SecurityContextHolder;
+import raff.stein.platformcore.security.context.WMPContext;
 import raff.stein.user.model.user.User;
 import raff.stein.user.repository.UserRepository;
 import raff.stein.user.security.JwtTokenIssuer;
@@ -20,6 +22,8 @@ import java.util.List;
 @Slf4j
 @Component
 public class PlatformAdminUserBootstrap implements ApplicationRunner {
+
+    static final String BOOTSTRAP_ACTOR = "bootstrap";
 
     private final UserRepository userRepository;
     private final UserService userService;
@@ -39,10 +43,17 @@ public class PlatformAdminUserBootstrap implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        platformAdminEmails.stream()
-                .map(String::trim)
-                .filter(email -> !email.isEmpty())
-                .forEach(this::createIfMissing);
+        // no user is behind a startup action: act as a named system actor, so audit columns and the events'
+        // actor extension say "bootstrap" (consumers reject writes without an actor)
+        SecurityContextHolder.setContext(WMPContext.builder().userId(BOOTSTRAP_ACTOR).email(BOOTSTRAP_ACTOR).build());
+        try {
+            platformAdminEmails.stream()
+                    .map(String::trim)
+                    .filter(email -> !email.isEmpty())
+                    .forEach(this::createIfMissing);
+        } finally {
+            SecurityContextHolder.clear();
+        }
     }
 
     private void createIfMissing(String email) {
