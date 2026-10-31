@@ -89,12 +89,6 @@ public class UserService {
                         && Objects.equals(context.getBranchCode(), branchRole.getBranchCode())));
     }
 
-    public User getUserById(UUID id) {
-        UserEntity userEntity = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + id));
-        return userToUserEntityMapper.toUser(userEntity);
-    }
-
     @Transactional
     public User updateUserById(UUID id, User user) {
         //TODO: to complete

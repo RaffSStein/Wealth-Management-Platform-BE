@@ -2,6 +2,7 @@ package raff.stein.user.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.*;
 import raff.stein.platformcore.model.audit.entity.BaseDateEntity;
 
@@ -38,6 +39,8 @@ public class UserEntity extends BaseDateEntity<UUID> {
      * List of associations between this user and bank branches (roles per branch).
      */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    // a search page (up to 50 users) loads all their assignments in one query instead of one per user
+    @BatchSize(size = 50)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore

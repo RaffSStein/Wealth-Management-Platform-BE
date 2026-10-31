@@ -78,6 +78,15 @@ by **profiler-service**, which owns role assignments; user-service keeps a read-
 - `GET /me` returns every role assignment (`userBranchRoles`, with the profiler `id` used to revoke it) and flags the
   one the token was issued for with `active: true`.
 - Claim names are shared with every service through `WmpJwtClaims`, roles through `WmpRole` (platform-core).
+- **Finding users** (`UserDirectoryService`, rule in `UserVisibilityPolicy`):
+  - `GET /user/lookup?email=` (staff): one user by exact, case-insensitive email;
+  - `GET /user/search?query=&linked=&page=&size=` (bank and platform admins): part of an email or name, paged;
+  - `GET /user/{id}` (anyone): read one user.
+  All three show only users in the caller's scope: itself; for an ADVISOR its branch; for a BANK_ADMIN its bank plus
+  users not linked to any bank; for a PLATFORM_ADMIN everyone. Out of scope answers 404, and only the role
+  assignments in scope are listed. Searched emails and queries are not logged. Rules:
+  [roles and permissions](../../docs/domain/process/security/roles-and-permissions.md#who-can-see-which-users).
+- `GET /me` works for every role, admins included.
 - The password-setup token (`purpose: PASSWORD_SETUP`) is accepted only on `POST /auth/password/setup`, and only once:
   its `jti` is consumed in the shared Redis token store (platform-core), so the link can't be reused on another
   instance or after a restart.
