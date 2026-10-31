@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.security.authentication.AuthenticationManager;
+import raff.stein.platformcore.exception.types.badrequest.RequestValidationException;
 import raff.stein.platformcore.exception.types.forbidden.AccessDeniedException;
 import raff.stein.platformcore.security.context.SecurityContextHolder;
 import raff.stein.platformcore.security.context.WMPContext;
@@ -46,6 +47,8 @@ class AuthenticationServiceTest {
     private UserRepository userRepository;
     private JwtTokenIssuer jwtTokenIssuer;
     private TokenRevocationService tokenRevocationService;
+    private PasswordService passwordService;
+    private PasswordSetupTokenService passwordSetupTokenService;
     private AuthenticationService authenticationService;
 
     @BeforeEach
@@ -53,13 +56,15 @@ class AuthenticationServiceTest {
         userRepository = mock(UserRepository.class);
         jwtTokenIssuer = mock(JwtTokenIssuer.class);
         tokenRevocationService = mock(TokenRevocationService.class);
+        passwordService = mock(PasswordService.class);
+        passwordSetupTokenService = mock(PasswordSetupTokenService.class);
         authenticationService = new AuthenticationService(
                 mock(UserService.class),
-                mock(PasswordService.class),
+                passwordService,
                 userRepository,
                 jwtTokenIssuer,
                 mock(AuthenticationManager.class),
-                mock(PasswordSetupTokenService.class),
+                passwordSetupTokenService,
                 tokenRevocationService);
         when(jwtTokenIssuer.issueToken(anyString(), anyString(), any(), any())).thenReturn("new-token");
     }
@@ -154,6 +159,17 @@ class AuthenticationServiceTest {
         final ArgumentCaptor<Map<String, Object>> claims = ArgumentCaptor.forClass(Map.class);
         verify(jwtTokenIssuer).issueToken(anyString(), eq(EMAIL), roles.capture(), claims.capture());
         return new IssuedToken(roles.getValue(), claims.getValue());
+    }
+
+    @Test
+    void shouldRejectWeakPasswordWithoutConsumingTheSetupLink() {
+        SecurityContextHolder.setContext(WMPContext.builder().email(EMAIL).rawToken("setup-token").build());
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(UserEntity.builder().email(EMAIL).build()));
+        when(passwordService.validatePolicy("weak", EMAIL)).thenReturn(List.of("Password must contain at least one digit"));
+
+        assertThrows(RequestValidationException.class, () -> authenticationService.setupPassword("weak"));
+
+        verify(passwordSetupTokenService, never()).validateAndConsume(anyString());
     }
 
     private void givenUser(BranchUserEntity... memberships) {

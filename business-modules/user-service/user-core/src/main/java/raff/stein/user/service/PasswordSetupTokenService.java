@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import raff.stein.platformcore.exception.ErrorCode;
+import raff.stein.platformcore.exception.types.unauthorized.JwtTokenException;
 import raff.stein.platformcore.security.jwt.TokenRevocationService;
 import raff.stein.platformcore.security.jwt.WmpJwtClaims;
 
@@ -40,7 +42,7 @@ public class PasswordSetupTokenService {
 
     /**
      * Validates the token purpose/exp/signature and consumes its JTI so it cannot be reused.
-     * Returns the subject (user identifier) or throws IllegalArgumentException on invalid token.
+     * Returns the subject (user identifier) or throws a 401 {@link JwtTokenException} on an invalid token.
      */
     public String validateAndConsume(String jwt) {
         Claims claims = parseClaims(jwt);
@@ -60,25 +62,25 @@ public class PasswordSetupTokenService {
                     .parseSignedClaims(jwt)
                     .getPayload();
         } catch (ExpiredJwtException | SignatureException | IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid token");
+            throw invalidToken();
         }
     }
 
     private void validatePurpose(Claims claims) {
         Object purpose = claims.get(WmpJwtClaims.PURPOSE);
         if (purpose == null || !WmpJwtClaims.PURPOSE_PASSWORD_SETUP.equals(purpose.toString())) {
-            throw new IllegalArgumentException("Invalid token");
+            throw invalidToken();
         }
     }
 
     private long validateExp(Claims claims, long now) {
         Date expDate = claims.getExpiration();
         if (expDate == null) {
-            throw new IllegalArgumentException("Invalid token");
+            throw invalidToken();
         }
         long exp = expDate.toInstant().getEpochSecond();
         if (now >= exp) {
-            throw new IllegalArgumentException("Invalid token");
+            throw invalidToken();
         }
         return exp;
     }
@@ -88,7 +90,7 @@ public class PasswordSetupTokenService {
         if (nbfDate != null) {
             long nbf = nbfDate.toInstant().getEpochSecond();
             if (now < nbf) {
-                throw new IllegalArgumentException("Invalid token");
+                throw invalidToken();
             }
         }
     }
@@ -96,13 +98,20 @@ public class PasswordSetupTokenService {
     private void consumeJti(Claims claims, long exp) {
         String jti = claims.getId();
         if (jti == null || jti.isBlank()) {
-            throw new IllegalArgumentException("Invalid token");
+            throw invalidToken();
         }
         // the store entry expires with the token, so no cleanup is needed; a store outage fails closed
         boolean firstUse = tokenRevocationService.consumeOnce(jti, exp);
         if (!firstUse) {
-            throw new IllegalArgumentException("Invalid token");
+            throw invalidToken();
         }
+    }
+
+    // one code for every cause: the client can only ask for a new link, and the cause isn't disclosed
+    private static JwtTokenException invalidToken() {
+        return new JwtTokenException(
+                ErrorCode.PASSWORD_SETUP_TOKEN_INVALID,
+                ErrorCode.PASSWORD_SETUP_TOKEN_INVALID.getMessageTemplate());
     }
 
     private RSAPublicKey loadPublicKey() {

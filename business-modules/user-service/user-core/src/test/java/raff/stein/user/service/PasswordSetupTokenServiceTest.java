@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.test.util.ReflectionTestUtils;
+import raff.stein.platformcore.exception.types.unauthorized.JwtTokenException;
 import raff.stein.platformcore.exception.types.unavailable.TokenStoreUnavailableException;
 import raff.stein.platformcore.security.jwt.TokenRevocationService;
 import raff.stein.platformcore.security.jwt.WmpJwtClaims;
@@ -42,14 +43,14 @@ class PasswordSetupTokenServiceTest {
         final String token = setupToken(WmpJwtClaims.PURPOSE_PASSWORD_SETUP);
 
         assertEquals("user-1", service.validateAndConsume(token));
-        assertThrows(IllegalArgumentException.class, () -> service.validateAndConsume(token));
+        assertThrows(JwtTokenException.class, () -> service.validateAndConsume(token));
     }
 
     @Test
     void shouldRejectTokenWithoutSetupPurpose() {
         final PasswordSetupTokenService service = service(new TokenRevocationService(new InMemoryTokenStore()));
 
-        assertThrows(IllegalArgumentException.class, () -> service.validateAndConsume(setupToken("OTHER")));
+        assertThrows(JwtTokenException.class, () -> service.validateAndConsume(setupToken("OTHER")));
     }
 
     @Test

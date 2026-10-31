@@ -7,6 +7,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import raff.stein.platformcore.exception.ErrorCode;
+import raff.stein.platformcore.exception.types.badrequest.RequestValidationException;
 import raff.stein.platformcore.exception.types.forbidden.AccessDeniedException;
 import raff.stein.platformcore.exception.types.notfound.GenericObjectNotFoundException;
 import raff.stein.platformcore.exception.types.unauthorized.WmpContextException;
@@ -104,7 +105,10 @@ public class AuthenticationService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + userEmail));
         final List<String> violations = passwordService.validatePolicy(password, userEmail);
         if (!violations.isEmpty()) {
-            throw new IllegalArgumentException("Password does not meet policy requirements: " + String.join(", ", violations));
+            // 400, and the token is not consumed yet, so the user can retry with the same link
+            throw new RequestValidationException(
+                    ErrorCode.REQUEST_VALIDATION_ERROR,
+                    "Password does not meet policy requirements: " + String.join(", ", violations));
         }
         // Validate and consume the password setup token to avoid future reuse
         passwordSetupTokenService.validateAndConsume(rawToken);
