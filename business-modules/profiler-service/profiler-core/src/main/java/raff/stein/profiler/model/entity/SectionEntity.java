@@ -34,8 +34,15 @@ public class SectionEntity extends BaseEntity<Integer> {
     @Column(nullable = false, unique = true)
     private String sectionName;
 
+    /**
+     * Position in the FE navigation (top bar), set by the catalogue seed. Nullable only so the column can be added
+     * to existing rows; lists put rows without an order last.
+     */
+    @Column(name = "display_order")
+    private Integer displayOrder;
+
     @OneToMany(mappedBy = "section", fetch = FetchType.EAGER)
-    @OrderBy("featureName ASC")
+    @OrderBy("displayOrder ASC, id ASC")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore

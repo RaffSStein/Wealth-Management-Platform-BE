@@ -14,7 +14,9 @@ import raff.stein.platformcore.model.audit.entity.BaseEntity;
  * access to individual features within sections.
  */
 @Entity
-@Table(name = "features")
+// a feature code is unique within its section: sitemaps resolve features by (section code, feature code)
+@Table(name = "features", uniqueConstraints = @UniqueConstraint(
+        name = "uk_feature_section_code", columnNames = {"section_id", "featureCode"}))
 @Getter
 @Builder
 @NoArgsConstructor
@@ -30,6 +32,13 @@ public class FeatureEntity extends BaseEntity<Integer> {
 
     @Column(nullable = false)
     private String featureName;
+
+    /**
+     * Position within its section (FE side nav), set by the catalogue seed. Nullable only so the column can be added
+     * to existing rows; lists put rows without an order last.
+     */
+    @Column(name = "display_order")
+    private Integer displayOrder;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "section_id")

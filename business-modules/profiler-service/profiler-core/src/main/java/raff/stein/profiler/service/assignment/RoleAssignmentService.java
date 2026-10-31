@@ -30,7 +30,6 @@ import raff.stein.profiler.model.entity.mapper.RoleAssignmentEntityMapper;
 import raff.stein.profiler.repository.KnownUserRepository;
 import raff.stein.profiler.repository.RoleAssignmentRepository;
 import raff.stein.profiler.repository.RoleAssignmentRequestRepository;
-import raff.stein.profiler.service.PermissionService;
 import raff.stein.profiler.service.assignment.policy.AssignmentDecision;
 import raff.stein.profiler.service.assignment.policy.AssignmentDenied;
 import raff.stein.profiler.service.assignment.policy.AssignmentPolicy;
@@ -58,7 +57,6 @@ public class RoleAssignmentService {
     private final BankBranchValidator bankBranchValidator;
     private final RecentAuthenticationGuard recentAuthenticationGuard;
     private final TokenRevocationService tokenRevocationService;
-    private final PermissionService permissionService;
     private final RoleAssignmentProperties properties;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final Clock clock;
@@ -158,7 +156,6 @@ public class RoleAssignmentService {
         assignmentRepository.delete(assignment);
         // inside the transaction: if the token store is down nothing is revoked and the caller gets 503
         tokenRevocationService.revokeAllIssuedUpTo(assignment.getUserId().toString(), clock.instant().getEpochSecond());
-        syncPermissions(assignment.getUserId(), assignment.getUserEmail(), assignment.getBankCode(), assignment.getBranchCode());
         applicationEventPublisher.publishEvent(new RoleAssignmentRevokedEvent()
                 .assignmentId(assignment.getId())
                 .userId(assignment.getUserId())
@@ -234,7 +231,6 @@ public class RoleAssignmentService {
                 .approvedBy(approvedBy)
                 .requestId(requestId)
                 .build());
-        syncPermissions(user.getUserId(), user.getEmail(), bankCode, branchCode);
         applicationEventPublisher.publishEvent(new RoleAssignmentGrantedEvent()
                 .assignmentId(assignment.getId())
                 .userId(user.getUserId())
@@ -247,15 +243,6 @@ public class RoleAssignmentService {
         log.info("Role assignment [{}] created: role [{}] in [{}/{}] for userId [{}]",
                 assignment.getId(), role, bankCode, branchCode, user.getUserId());
         return assignment;
-    }
-
-    // permissions follow the roles still held in that branch
-    private void syncPermissions(UUID userId, String email, String bankCode, String branchCode) {
-        final List<String> roles = assignmentRepository.findByUserIdAndBankCodeAndBranchCode(userId, bankCode, branchCode)
-                .stream()
-                .map(RoleAssignmentEntity::getRole)
-                .toList();
-        permissionService.syncUserPermissions(email, bankCode, branchCode, roles);
     }
 
     private RoleAssignmentRequestEntity loadPendingRequest(Long requestId) {

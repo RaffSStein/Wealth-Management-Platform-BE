@@ -52,6 +52,10 @@ paths:
   /permissions/getUserSitemapByClaims:
     get:
       summary: Get the sitemap for a user based on their claims
+      description: >
+        Sections, features and permission codes the caller may use, in FE navigation order: those of the role(s) in its
+        token (the active role assignment), read from the role permission catalogue on each request. A token without
+        bank or branch (user not linked to a bank yet) gets an empty result.
       operationId: getUserSitemapByClaims
       tags:
         - Permissions
@@ -334,6 +338,9 @@ components:
         id:
           type: integer
           format: int32
+        permissionCode:
+          type: string
+          description: VIEW, USE, EDIT or DOWNLOAD
         permissionName:
           type: string
 
@@ -351,7 +358,11 @@ components:
 
     SectionPermissionsDTO:
       type: object
+      description: A section of the FE navigation (top bar), in display order
       properties:
+        sectionCode:
+          type: string
+          description: ACCOUNT, INVESTMENTS, NEWS_MARKETS, WORKSPACE (the FE navigation key in UPPER_SNAKE)
         sectionName:
           type: string
         featurePermissions:
@@ -361,7 +372,11 @@ components:
 
     FeaturePermissionsDTO:
       type: object
+      description: A feature of the section (FE side-nav item), in display order, with the permission codes granted
       properties:
+        featureCode:
+          type: string
+          description: e.g. HOME, INVESTOR_PROFILE, ORDERS; unique within the section
         featureName:
           type: string
         permissions:

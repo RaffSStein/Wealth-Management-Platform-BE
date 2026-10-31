@@ -24,7 +24,6 @@ import raff.stein.profiler.model.entity.enumeration.RoleAssignmentRequestStatus;
 import raff.stein.profiler.repository.KnownUserRepository;
 import raff.stein.profiler.repository.RoleAssignmentRepository;
 import raff.stein.profiler.repository.RoleAssignmentRequestRepository;
-import raff.stein.profiler.service.PermissionService;
 import raff.stein.profiler.service.assignment.policy.AdvisorAssignmentPolicy;
 import raff.stein.profiler.service.assignment.policy.AssignmentPolicyDispatcher;
 import raff.stein.profiler.service.assignment.policy.BankAdminAssignmentPolicy;
@@ -61,7 +60,6 @@ class RoleAssignmentServiceTest {
     private BankBranchValidator bankBranchValidator;
     private RecentAuthenticationGuard recentAuthenticationGuard;
     private TokenRevocationService tokenRevocationService;
-    private PermissionService permissionService;
     private ApplicationEventPublisher eventPublisher;
     private RoleAssignmentService service;
 
@@ -73,13 +71,12 @@ class RoleAssignmentServiceTest {
         bankBranchValidator = mock(BankBranchValidator.class);
         recentAuthenticationGuard = mock(RecentAuthenticationGuard.class);
         tokenRevocationService = mock(TokenRevocationService.class);
-        permissionService = mock(PermissionService.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
         service = new RoleAssignmentService(
                 assignmentRepository, requestRepository, knownUserRepository,
                 new AssignmentPolicyDispatcher(List.of(
                         new AdvisorAssignmentPolicy(), new BankAdminAssignmentPolicy(), new PlatformAdminAssignmentPolicy())),
-                bankBranchValidator, recentAuthenticationGuard, tokenRevocationService, permissionService,
+                bankBranchValidator, recentAuthenticationGuard, tokenRevocationService,
                 new RoleAssignmentProperties(), eventPublisher, Clock.fixed(NOW, ZoneOffset.UTC));
         when(knownUserRepository.findById(TARGET))
                 .thenReturn(Optional.of(KnownUserEntity.builder().userId(TARGET).email(TARGET_EMAIL).build()));
@@ -101,7 +98,6 @@ class RoleAssignmentServiceTest {
         assertEquals(AssignmentResult.Outcome.ASSIGNED, result.getOutcome());
         verify(bankBranchValidator).requireActiveBranch("BANK_A", "BR_01");
         verify(recentAuthenticationGuard, never()).requireAuthenticatedWithin(any());
-        verify(permissionService).syncUserPermissions(eq(TARGET_EMAIL), eq("BANK_A"), eq("BR_01"), any());
         final ArgumentCaptor<Object> event = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher).publishEvent(event.capture());
         assertEquals("CUSTOMER", ((RoleAssignmentGrantedEvent) event.getValue()).getRole());
@@ -193,7 +189,6 @@ class RoleAssignmentServiceTest {
         service.revoke(5L);
 
         verify(tokenRevocationService).revokeAllIssuedUpTo(TARGET.toString(), NOW.getEpochSecond());
-        verify(permissionService).syncUserPermissions(eq(TARGET_EMAIL), eq("BANK_A"), eq("BR_01"), eq(List.of()));
         verify(eventPublisher).publishEvent(any(RoleAssignmentRevokedEvent.class));
     }
 

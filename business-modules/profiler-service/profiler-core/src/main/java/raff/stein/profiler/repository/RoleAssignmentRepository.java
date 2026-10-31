@@ -12,9 +12,5 @@ public interface RoleAssignmentRepository extends JpaRepository<RoleAssignmentEn
 
     boolean existsByUserIdAndBankCodeAndBranchCodeAndRole(UUID userId, String bankCode, String branchCode, String role);
 
-    boolean existsByUserEmailAndRole(String userEmail, String role);
-
     List<RoleAssignmentEntity> findByUserIdOrderByIdAsc(UUID userId);
-
-    List<RoleAssignmentEntity> findByUserIdAndBankCodeAndBranchCode(UUID userId, String bankCode, String branchCode);
 }
