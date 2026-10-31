@@ -1,5 +1,12 @@
 kafka:
   topics:
+    profiler-service:
+      domain: profiler-service
+      # produced topics
+      role-assignment-granted:
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.profiler-service.domain}.role-assignment-granted"
+      role-assignment-revoked:
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.profiler-service.domain}.role-assignment-revoked"
     # consumed topics
     user-service:
       domain: user-service

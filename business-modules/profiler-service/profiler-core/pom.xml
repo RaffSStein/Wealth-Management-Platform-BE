@@ -80,6 +80,11 @@
             <artifactId>user-event-data</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <!-- bank-service lookups (branch validation for role assignments) -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

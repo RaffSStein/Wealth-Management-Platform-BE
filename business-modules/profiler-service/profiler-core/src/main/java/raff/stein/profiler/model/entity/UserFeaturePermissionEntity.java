@@ -30,6 +30,10 @@ public class UserFeaturePermissionEntity extends BaseDateEntity<UUID> {
     @Column(name = "user_email", nullable = false)
     private String userEmail;
 
+    // nullable only so the column can be added to existing rows; always set (permissions are per bank + branch)
+    @Column(name = "bank_code")
+    private String bankCode;
+
     @Column(name = "branch_code", nullable = false)
     private String branchCode;
 

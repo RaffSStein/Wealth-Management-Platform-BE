@@ -3,7 +3,6 @@ package raff.stein.profiler.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +23,11 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
+/**
+ * Functional permissions (feature + permission code) of a user in a bank branch. They are derived from the roles the
+ * user holds there (role assignments) through the per-role sitemap files {@code sitemap/{ROLE}_SITEMAP.json}.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -38,127 +40,74 @@ public class PermissionService {
     private static final UserFeaturePermissionToUserPermissionMapper userFeaturePermissionMapper = UserFeaturePermissionToUserPermissionMapper.MAPPER;
 
     /**
-     * Builds the UserPermission view for the current authenticated user by reading the security context
-     * and mapping persisted UserFeaturePermissionEntity records into a DTO.
-     * <p>
-     * Behavior:
-     * - If context, email or bank code are missing, returns an empty UserPermission.
-     * - If no persisted permissions exist for the user/bank pair, returns an empty UserPermission.
-     * - Otherwise maps all records to a consolidated UserPermission.
+     * Permissions of the current user in the bank and branch of its token (the active role assignment).
+     * Empty when the context, the bank or the branch is missing, or when nothing is stored.
      */
     public UserPermission getUserSitemapByClaims() {
-        // This method should retrieve user claims and generate a sitemap based on those claims.
-        // The implementation will depend on how user claims are stored and accessed.
         final WMPContext context = SecurityContextHolder.getContext();
         if (context == null) {
-            // Handle the case where the user context is not available
             log.info("User context is not available.");
             return new UserPermission();
         }
-        // Retrieve user permissions based on the user ID from the context
         final String email = context.getEmail();
-        // permissions are stored per branch (the active membership's branch in the token)
+        final String bankCode = context.getTenantId();
         final String branchCode = context.getBranchCode();
-        if (StringUtils.isBlank(email) || StringUtils.isBlank(branchCode)) {
-            log.info("User email or branch code is not available in the context.");
+        if (StringUtils.isAnyBlank(email, bankCode, branchCode)) {
+            log.info("User email, bank or branch code is not available in the context.");
             return new UserPermission();
         }
-        List<UserFeaturePermissionEntity> userPermissions =
-                userFeaturePermissionRepository.findAllByUserEmailAndBranchCode(email, branchCode);
+        final List<UserFeaturePermissionEntity> userPermissions =
+                userFeaturePermissionRepository.findAllByUserEmailAndBankCodeAndBranchCode(email, bankCode, branchCode);
         if (userPermissions.isEmpty()) {
-            log.info("No user permissions found for email: [{}] and branchCode: [{}]", email, branchCode);
+            log.info("No user permissions found for email: [{}] in [{}/{}]", email, bankCode, branchCode);
             return new UserPermission();
         }
         return userFeaturePermissionMapper.toUserPermission(email, branchCode, userPermissions);
     }
 
     /**
-     * Persists user permissions derived from role-based sitemaps for one user across multiple bank codes.
-     * <p>
-     * Contract:
-     * - Input: userEmail (non-blank), list of pairs (bankCode, role) possibly with duplicates or blanks.
-     * - For each pair, loads the corresponding sitemap JSON from classpath and saves missing (feature, permission) tuples.
-     * - Idempotent per (feature, permission): existing tuples are not duplicated.
-     * - Logs warnings for invalid input or missing resources and continues with other pairs.
+     * Replaces the permissions of a user in a bank branch with those of the roles it still holds there.
+     * Called after every assignment and revocation; an empty role list removes them all.
+     * A role without a sitemap file (e.g. BANK_ADMIN) contributes no feature permission.
      */
     @Transactional
-    public void saveUserPermissions(String userEmail, List<ImmutablePair<String, String>> bankCodeRolePairs) {
-        if (isInvalidInput(userEmail, bankCodeRolePairs)) {
-            log.warn("Skipping saveUserPermissions: invalid input - userEmail or role pairs are empty");
+    public void syncUserPermissions(String userEmail, String bankCode, String branchCode, Collection<String> roles) {
+        if (StringUtils.isAnyBlank(userEmail, bankCode, branchCode)) {
+            log.warn("Skipping permission sync: user email, bank or branch code is blank");
             return;
         }
-
-        for (ImmutablePair<String, String> pair : bankCodeRolePairs) {
-            handleBankRolePair(userEmail, pair);
+        userFeaturePermissionRepository.deleteByUserEmailAndBankCodeAndBranchCode(userEmail, bankCode, branchCode);
+        final Set<String> keys = new HashSet<>();
+        final List<UserFeaturePermissionEntity> toPersist = new ArrayList<>();
+        for (String role : Optional.ofNullable(roles).orElse(List.of())) {
+            loadSitemapForRole(normalizeRole(role)).ifPresent(sitemap ->
+                    toPersist.addAll(computePermissions(sitemap, userEmail, bankCode, branchCode, keys)));
         }
-    }
-
-    /**
-     * Handles a single (bankCode, role) pair:
-     * - Validates inputs and normalizes role.
-     * - Loads role sitemap from classpath (sitemap/{ROLE}_SITEMAP.json).
-     * - Computes the delta against existing user permissions and persists only the missing ones.
-     */
-    private void handleBankRolePair(String userEmail, ImmutablePair<String, String> pair) {
-        String bankCode = Optional.ofNullable(pair.getLeft()).map(String::trim).orElse("");
-        String role = Optional.ofNullable(pair.getRight()).map(String::trim).orElse("");
-        if (StringUtils.isAnyBlank(bankCode, role)) {
-            log.warn("Skipping entry with blank bankCode or role: [{}]", pair);
-            return;
-        }
-
-        String normalizedRole = normalizeRole(role);
-
-        Optional<SitemapDefinition> sitemapOpt = loadSitemapForRole(normalizedRole);
-        if (sitemapOpt.isEmpty()) {
-            // logging handled in loadSitemapForRole
-            return;
-        }
-
-        Set<String> existingKeys = preloadExistingKeys(userEmail, bankCode);
-        List<UserFeaturePermissionEntity> toPersist = computePermissionsToPersist(
-                sitemapOpt.get(), userEmail, bankCode, existingKeys);
-
-        if (!toPersist.isEmpty()) {
-            userFeaturePermissionRepository.saveAll(toPersist);
-            log.info("Saved [{}] new user feature permissions for user [{}] and bank [{}] from role [{}]",
-                    toPersist.size(), userEmail, bankCode, normalizedRole);
-        } else {
-            log.info("No new permissions to save for user [{}], bank [{}], role [{}]", userEmail, bankCode, normalizedRole);
-        }
-    }
-
-
-    /**
-     * Lightweight input check for the orchestration method.
-     */
-    private boolean isInvalidInput(String userEmail, List<ImmutablePair<String, String>> bankCodeRolePairs) {
-        return StringUtils.isBlank(userEmail) || bankCodeRolePairs == null || bankCodeRolePairs.isEmpty();
+        userFeaturePermissionRepository.saveAll(toPersist);
+        log.info("Synced [{}] feature permissions for user [{}] in [{}/{}] from roles {}",
+                toPersist.size(), userEmail, bankCode, branchCode, roles);
     }
 
     /**
      * Normalizes a role to uppercase using ROOT locale to guarantee stable classpath resource names.
      */
     private String normalizeRole(String role) {
-        return Optional.ofNullable(role).map(r -> r.toUpperCase(Locale.ROOT)).orElse("");
+        return Optional.ofNullable(role).map(r -> r.trim().toUpperCase(Locale.ROOT)).orElse("");
     }
 
     /**
-     * Loads the sitemap JSON for a normalized role from the classpath.
-     * <p>
-     * Resource pattern: sitemap/{ROLE}_SITEMAP.json
-     * Returns empty if resource is missing or parsing fails; logs details for observability.
+     * Loads the sitemap JSON for a normalized role from the classpath ({@code sitemap/{ROLE}_SITEMAP.json}).
+     * Returns empty if the resource is missing or can't be parsed.
      */
     private Optional<SitemapDefinition> loadSitemapForRole(String normalizedRole) {
-        String resourcePath = String.format("sitemap/%s_SITEMAP.json", normalizedRole);
+        final String resourcePath = String.format("sitemap/%s_SITEMAP.json", normalizedRole);
         try {
-            ClassPathResource resource = new ClassPathResource(resourcePath);
+            final ClassPathResource resource = new ClassPathResource(resourcePath);
             if (!resource.exists()) {
-                log.warn("Sitemap resource not found for role [{}] at [{}]", normalizedRole, resourcePath);
+                log.info("No sitemap for role [{}] at [{}]: no feature permissions", normalizedRole, resourcePath);
                 return Optional.empty();
             }
-            SitemapDefinition sitemap = objectMapper.readValue(resource.getInputStream(), SitemapDefinition.class);
-            return Optional.ofNullable(sitemap);
+            return Optional.ofNullable(objectMapper.readValue(resource.getInputStream(), SitemapDefinition.class));
         } catch (IOException e) {
             log.error("Failed to load sitemap for role [{}]", normalizedRole, e);
             return Optional.empty();
@@ -166,106 +115,49 @@ public class PermissionService {
     }
 
     /**
-     * Preloads the set of (featureId:permissionId) keys already persisted for a user/bank pair.
-     * This allows constant-time duplicate checks when computing the delta to persist.
+     * Translates a sitemap into permissions to persist, skipping (feature, permission) pairs already collected
+     * for another role in the same branch.
      */
-    private Set<String> preloadExistingKeys(String userEmail, String bankCode) {
-        List<UserFeaturePermissionEntity> existing = userFeaturePermissionRepository
-                .findAllByUserEmailAndBranchCode(userEmail, bankCode);
-        return existing.stream()
-                .map(ufp -> key(ufp.getFeature().getId(), ufp.getPermission().getId()))
-                .collect(Collectors.toSet());
-    }
-
-    /**
-     * Translates a sitemap into a list of UserFeaturePermissionEntity to persist, skipping what already exists.
-     * Iterates sections -> features -> permissions, resolving codes to entities and performing idempotent checks.
-     */
-    private List<UserFeaturePermissionEntity> computePermissionsToPersist(
-            SitemapDefinition sitemap,
-            String userEmail,
-            String bankCode,
-            Set<String> existingKeys) {
-        List<UserFeaturePermissionEntity> toPersist = new ArrayList<>();
-        if (sitemap.getSections() == null) {
-            return toPersist;
-        }
-        for (SitemapSectionDefinition section : sitemap.getSections()) {
-            if (section.getFeatures() == null) {
-                continue;
-            }
-            for (SitemapFeatureDefinition feature : section.getFeatures()) {
-                processFeature(section, feature, userEmail, bankCode, existingKeys, toPersist);
-            }
-        }
-        return toPersist;
-    }
-
-    /**
-     * Resolves a feature by section/feature codes and forwards to permission expansion.
-     * Logs and skips if the feature reference cannot be resolved.
-     */
-    private void processFeature(
-            SitemapSectionDefinition section,
-            SitemapFeatureDefinition feature,
-            String userEmail,
-            String bankCode,
-            Set<String> existingKeys,
-            List<UserFeaturePermissionEntity> acc) {
-        Optional<FeatureEntity> featureOpt = featureRepository
-                .findBySection_SectionCodeAndFeatureCode(section.getSectionCode(), feature.getFeatureCode());
-        if (featureOpt.isEmpty()) {
-            log.warn("Feature not found for sectionCode=[{}], featureCode=[{}]", section.getSectionCode(), feature.getFeatureCode());
-            return;
-        }
-        FeatureEntity featureEntity = featureOpt.get();
-        List<String> permissionCodes = Optional.ofNullable(feature.getPermissions()).orElse(Collections.emptyList());
-        appendPermissionsForFeature(featureEntity, permissionCodes, userEmail, bankCode, existingKeys, acc);
-    }
-
-    /**
-     * Expands permission codes for a resolved feature, maps them to PermissionEntity and creates
-     * UserFeaturePermissionEntity entries only if not already present.
-     * Uses a preloaded set of composite keys to enforce idempotency and avoid duplicates.
-     */
-    private void appendPermissionsForFeature(
-            FeatureEntity featureEntity,
-            List<String> permissionCodes,
-            String userEmail,
-            String bankCode,
-            Set<String> existingKeys,
-            List<UserFeaturePermissionEntity> acc) {
-        for (String permCodeRaw : permissionCodes) {
-            String permCode = StringUtils.trimToEmpty(permCodeRaw).toUpperCase(Locale.ROOT);
-            if (!permCode.isEmpty()) {
-                Optional<PermissionEntity> permOpt = permissionRepository.findByPermissionCode(permCode);
-                if (permOpt.isPresent()) {
-                    PermissionEntity permissionEntity = permOpt.get();
-                    // Build a composite key (featureId:permissionId) to check existence in O(1)
-                    String k = key(featureEntity.getId(), permissionEntity.getId());
-                    if (!existingKeys.contains(k)) {
-                        // Prepare an insert only when the pair is missing from the existing set
-                        acc.add(UserFeaturePermissionEntity.builder()
-                                .userEmail(userEmail)
-                                .branchCode(bankCode)
-                                .feature(featureEntity)
-                                .permission(permissionEntity)
-                                .build());
-                        // Update the in-memory set to prevent duplicates within the same batch
-                        existingKeys.add(k);
-                    }
-                } else {
-                    log.warn("Permission not found for code=[{}]", permCode);
+    private List<UserFeaturePermissionEntity> computePermissions(
+            SitemapDefinition sitemap, String userEmail, String bankCode, String branchCode, Set<String> keys) {
+        final List<UserFeaturePermissionEntity> result = new ArrayList<>();
+        for (SitemapSectionDefinition section : Optional.ofNullable(sitemap.getSections()).orElse(List.of())) {
+            for (SitemapFeatureDefinition feature : Optional.ofNullable(section.getFeatures()).orElse(List.of())) {
+                final Optional<FeatureEntity> featureEntity = featureRepository
+                        .findBySection_SectionCodeAndFeatureCode(section.getSectionCode(), feature.getFeatureCode());
+                if (featureEntity.isEmpty()) {
+                    log.warn("Feature not found for sectionCode=[{}], featureCode=[{}]",
+                            section.getSectionCode(), feature.getFeatureCode());
+                    continue;
+                }
+                for (String permissionCode : Optional.ofNullable(feature.getPermissions()).orElse(List.of())) {
+                    addPermission(featureEntity.get(), permissionCode, userEmail, bankCode, branchCode, keys, result);
                 }
             }
         }
+        return result;
     }
-    // endregion
 
-    /**
-     * Builds a stable composite key used for quick duplicate detection.
-     */
-    private static String key(Integer featureId, Integer permissionId) {
-        return featureId + ":" + permissionId;
+    private void addPermission(
+            FeatureEntity feature, String rawPermissionCode, String userEmail, String bankCode, String branchCode,
+            Set<String> keys, List<UserFeaturePermissionEntity> acc) {
+        final String permissionCode = StringUtils.trimToEmpty(rawPermissionCode).toUpperCase(Locale.ROOT);
+        if (permissionCode.isEmpty()) {
+            return;
+        }
+        final Optional<PermissionEntity> permission = permissionRepository.findByPermissionCode(permissionCode);
+        if (permission.isEmpty()) {
+            log.warn("Permission not found for code=[{}]", permissionCode);
+            return;
+        }
+        if (keys.add(feature.getId() + ":" + permission.get().getId())) {
+            acc.add(UserFeaturePermissionEntity.builder()
+                    .userEmail(userEmail)
+                    .bankCode(bankCode)
+                    .branchCode(branchCode)
+                    .feature(feature)
+                    .permission(permission.get())
+                    .build());
+        }
     }
 }

@@ -73,3 +73,66 @@ components:
         - featureName
         - permissions
 
+    RoleAssignmentGrantedEvent:
+      type: object
+      description: A user got a role in a bank branch, directly or after four-eyes approval
+      properties:
+        assignmentId:
+          type: integer
+          format: int64
+        userId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        bankCode:
+          type: string
+        branchCode:
+          type: string
+        role:
+          type: string
+        grantedBy:
+          type: string
+          description: "Email of whoever assigned it (the requester, for approved requests), or bootstrap"
+        approvedBy:
+          type: string
+          description: "Email of the second admin, for four-eyes assignments"
+      required:
+        - assignmentId
+        - userId
+        - email
+        - bankCode
+        - branchCode
+        - role
+        - grantedBy
+
+    RoleAssignmentRevokedEvent:
+      type: object
+      description: A role assignment was removed; every session of the user was ended
+      properties:
+        assignmentId:
+          type: integer
+          format: int64
+        userId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        bankCode:
+          type: string
+        branchCode:
+          type: string
+        role:
+          type: string
+        revokedBy:
+          type: string
+      required:
+        - assignmentId
+        - userId
+        - email
+        - bankCode
+        - branchCode
+        - role
+        - revokedBy

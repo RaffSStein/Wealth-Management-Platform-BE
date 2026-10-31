@@ -23,3 +23,13 @@ spring:
     import:
       - classpath:platform-shared-properties.yaml
       - classpath:kafka-properties.yaml
+
+wmp:
+  clients:
+    bank-service:
+      url: ${BANK_SERVICE_URL:http://localhost:8089/bank-service}
+  role-assignment:
+    recent-login: 10m
+    request-ttl: 7d
+    # first platform run: these users get PLATFORM_ADMIN when user-service creates them (at least two, for four-eyes)
+    bootstrap-platform-admins: ${WMP_BOOTSTRAP_PLATFORM_ADMINS:platform-admin-1@wmp.local,platform-admin-2@wmp.local}
