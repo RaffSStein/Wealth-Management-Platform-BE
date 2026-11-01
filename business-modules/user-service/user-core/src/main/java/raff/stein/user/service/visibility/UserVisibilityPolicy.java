@@ -12,10 +12,7 @@ import raff.stein.platformcore.security.role.WmpRole;
 import raff.stein.user.model.entity.BranchUserEntity;
 import raff.stein.user.model.entity.UserEntity;
 
-import java.util.Comparator;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * Which users a caller may see (lookup, search, GET /user/{id}). The rule exists twice, kept side by side: in memory
@@ -36,11 +33,7 @@ public class UserVisibilityPolicy {
      * The most privileged role in the token (the active role assignment), CUSTOMER when none is known.
      */
     public WmpRole callerRole(WMPContext caller) {
-        return Optional.ofNullable(caller.getRoles()).orElse(Set.of()).stream()
-                .map(WmpRole::parse)
-                .flatMap(Optional::stream)
-                .max(Comparator.naturalOrder())
-                .orElse(WmpRole.CUSTOMER);
+        return WmpRole.highestOf(caller.getRoles());
     }
 
     public boolean canSee(WMPContext caller, UserEntity user) {

@@ -26,6 +26,8 @@ public enum ErrorCode {
 
     // TODO: move to specific modules
     // Domain specific errors
+    // Customer related errors
+    CUSTOMER_ALREADY_EXISTS("User [%s] already has a customer record in this bank", ErrorCategory.VALIDATION_ERROR),
     // Document related errors
     DOCUMENT_UPLOAD_VALIDATION_ERROR("File validation not passed. Field [%s] - Value [%s]", ErrorCategory.VALIDATION_ERROR),
     FILE_VALIDATION_FAILED("File validation failed for customer with id [%s].", ErrorCategory.VALIDATION_ERROR),

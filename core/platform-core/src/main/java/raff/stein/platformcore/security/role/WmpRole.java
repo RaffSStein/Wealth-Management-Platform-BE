@@ -1,6 +1,8 @@
 package raff.stein.platformcore.security.role;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Optional;
 
 /**
@@ -20,6 +22,18 @@ public enum WmpRole {
     public static Optional<WmpRole> parse(String value) {
         if (value == null) return Optional.empty();
         return Arrays.stream(values()).filter(role -> role.name().equalsIgnoreCase(value.trim())).findFirst();
+    }
+
+    /**
+     * The role a token acts with: the most privileged known one, CUSTOMER (the least privileged) when none is known.
+     */
+    public static WmpRole highestOf(Collection<String> roles) {
+        if (roles == null) return CUSTOMER;
+        return roles.stream()
+                .map(WmpRole::parse)
+                .flatMap(Optional::stream)
+                .max(Comparator.naturalOrder())
+                .orElse(CUSTOMER);
     }
 
     public boolean isStaff() {
