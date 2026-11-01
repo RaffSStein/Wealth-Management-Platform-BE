@@ -215,6 +215,9 @@ curl -X POST $P/role-assignments -H "Authorization: Bearer $BANK_ADMIN_TOKEN" -H
 # 201 {"outcome":"ASSIGNED","assignment":{"id":5,...}}
 ```
 
+- Once linked, the customer creates its own customer record: `POST /customer/init` takes its user from the token and
+  allows one record per bank. Bank and platform admins can read customer data but not change it (see
+  [who can see which customers](../security/roles-and-permissions.md#who-can-see-which-customers)).
 - A bank admin can link customers to any active branch of its bank; a second identical assignment answers 409.
 - Once linked, the customer is in that branch, so its advisors can find it (`GET /user/lookup`) and work with it.
   An advisor may also assign CUSTOMER in its own branch to a user it already knows (for example, a second role).

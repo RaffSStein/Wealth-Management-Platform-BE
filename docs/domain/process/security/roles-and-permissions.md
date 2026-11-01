@@ -77,12 +77,13 @@ From least to most privileged (`raff.stein.platformcore.security.role.WmpRole`):
 | Role | Scope | Typical user | Granted by |
 |---|---|---|---|
 | `CUSTOMER` | own data in one bank branch | a bank's client | an ADVISOR of that branch, or a BANK_ADMIN of the bank |
-| `ADVISOR` | the branch's customers | private banker, advisor | a BANK_ADMIN, approved by a second BANK_ADMIN |
+| `ADVISOR` | the bank's customers today, its branch's customers once `customers` has a branch | private banker, advisor | a BANK_ADMIN, approved by a second BANK_ADMIN |
 | `BANK_ADMIN` | one bank | the bank's administrator | a PLATFORM_ADMIN, approved by a second PLATFORM_ADMIN |
 | `PLATFORM_ADMIN` | the platform (bank code `PLATFORM`) | the platform operator | **nobody**: created only by the bootstrap |
 
 - A PLATFORM_ADMIN assignment uses the pseudo bank and branch `PLATFORM`. No business data belongs to that tenant, so
-  a platform admin sees **no bank data**: its job is to create bank admins.
+  its token reaches bank data only where a service opts in. customer-service does, for reading: see
+  [who can see which customers](#who-can-see-which-customers). Its main job is to create bank admins.
 - Role names are parsed exactly. An unknown role stored anywhere grants nothing (there is no fallback to CUSTOMER).
 - A user with no role assignment can log in but gets a `CUSTOMER` token **without tenant**: it can't read or write any
   bank data (see [JWT authentication](jwt-authentication.md), section 3).
@@ -133,6 +134,31 @@ in user-service (`UserVisibilityPolicy`), based on its copy of the role assignme
   50 per page) and sorted by email, and `linked=false` lists the users waiting to be linked. The scope is applied in
   the query itself, so page counts are exact.
 - The summary returned by lookup and search has no phone, address or birth date: it's for finding and linking.
+
+### Who can see which customers
+
+customer-service applies one rule (`CustomerAccessPolicy`) to every endpoint on a customer. Controller methods declare
+what they do with `@CustomerAccess(READ | WRITE | LIST_BY_USER)`, and `CustomerAccessInterceptor` enforces it before the
+method runs. The **active** role in the token decides: a user who is a customer in one bank or branch and an advisor in
+another gets the rule of the membership it's signed in with.
+
+| Caller (active role) | Read customer, MiFID, onboarding | Change customer, MiFID | `GET /customer/disambiguation/{userId}` | `POST /customer/init` |
+|---|---|---|---|---|
+| CUSTOMER | its own record, otherwise 404 | its own record, otherwise 404 | its own id (200, `[]` if none), otherwise 404 | `userId` comes from the token: a different one answers 403, a second record in the bank 409 |
+| ADVISOR | any in its bank | any in its bank | any user in its bank | sends `userId` (400 without it) |
+| BANK_ADMIN | any in its bank | 403 | any user in its bank | 403 |
+| PLATFORM_ADMIN | any in every bank | 403 | any user in every bank | 403 |
+
+- **Out of scope looks like "not found" (404)** for a customer, so it can't learn which ids exist.
+- **Disambiguation and acting as a client are for advisors.** A customer never sees or acts on another customer; the FE
+  uses `disambiguation/{own id}` only to load its own record.
+- **Admins are read-only for now.** Each write gets added explicitly when an admin screen needs it. Their reads are
+  logged with caller and customer ids.
+- **A platform admin reads across banks through the Hibernate root tenant.** It's opt-in per service
+  (`platform.tenant.root-read-enabled`, on only in customer-service), and tenant-scoped entities refuse any write from a
+  platform admin.
+- A route with a `customerId` path variable and no `@CustomerAccess` is refused with 403, so forgetting it can't open data.
+- Configuration (`/mifid/questionnaire/config`, `/financial/types`, `/goal/types`) stays open to any token.
 
 Banks and branches (bank-service, `GET /bank/banks`, `GET /bank/branches`, `GET /bank/{bankCode}/branches/{branchCode}`)
 follow the same idea: a PLATFORM_ADMIN sees every bank, any other role only the bank of its token, which is exactly
@@ -305,7 +331,7 @@ Permission codes: `VIEW` (see it), `USE` (act: place, transfer, select), `EDIT` 
 | `WORKSPACE/MIFID_REVIEWS`, `WORKSPACE/PROPOSALS` | – | `VIEW`, `EDIT` |
 
 That's 21 rows for CUSTOMER and 30 for ADVISOR. An advisor also gets the customer sections because the FE lets it act
-on behalf of a client.
+on behalf of a client. Only an advisor can: see [who can see which customers](#who-can-see-which-customers).
 
 ### Changing permissions
 
@@ -459,5 +485,8 @@ erDiagram
 - **Lazy expiry.** Pending requests expire only when someone tries to decide them (no scheduler yet).
 - **Admin permissions.** Only CUSTOMER and ADVISOR have feature permissions; admin roles get a section when the FE gets
   admin screens.
-- **Visibility scopes** (own customers, branch, bank) from the legacy requirements are not built yet. They will live in
-  profiler too.
+- **Customers belong to their creator.** `customers.user_id` holds whoever created the record, so a client onboarded by
+  an advisor points at the advisor: the client can't see it, and that advisor would see it as its own if it's also a
+  CUSTOMER in the same bank. It will become the client, with advisor access coming from a new `branch_code`.
+- **Advisors aren't limited to their branch yet.** `customers` has no branch, so an advisor reaches every customer in its
+  bank. The same change fixes this.

@@ -15,6 +15,15 @@ This document describes the complete customer onboarding process for the Wealth 
 
 ---
 
+## Who may do this
+
+A CUSTOMER onboards only itself: `POST /customer/init` takes its user from the token and answers 409 if it already has a
+record in the bank, and every later step answers 404 on another customer's record. An ADVISOR can onboard clients of its
+bank. Admin roles can read but not change onboarding data. The full table is in
+[roles and permissions](../../security/roles-and-permissions.md#who-can-see-which-customers).
+
+---
+
 ## Step-by-Step Process
 
 ### 1. Customer Personal Information

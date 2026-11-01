@@ -256,8 +256,11 @@ A tenant is a bank, identified by its bank code. All services share tables, and 
   returns the placeholder `__none__`: reads of tenant data return nothing, and persisting a `TenantScopedEntity` fails with
   `MISSING_HEADER_TOKEN_FIELD [tenantId]` (HTTP 401).
 - **Native SQL is not filtered.** Add `tenant_id = :tenantId` yourself, or prefer JPQL.
-- Not yet supported: a root tenant for group-level users and a "run as tenant" helper for scheduled jobs. Both come with
-  the visibility-scope and scheduled-job work.
+- **Root tenant (opt-in per service).** With `platform.tenant.root-read-enabled=true`, a PLATFORM_ADMIN token on the
+  `PLATFORM` pseudo tenant skips the tenant filter, so it reads every bank's rows. It's off by default; turn it on only
+  where the service's own endpoints restrict what a platform admin may do. `TenantScopedEntity` refuses insert, update and
+  delete from a platform admin in every service, whether the flag is on or not.
+- Not yet supported: a "run as tenant" helper for scheduled jobs. It comes with the scheduled-job work.
 
 ## Cross-cutting patterns for business microservices
 
