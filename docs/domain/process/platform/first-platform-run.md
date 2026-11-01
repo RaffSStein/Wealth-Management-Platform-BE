@@ -221,6 +221,10 @@ curl -X POST $P/role-assignments -H "Authorization: Bearer $BANK_ADMIN_TOKEN" -H
 - A bank admin can link customers to any active branch of its bank; a second identical assignment answers 409.
 - Once linked, the customer is in that branch, so its advisors can find it (`GET /user/lookup`) and work with it.
   An advisor may also assign CUSTOMER in its own branch to a user it already knows (for example, a second role).
+- An advisor can also start from the client: `POST /customer/init` with the client's email creates the login if there's none,
+  sends the password setup email (valid 72 hours), assigns CUSTOMER in the advisor's branch and links the record, through events
+  (see [customer onboarding](../onboarding/customer-onboarding/customer-onboarding-process.md)). user-service, profiler-service,
+  email-service and Kafka must be running for this.
 
 ## 7. Step 5: revoking access
 

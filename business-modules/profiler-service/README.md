@@ -59,7 +59,8 @@ explicitly.
 | Topic | Direction | Purpose |
 |---|---|---|
 | `...user-service.user-created` | consumed | Records the user in `known_users`; bootstrap PLATFORM_ADMIN |
-| `...profiler-service.role-assignment-granted` | produced | user-service updates its read model |
+| `...user-service.customer-user-resolved` | consumed | An advisor created a client: assigns CUSTOMER in its branch, or announces the role again if it's already held |
+| `...profiler-service.role-assignment-granted` | produced | user-service updates its read model; customer-service links a waiting record |
 | `...profiler-service.role-assignment-revoked` | produced | user-service removes it from its read model |
 
 Events are sent after the transaction commits. There is no transactional outbox yet: a crash between commit and send

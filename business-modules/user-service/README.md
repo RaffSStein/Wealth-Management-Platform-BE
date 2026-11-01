@@ -99,6 +99,12 @@ by **profiler-service**, which owns role assignments; user-service keeps a read-
   [roles and permissions](../../docs/domain/process/security/roles-and-permissions.md),
   [JWT authentication](../../docs/domain/process/security/jwt-authentication.md).
 
+## Clients created by an advisor
+
+customer-service publishes `create-user` with `bankCode`, `branchCode` and `requestedBy`. A new email gets a login and a setup
+token valid `security.jwt.client-setup-expiration-seconds` (72 hours), and `user-created` sends the email. An existing email
+gets neither. Both publish `customer-user-resolved`, which profiler-service consumes to assign the CUSTOMER role.
+
 ## Database
 - Postgres is the default RDBMS; JPA/Hibernate used in `user-core`.
 - Ensure datasource properties are provided via environment or `application-*.yml` profiles.

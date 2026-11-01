@@ -76,7 +76,7 @@ Custom claim names live in `WmpJwtClaims` (platform-core) and are shared by the 
 | | Session token | Password-setup token |
 |---|---|---|
 | Issued by | `POST /auth/login`, `POST /auth/switch-branch` | `POST /auth/register` (sent by email) |
-| Lifetime | `security.jwt.expiration-seconds` (default 3600 s) | `security.jwt.password-setup-expiration-seconds` (default 900 s) |
+| Lifetime | `security.jwt.expiration-seconds` (default 3600 s) | `security.jwt.password-setup-expiration-seconds` (default 900 s); `security.jwt.client-setup-expiration-seconds` (default 259200 s) for a client created by an advisor |
 | `roles` / `tenantId` | yes / yes (if the user has a role assignment) | no / no |
 | `purpose` | — | `PASSWORD_SETUP` |
 | Accepted on | every authenticated endpoint | **only** `POST /auth/password/setup`, once |
@@ -355,6 +355,7 @@ Then call a service with it: `curl -H "Authorization: Bearer <token>" http://loc
 | `security.jwt.issuer` | user-service | `user-service` | `iss` claim |
 | `security.jwt.expiration-seconds` | user-service | `3600` | Session token lifetime |
 | `security.jwt.password-setup-expiration-seconds` | user-service | `900` | Setup token lifetime |
+| `security.jwt.client-setup-expiration-seconds` | user-service | `259200` | Setup token lifetime for a client created by an advisor, who may read the email much later |
 | `wmp.onboarding.password-setup-link` | email-service | `http://localhost:4200/onboarding/setup-password` | Link in the onboarding email |
 | `platform.security.token-store.type` | every service | `REDIS` | `REDIS` (shared) or `IN_MEMORY` (per instance, for tests or isolated runs) |
 | `platform.security.token-store.max-token-lifetime` | every service | `1h` | How long a user-wide revocation is kept (must be ≥ `security.jwt.expiration-seconds`) |

@@ -18,10 +18,54 @@ This document describes the complete customer onboarding process for the Wealth 
 ## Who may do this
 
 A CUSTOMER onboards only itself: `POST /customer/init` takes its user from the token and answers 409 if it already has a
-record in the bank, and every later step answers 404 on another customer's record. An ADVISOR can onboard clients of its
-bank. Admin roles can read but not change onboarding data. A new record always starts as `DRAFT`, whatever the request
-says: only the onboarding steps move it on. The full table is in
+record in the bank, and every later step answers 404 on another customer's record. An ADVISOR onboards clients of the
+branch in its token and sends the client's email, first name, last name and phone number, which a login requires. Admin
+roles can read but not change onboarding data. A new record always
+starts as `DRAFT`, whatever the request says: only the onboarding steps move it on. The full table is in
 [roles and permissions](../../security/roles-and-permissions.md#who-can-see-which-customers).
+
+### A client created by an advisor
+
+The record answers straight away with no user, and the advisor keeps working by `customerId`. The rest is asynchronous:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor A as Advisor
+    participant CS as customer-service
+    participant US as user-service
+    participant ES as email-service
+    participant PS as profiler-service
+    A->>CS: POST /customer/init {..., email}
+    CS-->>A: 200, userId null
+    CS->>US: create-user {user, bankCode, branchCode, requestedBy}, after the commit
+    alt no login with this email
+        US->>US: create the login, issue a setup token (72 hours, works once)
+        US->>ES: user-created
+        ES-->>ES: password setup email to the client
+    else login exists
+        US->>US: nothing to create, no email
+    end
+    US->>PS: customer-user-resolved {userId, email, bankCode, branchCode}
+    alt role not held yet
+        PS->>PS: assign CUSTOMER in that branch
+    else role already held
+        PS->>PS: announce it again
+    end
+    PS->>CS: role-assignment-granted
+    CS->>CS: set user_id on the record with that email in that branch
+```
+
+- **Before init** the FE has the advisor confirm the address and calls `GET /user/lookup?email=`, which only sees users of the
+  advisor's branch.
+- **Same email in the bank:** init answers 409 `CUSTOMER_ALREADY_EXISTS`, even when that record is in another branch.
+- **A client who logs in before the event arrives:** a self-init returns the record waiting for its email in its branch and
+  links it, instead of creating a second one.
+- **Revoking the CUSTOMER role** clears `user_id`. The email stays, so granting the role again links the record again. A bank
+  admin granting CUSTOMER by hand also links a waiting record.
+- **Known limits:** those required name fields mean a legal entity can't be created by an advisor yet. A wrong address that matches an existing account gives that person the role and the record, and the email
+  can't be corrected yet (revoke the role to undo it). An existing account isn't notified. There's no outbox yet, so a crash
+  between the commit and the send leaves a record unlinked with no email.
 
 ---
 

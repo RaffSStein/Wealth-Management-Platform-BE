@@ -57,8 +57,9 @@ docs/domain/                   functional docs: process/ (markdown) + assets/ (d
   unique platform-wide. Suffix REST models with `DTO` (`CustomerDTO`) and events with `Event` (`CustomerCreatedEvent`).
 - Every operation has an `operationId` (camelCase), `summary`, `description` and `tags`. Paths are prefixed with the domain (`/customer/...`).
 - Shared types (`ErrorResponse`, `ErrorCategory`) live in `platform-core/src/main/resources/api-data.yaml`. Reuse them.
-  There is no shared pagination type yet: `Pageable` is defined only in `bank-api-data.yaml`. Move it to platform-core
-  when another service needs paging.
+  There is no shared pagination type yet. For paged lists, use openapi-processor with a `mapping.yaml` as bank-api-data and
+  customer-api-data do: controllers receive Spring's `Pageable` and return `Page`. Those modules generate into
+  `io.openapiprocessor.openapi.*`, with records and `*Dto` names.
 
 ### Layering and mapping (customer-service is the reference implementation)
 - Flow: `DTO (api-data) -> controller mapper -> BO (model/bo) -> service -> entity mapper -> Entity (model/entity) -> repository`.

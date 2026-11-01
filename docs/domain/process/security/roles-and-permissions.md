@@ -77,7 +77,7 @@ From least to most privileged (`raff.stein.platformcore.security.role.WmpRole`):
 | Role | Scope | Typical user | Granted by |
 |---|---|---|---|
 | `CUSTOMER` | own data in one bank branch | a bank's client | an ADVISOR of that branch, or a BANK_ADMIN of the bank |
-| `ADVISOR` | the bank's customers today, its branch's customers once `customers` has a branch | private banker, advisor | a BANK_ADMIN, approved by a second BANK_ADMIN |
+| `ADVISOR` | the customers of the branch in its token | private banker, advisor | a BANK_ADMIN, approved by a second BANK_ADMIN |
 | `BANK_ADMIN` | one bank | the bank's administrator | a PLATFORM_ADMIN, approved by a second PLATFORM_ADMIN |
 | `PLATFORM_ADMIN` | the platform (bank code `PLATFORM`) | the platform operator | **nobody**: created only by the bootstrap |
 
@@ -127,8 +127,9 @@ in user-service (`UserVisibilityPolicy`), based on its copy of the role assignme
 | PLATFORM_ADMIN | everyone |
 
 - **Out of scope looks like "not found" (404),** so nobody learns whether an email is registered somewhere else.
-- **Only admins see unlinked users.** That's why a bank admin, not an advisor, links a self-registered customer (see
-  [first platform run](../platform/first-platform-run.md#6-step-4-a-customer-signs-up-and-gets-linked)).
+- **Only admins see unlinked users.** That's why a bank admin finds self-registered customers (see
+  [first platform run](../platform/first-platform-run.md#6-step-4-a-customer-signs-up-and-gets-linked)). An advisor who
+  creates a client with that person's email also gets them the role, without seeing the account.
 - **The listed role assignments are filtered too.** A bank admin sees only the assignments of a user in its own bank.
 - **The search is for admins only.** It matches part of an email or name (at least 3 characters), it's paged (at most
   50 per page) and sorted by email, and `linked=false` lists the users waiting to be linked. The scope is applied in
@@ -138,18 +139,27 @@ in user-service (`UserVisibilityPolicy`), based on its copy of the role assignme
 ### Who can see which customers
 
 customer-service applies one rule (`CustomerAccessPolicy`) to every endpoint on a customer. Controller methods declare
-what they do with `@CustomerAccess(READ | WRITE | LIST_BY_USER)`, and `CustomerAccessInterceptor` enforces it before the
+what they do with `@CustomerAccess(READ | WRITE | LIST_BY_USER | LIST | ADVISOR_DASHBOARD)`, and `CustomerAccessInterceptor` enforces it before the
 method runs. The **active** role in the token decides: a user who is a customer in one bank or branch and an advisor in
 another gets the rule of the membership it's signed in with.
 
-| Caller (active role) | Read customer, MiFID, onboarding | Change customer, MiFID | `GET /customer/disambiguation/{userId}` | `POST /customer/init` |
+| Caller (active role) | Read customer, MiFID, onboarding | Change customer, MiFID | `GET /customer/disambiguation/{userId}` | `POST /customer/init` | `GET /customer` | `GET /customer/advisor-dashboard-statistics` |
 |---|---|---|---|---|
 | CUSTOMER | its own record, otherwise 404 | its own record, otherwise 404 | its own id (200, `[]` if none), otherwise 404 | `userId` comes from the token: a different one answers 403, a second record in the bank 409 |
-| ADVISOR | any in its bank | any in its bank | any user in its bank | sends `userId` (400 without it) |
-| BANK_ADMIN | any in its bank | 403 | any user in its bank | 403 |
-| PLATFORM_ADMIN | any in every bank | 403 | any user in every bank | 403 |
+| ADVISOR | the branch in its token, otherwise 404 | the branch in its token, otherwise 404 | that user's records in the branch in its token | sends the client's email; `userId` is ignored | the branch in its token | the branch in its token |
+| BANK_ADMIN | any in its bank | 403 | any user in its bank | 403 | its bank | 403 |
+| PLATFORM_ADMIN | any in every bank | 403 | any user in every bank | 403 | every bank | 403 |
 
-- **Out of scope looks like "not found" (404)** for a customer, so it can't learn which ids exist.
+- **Out of scope looks like "not found" (404)** for a customer or an advisor, so they can't learn which ids exist.
+- **An advisor works in one branch at a time:** the active one in its token. There's no combined view across its branches;
+  it changes branch with `POST /auth/switch-branch`.
+- **`customers.user_id` is the client,** never whoever created the record, and is null until it's linked. A customer's
+  own record follows `user_id` whatever its branch; one user and one email have at most one record per bank (database
+  constraints).
+- **Linking follows the CUSTOMER role.** Granting it links the record waiting for that email in that branch, and revoking it
+  removes the link. No request sets `user_id`: see
+  [a client created by an advisor](../onboarding/customer-onboarding/customer-onboarding-process.md#a-client-created-by-an-advisor).
+  An advisor can't use its own email.
 - **Disambiguation and acting as a client are for advisors.** A customer never sees or acts on another customer; the FE
   uses `disambiguation/{own id}` only to load its own record.
 - **Admins are read-only for now.** Each write gets added explicitly when an admin screen needs it. Their reads are
@@ -485,8 +495,3 @@ erDiagram
 - **Lazy expiry.** Pending requests expire only when someone tries to decide them (no scheduler yet).
 - **Admin permissions.** Only CUSTOMER and ADVISOR have feature permissions; admin roles get a section when the FE gets
   admin screens.
-- **Customers belong to their creator.** `customers.user_id` holds whoever created the record, so a client onboarded by
-  an advisor points at the advisor: the client can't see it, and that advisor would see it as its own if it's also a
-  CUSTOMER in the same bank. It will become the client, with advisor access coming from a new `branch_code`.
-- **Advisors aren't limited to their branch yet.** `customers` has no branch, so an advisor reaches every customer in its
-  bank. The same change fixes this.
