@@ -5,22 +5,29 @@ import io.micrometer.tracing.Tracer;
 import org.junit.jupiter.api.Test;
 import org.openapitools.model.ErrorCategory;
 import org.openapitools.model.ErrorResponse;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.core.MethodParameter;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class GlobalControllerExceptionHandlerTest {
 
@@ -91,6 +98,35 @@ class GlobalControllerExceptionHandlerTest {
         assertEquals(HttpStatus.BAD_REQUEST, GlobalControllerExceptionHandler.class
                 .getMethod("handleArgumentTypeMismatch", MethodArgumentTypeMismatchException.class)
                 .getAnnotation(ResponseStatus.class).value());
+    }
+
+    @Test
+    void shouldAnswerBadRequestForAnUnknownSortProperty() throws Exception {
+        final PropertyReferenceException exception = mock(PropertyReferenceException.class);
+        when(exception.getPropertyName()).thenReturn("nope");
+
+        final ErrorResponse response = handler.handleUnknownSortProperty(exception);
+
+        assertEquals(ErrorCode.REQUEST_VALIDATION_ERROR.name(), response.getErrorCode());
+        assertEquals(HttpStatus.BAD_REQUEST, GlobalControllerExceptionHandler.class
+                .getMethod("handleUnknownSortProperty", PropertyReferenceException.class)
+                .getAnnotation(ResponseStatus.class)
+                .value());
+    }
+
+    @Test
+    void shouldAnswerBadRequestForAConstraintOnAControllerParameter() {
+        final ParameterValidationResult result = mock(ParameterValidationResult.class);
+        when(result.getResolvableErrors()).thenReturn(List.of(
+                new FieldError("customerDto", "taxId", "must not be null"),
+                new DefaultMessageSourceResolvable(null, "must not be blank")));
+        final HandlerMethodValidationException exception = mock(HandlerMethodValidationException.class);
+        when(exception.getParameterValidationResults()).thenReturn(List.of(result));
+
+        final ErrorResponse response = handler.handleMethodValidation(exception);
+
+        assertEquals(ErrorCode.REQUEST_VALIDATION_ERROR.name(), response.getErrorCode());
+        assertEquals("taxId: must not be null,must not be blank", response.getErrorMessage());
     }
 
     @Test

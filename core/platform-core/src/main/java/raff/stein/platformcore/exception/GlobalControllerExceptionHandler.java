@@ -10,7 +10,10 @@ import org.openapitools.model.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.data.core.PropertyReferenceException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -100,6 +103,39 @@ public class GlobalControllerExceptionHandler {
         return new ErrorResponse()
                 .errorMessage(String.format(
                         ErrorCode.REQUEST_VALIDATION_ERROR.getMessageTemplate(), ex.getName(), ex.getValue()))
+                .errorCode(ErrorCode.REQUEST_VALIDATION_ERROR.name())
+                .category(ErrorCode.REQUEST_VALIDATION_ERROR.getErrorCategory())
+                .traceId(getTraceId());
+    }
+
+    // Raised instead of MethodArgumentNotValidException when a controller parameter itself has a constraint
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMethodValidation(HandlerMethodValidationException ex) {
+        final String errorMessages = ex.getParameterValidationResults().stream()
+                .flatMap(result -> result.getResolvableErrors().stream())
+                .map(error -> error instanceof FieldError fieldError
+                        ? fieldError.getField() + ": " + fieldError.getDefaultMessage()
+                        : error.getDefaultMessage())
+                .collect(Collectors.joining(","));
+        log.warn("Validation failed traceId={} errors={}", getTraceId(), errorMessages);
+
+        return new ErrorResponse()
+                .errorMessage(errorMessages)
+                .errorCode(ErrorCode.REQUEST_VALIDATION_ERROR.name())
+                .category(ErrorCode.REQUEST_VALIDATION_ERROR.getErrorCategory())
+                .traceId(getTraceId());
+    }
+
+    // A sort on a field that doesn't exist (?sort=nope) is a client error, not a 500
+    @ExceptionHandler(PropertyReferenceException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleUnknownSortProperty(PropertyReferenceException ex) {
+        log.warn("Unknown sort property traceId={} property=[{}]", getTraceId(), ex.getPropertyName());
+
+        return new ErrorResponse()
+                .errorMessage(String.format(
+                        ErrorCode.REQUEST_VALIDATION_ERROR.getMessageTemplate(), "sort", ex.getPropertyName()))
                 .errorCode(ErrorCode.REQUEST_VALIDATION_ERROR.name())
                 .category(ErrorCode.REQUEST_VALIDATION_ERROR.getErrorCategory())
                 .traceId(getTraceId());
