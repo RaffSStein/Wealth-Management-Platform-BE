@@ -13,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import raff.stein.platformcore.exception.types.GenericException;
 import raff.stein.platformcore.exception.types.badrequest.RequestValidationException;
 import raff.stein.platformcore.exception.types.conflict.InvalidStateTransitionException;
@@ -84,6 +85,21 @@ public class GlobalControllerExceptionHandler {
 
         return new ErrorResponse()
                 .errorMessage(errorMessage)
+                .errorCode(ErrorCode.REQUEST_VALIDATION_ERROR.name())
+                .category(ErrorCode.REQUEST_VALIDATION_ERROR.getErrorCategory())
+                .traceId(getTraceId());
+    }
+
+    // A path or query value of the wrong type (e.g. /customer/not-a-uuid) is a client error, not a 500
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        // the value is the caller's raw input: it goes back in the response, but stays out of the logs
+        log.warn("Invalid request argument traceId={} field=[{}]", getTraceId(), ex.getName());
+
+        return new ErrorResponse()
+                .errorMessage(String.format(
+                        ErrorCode.REQUEST_VALIDATION_ERROR.getMessageTemplate(), ex.getName(), ex.getValue()))
                 .errorCode(ErrorCode.REQUEST_VALIDATION_ERROR.name())
                 .category(ErrorCode.REQUEST_VALIDATION_ERROR.getErrorCategory())
                 .traceId(getTraceId());

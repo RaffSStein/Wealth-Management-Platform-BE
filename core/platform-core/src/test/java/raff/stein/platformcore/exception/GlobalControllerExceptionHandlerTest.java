@@ -5,14 +5,18 @@ import io.micrometer.tracing.Tracer;
 import org.junit.jupiter.api.Test;
 import org.openapitools.model.ErrorCategory;
 import org.openapitools.model.ErrorResponse;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
+
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -69,6 +73,23 @@ class GlobalControllerExceptionHandlerTest {
         assertEquals(ErrorCategory.AUTHORIZATION_ERROR, response.getCategory());
         assertEquals(HttpStatus.FORBIDDEN, GlobalControllerExceptionHandler.class
                 .getMethod("handleSpringSecurityAccessDenied", AccessDeniedException.class)
+                .getAnnotation(ResponseStatus.class).value());
+    }
+
+    @Test
+    void shouldAnswerBadRequestForArgumentOfTheWrongType() throws NoSuchMethodException {
+        final ErrorResponse response = handler.handleArgumentTypeMismatch(new MethodArgumentTypeMismatchException(
+                "not-a-uuid",
+                UUID.class,
+                "customerId",
+                mock(MethodParameter.class),
+                new IllegalArgumentException("Invalid UUID string")));
+
+        assertEquals("For field [customerId] value [not-a-uuid] is not valid", response.getErrorMessage());
+        assertEquals(ErrorCode.REQUEST_VALIDATION_ERROR.name(), response.getErrorCode());
+        assertEquals(ErrorCategory.VALIDATION_ERROR, response.getCategory());
+        assertEquals(HttpStatus.BAD_REQUEST, GlobalControllerExceptionHandler.class
+                .getMethod("handleArgumentTypeMismatch", MethodArgumentTypeMismatchException.class)
                 .getAnnotation(ResponseStatus.class).value());
     }
 
