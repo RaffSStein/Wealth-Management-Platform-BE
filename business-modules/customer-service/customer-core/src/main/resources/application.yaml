@@ -34,6 +34,11 @@ spring:
       - classpath:kafka-properties.yaml
 
 
+platform:
+  tenant:
+    # a PLATFORM_ADMIN reads every bank's customers; CustomerAccessPolicy keeps it read-only
+    root-read-enabled: true
+
 # AML configuration
 aml:
   jurisdictions:

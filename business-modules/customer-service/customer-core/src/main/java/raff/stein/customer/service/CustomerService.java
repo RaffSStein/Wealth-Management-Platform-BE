@@ -10,9 +10,12 @@ import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
 import raff.stein.customer.model.entity.customer.mapper.CustomerToCustomerEntityMapper;
 import raff.stein.customer.repository.customer.CustomerRepository;
+import raff.stein.customer.service.access.CustomerAccessPolicy;
 import raff.stein.customer.service.onboarding.OnboardingService;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
 import raff.stein.customer.service.update.visitor.CustomerVisitorDispatcher;
+import raff.stein.platformcore.exception.ErrorCode;
+import raff.stein.platformcore.exception.types.conflict.ResourceConflictException;
 
 import java.util.List;
 import java.util.UUID;
@@ -26,12 +29,19 @@ public class CustomerService {
 
     private final OnboardingService onboardingService;
     private final CustomerVisitorDispatcher customerVisitorDispatcher;
+    private final CustomerAccessPolicy customerAccessPolicy;
 
     private static final CustomerToCustomerEntityMapper customerToCustomerEntityMapper = CustomerToCustomerEntityMapper.MAPPER;
 
     @Transactional
     public Customer initCustomer(Customer customer) {
         log.debug("Initializing customer: [{}]", customer);
+        final UUID ownerId = customerAccessPolicy.resolveInitUserId(customer.getUserId());
+        customer.setUserId(ownerId);
+        // one record per bank for a customer; the tenant filter scopes this check to the bank of the token
+        if (customerAccessPolicy.isLimitedToOneRecord() && customerRepository.existsByUserId(ownerId)) {
+            throw ResourceConflictException.of(ErrorCode.CUSTOMER_ALREADY_EXISTS, ownerId);
+        }
         // Save the customer entity to the database
         CustomerEntity savedCustomerEntity = customerRepository.save(customerToCustomerEntityMapper.toCustomerEntity(customer));
         // Initiate the onboarding process for the saved customer

@@ -10,6 +10,8 @@ import raff.stein.customer.controller.mapper.mifid.MifidConfigDTOToMifidConfig;
 import raff.stein.customer.controller.mapper.mifid.MifidFillingToMifidFillingDTOMapper;
 import raff.stein.customer.model.bo.mifid.config.MifidQuestionnaireConfig;
 import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
+import raff.stein.customer.controller.access.CustomerAccess;
+import raff.stein.customer.controller.access.CustomerAccessLevel;
 import raff.stein.customer.service.mifid.MifidService;
 import raff.stein.customer.service.mifid.enumeration.MifidActionType;
 
@@ -31,6 +33,7 @@ public class MifidController implements MifidApi {
         return ResponseEntity.ok(mifidQuestionnaireConfigDTO);
     }
 
+    @CustomerAccess(CustomerAccessLevel.READ)
     @Override
     public ResponseEntity<MifidFillingDTO> getMifidFillingForCustomer(
             UUID customerId,
@@ -40,6 +43,7 @@ public class MifidController implements MifidApi {
         return ResponseEntity.ok(outputDTO);
     }
 
+    @CustomerAccess(CustomerAccessLevel.READ)
     @Override
     public ResponseEntity<MifidFillingDTO> getCurrentMifidFillingForCustomer(UUID customerId) {
         final MifidFilling mifidFilling = mifidService.getCurrentSubmittedMifidFilling(customerId);
@@ -47,6 +51,7 @@ public class MifidController implements MifidApi {
         return ResponseEntity.ok(outputDTO);
     }
 
+    @CustomerAccess(CustomerAccessLevel.WRITE)
     @Override
     public ResponseEntity<MifidFillingDTO> saveMifidFillingForCustomer(
             UUID customerId,
@@ -59,6 +64,7 @@ public class MifidController implements MifidApi {
         return ResponseEntity.ok(outputDTO);
     }
 
+    @CustomerAccess(CustomerAccessLevel.WRITE)
     @Override
     public ResponseEntity<MifidFillingDTO> updateMifidFillingForCustomer(
             UUID customerId,
@@ -74,6 +80,7 @@ public class MifidController implements MifidApi {
         return ResponseEntity.ok(outputDTO);
     }
 
+    @CustomerAccess(CustomerAccessLevel.WRITE)
     @Override
     public ResponseEntity<MifidFillingDTO> submitQuestionnaire(
             UUID customerId,

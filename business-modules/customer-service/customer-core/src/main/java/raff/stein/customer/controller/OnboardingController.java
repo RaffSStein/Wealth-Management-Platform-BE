@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import raff.stein.customer.controller.mapper.onboarding.CustomerOnboardingDTOToCustomerOnboardingMapper;
 import raff.stein.customer.model.bo.onboarding.CustomerOnboarding;
+import raff.stein.customer.controller.access.CustomerAccess;
+import raff.stein.customer.controller.access.CustomerAccessLevel;
 import raff.stein.customer.service.onboarding.OnboardingService;
 
 import java.util.List;
@@ -21,6 +23,7 @@ public class OnboardingController implements OnboardingApi {
     private static final CustomerOnboardingDTOToCustomerOnboardingMapper customerOnboardingDTOToCustomerOnboardingMapper =
             CustomerOnboardingDTOToCustomerOnboardingMapper.MAPPER;
 
+    @CustomerAccess(CustomerAccessLevel.READ)
     @Override
     public ResponseEntity<CustomerOnboardingDTO> getActiveOnboarding(UUID customerId) {
         final CustomerOnboarding activeOnboarding = onboardingService.getActiveOnboarding(customerId);
@@ -29,6 +32,7 @@ public class OnboardingController implements OnboardingApi {
         return ResponseEntity.ok(customerOnboardingDTO);
     }
 
+    @CustomerAccess(CustomerAccessLevel.READ)
     @Override
     public ResponseEntity<CustomerOnboardingDTO> getOnboardingById(UUID customerId, Long onboardingId) {
         final CustomerOnboarding onboarding = onboardingService.getOnboardingById(customerId, onboardingId);
@@ -37,6 +41,7 @@ public class OnboardingController implements OnboardingApi {
         return ResponseEntity.ok(customerOnboardingDTO);
     }
 
+    @CustomerAccess(CustomerAccessLevel.READ)
     @Override
     public ResponseEntity<List<CustomerOnboardingDTO>> getOnboardingInstances(UUID customerId) {
         final List<CustomerOnboarding> onboardingInstances = onboardingService.getOnboardingInstances(customerId);

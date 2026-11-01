@@ -26,4 +26,8 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID> 
 
     List<CustomerEntity> findByUserId(@NonNull UUID userId);
 
+    boolean existsByIdAndUserId(@NonNull UUID id, @NonNull UUID userId);
+
+    boolean existsByUserId(@NonNull UUID userId);
+
 }

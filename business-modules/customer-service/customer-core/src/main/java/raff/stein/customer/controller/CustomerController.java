@@ -16,6 +16,8 @@ import raff.stein.customer.model.bo.customer.CustomerGoals;
 import raff.stein.customer.model.bo.customer.CustomerPersonalDetails;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
 import raff.stein.customer.service.CustomerService;
+import raff.stein.customer.controller.access.CustomerAccess;
+import raff.stein.customer.controller.access.CustomerAccessLevel;
 
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +38,7 @@ public class CustomerController implements CustomerApi {
         return ResponseEntity.ok(responseCustomerDTO);
     }
 
+    @CustomerAccess(CustomerAccessLevel.WRITE)
     @Override
     public ResponseEntity<CustomerDTO> updateCustomerPersonalDetails(UUID customerId, CustomerPersonalDetailsDTO customerPersonalDetailsDTO) {
         CustomerPersonalDetails customerPersonalDetails = customerDTOToCustomerMapper.toCustomerPersonalDetails(customerPersonalDetailsDTO);
@@ -49,6 +52,7 @@ public class CustomerController implements CustomerApi {
         return ResponseEntity.ok(responseCustomerDTO);
     }
 
+    @CustomerAccess(CustomerAccessLevel.WRITE)
     @Override
     public ResponseEntity<CustomerDTO> addCustomerFinancials(UUID customerId, List<@Valid CustomerFinancialDTO> customerFinancialDTO) {
         List<CustomerFinancials> customerFinancialsList = customerFinancialDTO.stream()
@@ -64,6 +68,7 @@ public class CustomerController implements CustomerApi {
         return ResponseEntity.ok(responseCustomerDTO);
     }
 
+    @CustomerAccess(CustomerAccessLevel.WRITE)
     @Override
     public ResponseEntity<CustomerDTO> addCustomerGoals(UUID customerId, List<@Valid CustomerGoalDTO> customerGoalDTO) {
         List<CustomerGoals> customerGoalsList = customerGoalDTO.stream()
@@ -79,6 +84,7 @@ public class CustomerController implements CustomerApi {
         return ResponseEntity.ok(responseCustomerDTO);
     }
 
+    @CustomerAccess(CustomerAccessLevel.READ)
     @Override
     public ResponseEntity<CustomerDTO> getCustomerById(UUID customerId) {
         Customer customer = customerService.getCustomerById(customerId);
@@ -86,6 +92,7 @@ public class CustomerController implements CustomerApi {
         return ResponseEntity.ok(responseCustomerDTO);
     }
 
+    @CustomerAccess(CustomerAccessLevel.LIST_BY_USER)
     @Override
     public ResponseEntity<List<CustomerDTO>> getCustomersByUserId(UUID userId) {
         List<Customer> customers = customerService.getCustomersByUserId(userId);

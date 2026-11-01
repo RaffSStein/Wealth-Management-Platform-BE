@@ -28,7 +28,7 @@ public class CustomerEntity extends TenantScopedEntity<UUID> {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    //TODO: consider using a separate entity for user reference if needed, a user may access as different customers
+    //TODO: holds the creator today, so an advisor's client points at the advisor; it must become the client (nullable)
     @Column(nullable = false)
     private UUID userId;        // Reference to the user in the platform
 
