@@ -44,6 +44,14 @@ public class CustomerAccessInterceptor implements HandlerInterceptor {
             }
             return true;
         }
+        if (access.value() == CustomerAccessLevel.LIST) {
+            customerAccessPolicy.assertCanList();
+            return true;
+        }
+        if (access.value() == CustomerAccessLevel.ADVISOR_DASHBOARD) {
+            customerAccessPolicy.assertCanReadAdvisorDashboard();
+            return true;
+        }
         final String variable = access.value() == CustomerAccessLevel.LIST_BY_USER ? USER_ID : CUSTOMER_ID;
         // a malformed id reaches no data: binding the controller argument fails right after this
         parseUuid(pathVariables.get(variable)).ifPresent(id -> {
@@ -51,6 +59,7 @@ public class CustomerAccessInterceptor implements HandlerInterceptor {
                 case READ -> customerAccessPolicy.assertCanRead(id);
                 case WRITE -> customerAccessPolicy.assertCanWrite(id);
                 case LIST_BY_USER -> customerAccessPolicy.assertCanListByUser(id);
+                case LIST, ADVISOR_DASHBOARD -> throw new IllegalStateException("Handled above");
             }
         });
         return true;

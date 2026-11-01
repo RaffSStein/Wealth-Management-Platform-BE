@@ -3,6 +3,8 @@ kafka:
     user-service:
       domain: user-service
       # produced topics
+      customer-user-resolved:
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.user-service.domain}.customer-user-resolved"
       user-created:
         name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.user-service.domain}.user-created"
         groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${spring.application.name}.user-created.sa.${kafka.broker.serviceAccount}"

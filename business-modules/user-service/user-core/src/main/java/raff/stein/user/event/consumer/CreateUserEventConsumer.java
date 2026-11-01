@@ -5,16 +5,19 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.CreateUserEvent;
+import org.openapitools.model.CustomerUserResolvedEvent;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import raff.stein.platformcore.messaging.consumer.WMPBaseEventConsumer;
 import raff.stein.user.event.consumer.mapper.CreateUserEventToUserMapper;
+import raff.stein.user.event.producer.CustomerUserResolvedEventPublisher;
 import raff.stein.user.event.producer.UserCreatedEventPublisher;
 import raff.stein.user.model.entity.UserEntity;
 import raff.stein.user.model.entity.mapper.UserToUserEntityMapper;
 import raff.stein.user.model.user.User;
 import raff.stein.user.repository.UserRepository;
+import raff.stein.user.security.JwtTokenIssuer;
 
 import java.util.Optional;
 
@@ -28,6 +31,8 @@ public class CreateUserEventConsumer extends WMPBaseEventConsumer {
     private static final UserToUserEntityMapper userToUserEntityMapper = UserToUserEntityMapper.MAPPER;
     private final UserRepository userRepository;
     private final UserCreatedEventPublisher userCreatedEventPublisher;
+    private final CustomerUserResolvedEventPublisher customerUserResolvedEventPublisher;
+    private final JwtTokenIssuer jwtTokenIssuer;
 
     @KafkaListener(
             topics = "${kafka.topics.user-service.create-user.name}",
@@ -44,26 +49,31 @@ public class CreateUserEventConsumer extends WMPBaseEventConsumer {
 
     private void processCreateUserEvent(@NotNull CreateUserEvent createUserEvent, String eventId) {
         log.info("Processing CreateUserEvent with eventId: [{}]", eventId);
-        User user = createUserEventToUserMapper.toUser(createUserEvent);
-        // check if this user already exists
-        if (userRepository.existsByEmail(user.getEmail())) {
-            log.warn("User with email [{}] already exists. Skipping CreateUserEvent with eventId: [{}]",
-                    user.getEmail(),
-                    eventId);
-            return;
+        final User user = createUserEventToUserMapper.toUser(createUserEvent);
+        final boolean forClient = createUserEvent.getBankCode() != null && createUserEvent.getBranchCode() != null;
+        final Optional<UserEntity> existingUserOptional = userRepository.findByEmailIgnoreCase(user.getEmail());
+        final UserEntity existingUserEntity;
+        if (existingUserOptional.isPresent()) {
+            // no new login and no setup email: replays and clients who already have an account land here
+            log.info("User already exists. Nothing to create for CreateUserEvent with eventId: [{}]", eventId);
+            existingUserEntity = existingUserOptional.get();
+        } else {
+            existingUserEntity = userRepository.save(userToUserEntityMapper.toUserEntity(user));
+            final String userId = existingUserEntity.getId().toString();
+            final String setupToken = forClient
+                    ? jwtTokenIssuer.issueClientSetupToken(userId, existingUserEntity.getEmail())
+                    : jwtTokenIssuer.issuePasswordSetupToken(userId, existingUserEntity.getEmail());
+            userCreatedEventPublisher.publishUserCreatedEvent(userToUserEntityMapper.toUser(existingUserEntity), setupToken);
+            log.info("Created user [{}] for CreateUserEvent with eventId: [{}]", userId, eventId);
         }
-        //TODO: this should use UserService.createUser to avoid code duplication and to handle the token
-        log.info("Creating new user with email: [{}]", user.getEmail());
-        // Map User to UserEntity
-        UserEntity userEntity = userToUserEntityMapper.toUserEntity(user);
-        // get the saved user entity for the id
-        UserEntity savedUser = userRepository.save(userEntity);
-        log.info("Successfully processed CreateUserEvent with eventId: [{}]", eventId);
-        // Publish UserCreatedEvent
-        log.info("Publishing UserCreatedEvent for user with email: [{}]", user.getEmail());
-        // Map UserEntity back to User
-        User userToBePublished = userToUserEntityMapper.toUser(savedUser);
-        // Publish the user just created
-        userCreatedEventPublisher.publishUserCreatedEvent(userToBePublished, null);
+        if (forClient) {
+            // only id and email: there's no session here, and the role assignments of a found user are lazy
+            customerUserResolvedEventPublisher.publish(new CustomerUserResolvedEvent()
+                    .userId(existingUserEntity.getId())
+                    .email(existingUserEntity.getEmail())
+                    .bankCode(createUserEvent.getBankCode())
+                    .branchCode(createUserEvent.getBranchCode())
+                    .requestedBy(createUserEvent.getRequestedBy()));
+        }
     }
 }

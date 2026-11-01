@@ -5,6 +5,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 import raff.stein.customer.model.bo.customer.Customer;
+import raff.stein.customer.model.bo.customer.CustomerSummary;
 import raff.stein.customer.model.bo.mifid.filling.CustomerRiskProfile;
 import raff.stein.customer.model.entity.customer.CustomerEntity;
 import raff.stein.customer.model.entity.mapper.CustomerEntityCommonMapperConfig;
@@ -28,6 +29,10 @@ public interface CustomerToCustomerEntityMapper {
     @Mapping(target = "customerGoals", source = "customerFinancialGoals")
     @Mapping(target = "riskProfile", source = "customerEntity", qualifiedByName = "toCustomerRiskProfile")
     Customer toCustomer(CustomerEntity customerEntity);
+
+    // only the columns of the row: a list must not load the customer's relations
+    @Mapping(target = "riskProfile", source = "customerEntity", qualifiedByName = "toCustomerRiskProfile")
+    CustomerSummary toCustomerSummary(CustomerEntity customerEntity);
 
     // null when no MiFID filling was submitted yet, so the DTO keeps riskProfile empty instead of {profile: null}
     @Named("toCustomerRiskProfile")

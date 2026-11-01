@@ -5,12 +5,15 @@ import org.springframework.stereotype.Repository;
 import raff.stein.profiler.model.entity.RoleAssignmentEntity;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface RoleAssignmentRepository extends JpaRepository<RoleAssignmentEntity, Long> {
 
     boolean existsByUserIdAndBankCodeAndBranchCodeAndRole(UUID userId, String bankCode, String branchCode, String role);
+
+    Optional<RoleAssignmentEntity> findByUserIdAndBankCodeAndBranchCodeAndRole(UUID userId, String bankCode, String branchCode, String role);
 
     List<RoleAssignmentEntity> findByUserIdOrderByIdAsc(UUID userId);
 }

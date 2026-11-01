@@ -51,12 +51,43 @@ components:
 
     CreateUserEvent:
       type: object
-      description: Event payload for creating a new user
+      description: >-
+        Event payload for creating a new user. With bankCode and branchCode it comes from an advisor creating a client:
+        user-service answers with CustomerUserResolvedEvent, also when the login already exists.
       properties:
         user:
           $ref: '#/components/schemas/User'
+        bankCode:
+          type: string
+        branchCode:
+          type: string
+        requestedBy:
+          type: string
+          description: Email of the advisor who asked for it
       required:
         - user
+
+    CustomerUserResolvedEvent:
+      type: object
+      description: The login of a client an advisor created exists now. profiler-service gives it the CUSTOMER role.
+      properties:
+        userId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        bankCode:
+          type: string
+        branchCode:
+          type: string
+        requestedBy:
+          type: string
+      required:
+        - userId
+        - email
+        - bankCode
+        - branchCode
 
     UpdateUserEvent:
       type: object

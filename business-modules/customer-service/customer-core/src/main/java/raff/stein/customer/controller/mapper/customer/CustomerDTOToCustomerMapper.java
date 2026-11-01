@@ -2,13 +2,14 @@ package raff.stein.customer.controller.mapper.customer;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
-import org.openapitools.model.*;
+import io.openapiprocessor.openapi.model.*;
 import raff.stein.customer.controller.mapper.CustomerControllerCommonMapperConfig;
 import raff.stein.customer.controller.mapper.financial.FinancialTypeDTOToFinancialType;
 import raff.stein.customer.controller.mapper.goal.GoalTypeDTOToGoalTypeMapper;
 import raff.stein.customer.model.bo.customer.Customer;
+import raff.stein.customer.model.bo.customer.CustomerSummary;
+import raff.stein.customer.model.bo.dashboard.AdvisorDashboardStatistics;
 import raff.stein.customer.model.bo.customer.CustomerFinancials;
 import raff.stein.customer.model.bo.customer.CustomerGoals;
 import raff.stein.customer.model.bo.customer.CustomerPersonalDetails;
@@ -23,37 +24,29 @@ public interface CustomerDTOToCustomerMapper {
 
     CustomerDTOToCustomerMapper MAPPER = Mappers.getMapper(CustomerDTOToCustomerMapper.class);
 
-    CustomerDTO toCustomerDTO(Customer customer);
+    CustomerDto toCustomerDTO(Customer customer);
 
-    Customer toCustomer(CustomerDTO customerDTO);
+    // the branch comes from the token, never from a request
+    @Mapping(target = "branchCode", ignore = true)
+    Customer toCustomer(CustomerDto customerDTO);
 
-    @Mapping(target = "gender", source = "gender", qualifiedByName = "stringToGender")
-    CustomerPersonalDetailsDTO toCustomerPersonalDetailsDTO(CustomerPersonalDetails customerPersonalDetails);
+    CustomerSummaryDto toCustomerSummaryDTO(CustomerSummary customerSummary);
 
-    @Mapping(target = "gender", source = "gender", qualifiedByName = "genderToString")
-    CustomerPersonalDetails toCustomerPersonalDetails(CustomerPersonalDetailsDTO customerPersonalDetailsDTO);
+    AdvisorDashboardStatisticsDto toAdvisorDashboardStatisticsDto(AdvisorDashboardStatistics statistics);
+
+    CustomerPersonalDetailsDto toCustomerPersonalDetailsDTO(CustomerPersonalDetails customerPersonalDetails);
+
+    CustomerPersonalDetails toCustomerPersonalDetails(CustomerPersonalDetailsDto customerPersonalDetailsDTO);
 
     // Financials mapping methods
 
-    CustomerFinancialDTO toCustomerFinancialDTO(CustomerFinancials customerFinancials);
+    CustomerFinancialDto toCustomerFinancialDTO(CustomerFinancials customerFinancials);
 
-    CustomerFinancials toCustomerFinancials(CustomerFinancialDTO customerFinancialDTO);
+    CustomerFinancials toCustomerFinancials(CustomerFinancialDto customerFinancialDTO);
 
     // Goals mapping methods
 
-    CustomerGoalDTO toCustomerGoalDTO(CustomerGoals customerGoals);
+    CustomerGoalDto toCustomerGoalDTO(CustomerGoals customerGoals);
 
-    CustomerGoals toCustomerGoals(CustomerGoalDTO customerGoalDTO);
-
-    // Helpers
-
-    @Named("genderToString")
-    default String genderToString(Gender gender) {
-        return gender == null ? null : gender.name();
-    }
-
-    @Named("stringToGender")
-    default Gender stringToGender(String gender) {
-        return (gender == null || gender.isBlank()) ? null : Gender.valueOf(gender);
-    }
+    CustomerGoals toCustomerGoals(CustomerGoalDto customerGoalDTO);
 }

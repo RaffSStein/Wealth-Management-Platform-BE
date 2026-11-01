@@ -12,5 +12,13 @@ public enum CustomerAccessLevel {
     /**
      * List the customers of the user in the {@code userId} path variable.
      */
-    LIST_BY_USER
+    LIST_BY_USER,
+    /**
+     * List or count the customers the caller can reach; no customer in the path.
+     */
+    LIST,
+    /**
+     * Read the counts of the advisor's dashboard; no customer in the path.
+     */
+    ADVISOR_DASHBOARD
 }

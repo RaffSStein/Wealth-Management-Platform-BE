@@ -2,7 +2,7 @@ package raff.stein.customer.controller.mapper.onboarding;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
-import org.openapitools.model.CustomerOnboardingDTO;
+import io.openapiprocessor.openapi.model.CustomerOnboardingDto;
 import raff.stein.customer.controller.mapper.CustomerControllerCommonMapperConfig;
 import raff.stein.customer.model.bo.onboarding.CustomerOnboarding;
 
@@ -11,7 +11,7 @@ public interface CustomerOnboardingDTOToCustomerOnboardingMapper {
 
     CustomerOnboardingDTOToCustomerOnboardingMapper MAPPER = Mappers.getMapper(CustomerOnboardingDTOToCustomerOnboardingMapper.class);
 
-    CustomerOnboardingDTO toCustomerOnboardingDTO(CustomerOnboarding customerOnboarding);
+    CustomerOnboardingDto toCustomerOnboardingDTO(CustomerOnboarding customerOnboarding);
 
-    CustomerOnboarding toCustomerOnboarding(CustomerOnboardingDTO customerOnboardingDTO);
+    CustomerOnboarding toCustomerOnboarding(CustomerOnboardingDto customerOnboardingDTO);
 }

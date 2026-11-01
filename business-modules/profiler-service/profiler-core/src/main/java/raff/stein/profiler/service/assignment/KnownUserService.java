@@ -20,14 +20,13 @@ public class KnownUserService {
     private final KnownUserRepository knownUserRepository;
 
     /**
-     * Upserts the user: replaying the same user-created event is harmless.
+     * Upserts the user: replaying an event, or two events for the same new user at once, is harmless.
      */
     @Transactional
     public KnownUserEntity recordUser(UUID userId, String email) {
-        final KnownUserEntity user = knownUserRepository.findById(userId)
-                .orElseGet(() -> KnownUserEntity.builder().userId(userId).email(email).build());
-        user.setEmail(email);
+        knownUserRepository.upsert(userId, email);
         log.debug("Recorded known user [{}]", userId);
-        return knownUserRepository.save(user);
+        return knownUserRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("Known user just recorded is missing: " + userId));
     }
 }

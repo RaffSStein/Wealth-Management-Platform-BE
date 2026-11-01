@@ -46,7 +46,8 @@ components:
 
     Customer:
       type: object
-      required: [ id, userId, customerType, taxId, customerStatus ]
+      # userId is absent while an advisor's client isn't linked to a login yet
+      required: [ id, customerType, taxId, customerStatus ]
       properties:
         id:
           type: string

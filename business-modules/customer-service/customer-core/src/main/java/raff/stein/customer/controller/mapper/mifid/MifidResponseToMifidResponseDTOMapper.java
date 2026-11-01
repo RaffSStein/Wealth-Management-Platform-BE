@@ -2,7 +2,7 @@ package raff.stein.customer.controller.mapper.mifid;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
-import org.openapitools.model.MifidResponseDTO;
+import io.openapiprocessor.openapi.model.MifidResponseDto;
 import raff.stein.customer.controller.mapper.CustomerControllerCommonMapperConfig;
 import raff.stein.customer.model.bo.mifid.filling.MifidResponse;
 
@@ -13,7 +13,7 @@ public interface MifidResponseToMifidResponseDTOMapper {
 
     MifidResponseToMifidResponseDTOMapper MAPPER = Mappers.getMapper(MifidResponseToMifidResponseDTOMapper.class);
 
-    MifidResponseDTO toMifidResponseDTO(MifidResponse mifidResponse);
+    MifidResponseDto toMifidResponseDTO(MifidResponse mifidResponse);
 
-    MifidResponse toMifidResponse(MifidResponseDTO mifidResponseDTO);
+    MifidResponse toMifidResponse(MifidResponseDto mifidResponseDTO);
 }

@@ -1,8 +1,8 @@
 package raff.stein.customer.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.openapitools.api.FinancialApi;
-import org.openapitools.model.FinancialTypeDTO;
+import io.openapiprocessor.openapi.api.FinancialApi;
+import io.openapiprocessor.openapi.model.FinancialTypeDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import raff.stein.customer.controller.mapper.financial.FinancialTypeDTOToFinancialType;
@@ -20,9 +20,9 @@ public class FinancialController implements FinancialApi {
     private static final FinancialTypeDTOToFinancialType financialTypeDTOToFinancialType  = FinancialTypeDTOToFinancialType.MAPPER;
 
     @Override
-    public ResponseEntity<List<FinancialTypeDTO>> getAllFinancialTypes() {
+    public ResponseEntity<List<FinancialTypeDto>> getAllFinancialTypes() {
         List<FinancialType> financialTypes = financialsService.getAllFinancialTypes();
-        List<FinancialTypeDTO> financialTypeDTOs = financialTypes.stream()
+        List<FinancialTypeDto> financialTypeDTOs = financialTypes.stream()
                 .map(financialTypeDTOToFinancialType::toFinancialTypeDTO)
                 .toList();
         return ResponseEntity.ok(financialTypeDTOs);

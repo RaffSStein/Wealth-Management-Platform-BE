@@ -104,6 +104,21 @@ public class RoleAssignmentService {
         return AssignmentResult.assigned(mapper.toRoleAssignment(assignment));
     }
 
+    /**
+     * An advisor created a client, whose login now exists: it gets the CUSTOMER role in the advisor's branch. A role it
+     * already holds is announced again, so customer-service can link the new record. Announcing twice is harmless: the
+     * consumers ignore replays. The bank-service check needs a caller token and isn't needed here: the branch comes from
+     * the advisor's own token.
+     */
+    @Transactional
+    public void grantCustomerToClient(KnownUserEntity client, String bankCode, String branchCode, String requestedBy) {
+        assignmentRepository.findByUserIdAndBankCodeAndBranchCodeAndRole(
+                        client.getUserId(), bankCode, branchCode, WmpRole.CUSTOMER.name())
+                .ifPresentOrElse(
+                        existing -> announceGranted(existing, client),
+                        () -> saveAssignment(client, bankCode, branchCode, WmpRole.CUSTOMER, requestedBy, null, null));
+    }
+
     // the EXPIRED status must survive the 409 thrown for an expired request
     @Transactional(noRollbackFor = ResourceConflictException.class)
     public RoleAssignment approve(Long requestId) {
@@ -231,18 +246,22 @@ public class RoleAssignmentService {
                 .approvedBy(approvedBy)
                 .requestId(requestId)
                 .build());
+        announceGranted(assignment, user);
+        log.info("Role assignment [{}] created: role [{}] in [{}/{}] for userId [{}]",
+                assignment.getId(), role, bankCode, branchCode, user.getUserId());
+        return assignment;
+    }
+
+    private void announceGranted(RoleAssignmentEntity assignment, KnownUserEntity user) {
         applicationEventPublisher.publishEvent(new RoleAssignmentGrantedEvent()
                 .assignmentId(assignment.getId())
                 .userId(user.getUserId())
                 .email(user.getEmail())
-                .bankCode(bankCode)
-                .branchCode(branchCode)
-                .role(role.name())
-                .grantedBy(grantedBy)
-                .approvedBy(approvedBy));
-        log.info("Role assignment [{}] created: role [{}] in [{}/{}] for userId [{}]",
-                assignment.getId(), role, bankCode, branchCode, user.getUserId());
-        return assignment;
+                .bankCode(assignment.getBankCode())
+                .branchCode(assignment.getBranchCode())
+                .role(assignment.getRole())
+                .grantedBy(assignment.getGrantedBy())
+                .approvedBy(assignment.getApprovedBy()));
     }
 
     private RoleAssignmentRequestEntity loadPendingRequest(Long requestId) {

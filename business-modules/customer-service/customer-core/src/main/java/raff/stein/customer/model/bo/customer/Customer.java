@@ -14,6 +14,8 @@ public class Customer {
 
     private UUID id;
     private UUID userId;
+    private String email;
+    private String branchCode;
     // anagraphic data
     private String customerType;
     private String firstName;

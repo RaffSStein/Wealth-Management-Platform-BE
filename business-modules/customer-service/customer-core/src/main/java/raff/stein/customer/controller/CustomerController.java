@@ -1,12 +1,16 @@
 package raff.stein.customer.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.openapitools.api.CustomerApi;
-import org.openapitools.model.CustomerDTO;
-import org.openapitools.model.CustomerFinancialDTO;
-import org.openapitools.model.CustomerGoalDTO;
-import org.openapitools.model.CustomerPersonalDetailsDTO;
+import io.openapiprocessor.openapi.api.CustomerApi;
+import io.openapiprocessor.openapi.model.AdvisorDashboardStatisticsDto;
+import io.openapiprocessor.openapi.model.CustomerDto;
+import io.openapiprocessor.openapi.model.CustomerStatus;
+import io.openapiprocessor.openapi.model.CustomerSummaryDto;
+import io.openapiprocessor.openapi.model.CustomerFinancialDto;
+import io.openapiprocessor.openapi.model.CustomerGoalDto;
+import io.openapiprocessor.openapi.model.CustomerPersonalDetailsDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import raff.stein.customer.controller.mapper.customer.CustomerDTOToCustomerMapper;
@@ -16,6 +20,7 @@ import raff.stein.customer.model.bo.customer.CustomerGoals;
 import raff.stein.customer.model.bo.customer.CustomerPersonalDetails;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
 import raff.stein.customer.service.CustomerService;
+import raff.stein.customer.service.dashboard.AdvisorDashboardService;
 import raff.stein.customer.controller.access.CustomerAccess;
 import raff.stein.customer.controller.access.CustomerAccessLevel;
 
@@ -27,20 +32,21 @@ import java.util.UUID;
 public class CustomerController implements CustomerApi {
 
     private final CustomerService customerService;
+    private final AdvisorDashboardService advisorDashboardService;
 
     private static final CustomerDTOToCustomerMapper customerDTOToCustomerMapper = CustomerDTOToCustomerMapper.MAPPER;
 
     @Override
-    public ResponseEntity<CustomerDTO> initCustomer(CustomerDTO customerDTO) {
+    public ResponseEntity<CustomerDto> initCustomer(CustomerDto customerDTO) {
         Customer customerInput = customerDTOToCustomerMapper.toCustomer(customerDTO);
         Customer createdCustomer = customerService.initCustomer(customerInput);
-        CustomerDTO responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(createdCustomer);
+        CustomerDto responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(createdCustomer);
         return ResponseEntity.ok(responseCustomerDTO);
     }
 
     @CustomerAccess(CustomerAccessLevel.WRITE)
     @Override
-    public ResponseEntity<CustomerDTO> updateCustomerPersonalDetails(UUID customerId, CustomerPersonalDetailsDTO customerPersonalDetailsDTO) {
+    public ResponseEntity<CustomerDto> updateCustomerPersonalDetails(UUID customerId, CustomerPersonalDetailsDto customerPersonalDetailsDTO) {
         CustomerPersonalDetails customerPersonalDetails = customerDTOToCustomerMapper.toCustomerPersonalDetails(customerPersonalDetailsDTO);
         // update customer personal details
         Customer customer = customerService.updateCustomer(
@@ -48,13 +54,13 @@ public class CustomerController implements CustomerApi {
                 customerPersonalDetails);
         // record the onboarding step
         customerService.proceedToOnboardingStep(customerId, OnboardingStep.PERSONAL_DETAILS);
-        CustomerDTO responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(customer);
+        CustomerDto responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(customer);
         return ResponseEntity.ok(responseCustomerDTO);
     }
 
     @CustomerAccess(CustomerAccessLevel.WRITE)
     @Override
-    public ResponseEntity<CustomerDTO> addCustomerFinancials(UUID customerId, List<@Valid CustomerFinancialDTO> customerFinancialDTO) {
+    public ResponseEntity<CustomerDto> addCustomerFinancials(UUID customerId, List<CustomerFinancialDto> customerFinancialDTO) {
         List<CustomerFinancials> customerFinancialsList = customerFinancialDTO.stream()
                 .map(customerDTOToCustomerMapper::toCustomerFinancials)
                 .toList();
@@ -64,13 +70,13 @@ public class CustomerController implements CustomerApi {
                 customerFinancialsList);
         // record the onboarding step
         customerService.proceedToOnboardingStep(customerId, OnboardingStep.FINANCIALS);
-        CustomerDTO responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(customer);
+        CustomerDto responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(customer);
         return ResponseEntity.ok(responseCustomerDTO);
     }
 
     @CustomerAccess(CustomerAccessLevel.WRITE)
     @Override
-    public ResponseEntity<CustomerDTO> addCustomerGoals(UUID customerId, List<@Valid CustomerGoalDTO> customerGoalDTO) {
+    public ResponseEntity<CustomerDto> addCustomerGoals(UUID customerId, List<CustomerGoalDto> customerGoalDTO) {
         List<CustomerGoals> customerGoalsList = customerGoalDTO.stream()
                 .map(customerDTOToCustomerMapper::toCustomerGoals)
                 .toList();
@@ -80,23 +86,38 @@ public class CustomerController implements CustomerApi {
                 customerGoalsList);
         // record the onboarding step
         customerService.proceedToOnboardingStep(customerId, OnboardingStep.GOALS);
-        CustomerDTO responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(customer);
+        CustomerDto responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(customer);
         return ResponseEntity.ok(responseCustomerDTO);
     }
 
     @CustomerAccess(CustomerAccessLevel.READ)
     @Override
-    public ResponseEntity<CustomerDTO> getCustomerById(UUID customerId) {
+    public ResponseEntity<CustomerDto> getCustomerById(UUID customerId) {
         Customer customer = customerService.getCustomerById(customerId);
-        CustomerDTO responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(customer);
+        CustomerDto responseCustomerDTO = customerDTOToCustomerMapper.toCustomerDTO(customer);
         return ResponseEntity.ok(responseCustomerDTO);
+    }
+
+    @CustomerAccess(CustomerAccessLevel.LIST)
+    @Override
+    public ResponseEntity<Page<CustomerSummaryDto>> getCustomers(String query, List<CustomerStatus> status, Pageable pageable) {
+        final List<String> statuses = status == null ? List.of() : status.stream().map(CustomerStatus::name).toList();
+        return ResponseEntity.ok(customerService.findCustomers(query, statuses, pageable)
+                .map(customerDTOToCustomerMapper::toCustomerSummaryDTO));
+    }
+
+    @CustomerAccess(CustomerAccessLevel.ADVISOR_DASHBOARD)
+    @Override
+    public ResponseEntity<AdvisorDashboardStatisticsDto> getAdvisorDashboardStatistics() {
+        return ResponseEntity.ok(customerDTOToCustomerMapper.toAdvisorDashboardStatisticsDto(
+                advisorDashboardService.getStatistics()));
     }
 
     @CustomerAccess(CustomerAccessLevel.LIST_BY_USER)
     @Override
-    public ResponseEntity<List<CustomerDTO>> getCustomersByUserId(UUID userId) {
+    public ResponseEntity<List<CustomerDto>> getCustomersByUserId(UUID userId) {
         List<Customer> customers = customerService.getCustomersByUserId(userId);
-        List<CustomerDTO> responseCustomerDTOs = customers.stream()
+        List<CustomerDto> responseCustomerDTOs = customers.stream()
                 .map(customerDTOToCustomerMapper::toCustomerDTO)
                 .toList();
         return ResponseEntity.ok(responseCustomerDTOs);

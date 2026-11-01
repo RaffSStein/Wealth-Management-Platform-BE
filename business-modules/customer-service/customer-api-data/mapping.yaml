@@ -1,0 +1,47 @@
+openapi-processor-mapping: v13
+
+options:
+  package-name: io.openapiprocessor.openapi
+  package-names:
+    base: io.openapiprocessor.openapi # same as option.package-name
+    location: io.openapiprocessor
+  package-name-from-path: true
+  model-type: record
+  # real enums: with strings, the generated validator rejects a missing optional enum
+  enum-type: default
+  one-of-interface: true
+  bean-validation: jakarta
+  generated: true
+  generated-date: true
+  format-code: true
+  javadoc: true
+  clear-target-dir: false
+  json-property-annotation: always
+  target-dir:
+    layout: standard
+  base-path:
+    server-url: 0
+    properties-name: api.properties
+logging:
+  mapping: true
+  mapping-target: stdout
+
+map:
+  types:
+    - type: array => java.util.List
+    # money: the processor's default is Float, which loses decimals
+    - type: number => java.math.BigDecimal
+    - type: string:uuid => java.util.UUID
+    - type: Page => org.springframework.data.domain.Page<java.lang.Object>
+    - type: PageCustomerSummaryDTO => org.springframework.data.domain.Page<{package-name}.model.CustomerSummaryDTO>
+  result: org.springframework.http.ResponseEntity
+
+  paths:
+    # clients send flat page/size/sort query params; the server keeps receiving one Spring Pageable
+    /customer:
+      get:
+        parameters:
+          - drop: page
+          - drop: size
+          - drop: sort
+          - add: pageable => org.springframework.data.domain.Pageable

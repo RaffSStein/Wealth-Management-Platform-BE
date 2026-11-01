@@ -2,7 +2,7 @@ package raff.stein.customer.controller.mapper.goal;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
-import org.openapitools.model.GoalTypeDTO;
+import io.openapiprocessor.openapi.model.GoalTypeDto;
 import raff.stein.customer.controller.mapper.CustomerControllerCommonMapperConfig;
 import raff.stein.customer.model.bo.goals.GoalType;
 
@@ -11,7 +11,7 @@ public interface GoalTypeDTOToGoalTypeMapper {
 
     GoalTypeDTOToGoalTypeMapper MAPPER = Mappers.getMapper(GoalTypeDTOToGoalTypeMapper.class);
 
-    GoalTypeDTO toGoalTypeDTO(GoalType goalType);
+    GoalTypeDto toGoalTypeDTO(GoalType goalType);
 
-    GoalType toGoalType(GoalTypeDTO goalTypeDTO);
+    GoalType toGoalType(GoalTypeDto goalTypeDTO);
 }

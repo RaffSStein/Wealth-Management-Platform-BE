@@ -1,8 +1,8 @@
 package raff.stein.customer.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.openapitools.api.OnboardingApi;
-import org.openapitools.model.CustomerOnboardingDTO;
+import io.openapiprocessor.openapi.api.OnboardingApi;
+import io.openapiprocessor.openapi.model.CustomerOnboardingDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import raff.stein.customer.controller.mapper.onboarding.CustomerOnboardingDTOToCustomerOnboardingMapper;
@@ -25,27 +25,27 @@ public class OnboardingController implements OnboardingApi {
 
     @CustomerAccess(CustomerAccessLevel.READ)
     @Override
-    public ResponseEntity<CustomerOnboardingDTO> getActiveOnboarding(UUID customerId) {
+    public ResponseEntity<CustomerOnboardingDto> getActiveOnboarding(UUID customerId) {
         final CustomerOnboarding activeOnboarding = onboardingService.getActiveOnboarding(customerId);
-        final CustomerOnboardingDTO customerOnboardingDTO = customerOnboardingDTOToCustomerOnboardingMapper
+        final CustomerOnboardingDto customerOnboardingDTO = customerOnboardingDTOToCustomerOnboardingMapper
                 .toCustomerOnboardingDTO(activeOnboarding);
         return ResponseEntity.ok(customerOnboardingDTO);
     }
 
     @CustomerAccess(CustomerAccessLevel.READ)
     @Override
-    public ResponseEntity<CustomerOnboardingDTO> getOnboardingById(UUID customerId, Long onboardingId) {
+    public ResponseEntity<CustomerOnboardingDto> getOnboardingById(UUID customerId, Long onboardingId) {
         final CustomerOnboarding onboarding = onboardingService.getOnboardingById(customerId, onboardingId);
-        final CustomerOnboardingDTO customerOnboardingDTO = customerOnboardingDTOToCustomerOnboardingMapper
+        final CustomerOnboardingDto customerOnboardingDTO = customerOnboardingDTOToCustomerOnboardingMapper
                 .toCustomerOnboardingDTO(onboarding);
         return ResponseEntity.ok(customerOnboardingDTO);
     }
 
     @CustomerAccess(CustomerAccessLevel.READ)
     @Override
-    public ResponseEntity<List<CustomerOnboardingDTO>> getOnboardingInstances(UUID customerId) {
+    public ResponseEntity<List<CustomerOnboardingDto>> getOnboardingInstances(UUID customerId) {
         final List<CustomerOnboarding> onboardingInstances = onboardingService.getOnboardingInstances(customerId);
-        final List<CustomerOnboardingDTO> customerOnboardingDTOs = onboardingInstances
+        final List<CustomerOnboardingDto> customerOnboardingDTOs = onboardingInstances
                 .stream()
                 .map(customerOnboardingDTOToCustomerOnboardingMapper::toCustomerOnboardingDTO)
                 .toList();

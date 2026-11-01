@@ -34,6 +34,14 @@ class CustomerAccessInterceptorTest {
         public void list() {
         }
 
+        @CustomerAccess(CustomerAccessLevel.LIST)
+        public void book() {
+        }
+
+        @CustomerAccess(CustomerAccessLevel.ADVISOR_DASHBOARD)
+        public void dashboard() {
+        }
+
         public void unannotated() {
         }
     }
@@ -64,6 +72,12 @@ class CustomerAccessInterceptorTest {
 
         call("list", Map.of("userId", ID.toString()));
         verify(policy).assertCanListByUser(ID);
+
+        call("book", Map.of());
+        verify(policy).assertCanList();
+
+        call("dashboard", Map.of());
+        verify(policy).assertCanReadAdvisorDashboard();
     }
 
     @Test

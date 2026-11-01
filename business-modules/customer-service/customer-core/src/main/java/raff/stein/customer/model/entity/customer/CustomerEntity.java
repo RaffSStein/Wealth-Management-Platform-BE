@@ -15,12 +15,20 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Table(name = "customers")
+@Table(name = "customers",
+        // one record per bank for a client; a record not linked yet has no user, and NULLs don't collide
+        uniqueConstraints = {
+                @UniqueConstraint(name = CustomerEntity.TENANT_USER_CONSTRAINT, columnNames = {"tenant_id", "user_id"}),
+                @UniqueConstraint(name = CustomerEntity.TENANT_EMAIL_CONSTRAINT, columnNames = {"tenant_id", "email"})
+        })
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CustomerEntity extends TenantScopedEntity<UUID> {
+
+    public static final String TENANT_USER_CONSTRAINT = "uk_customers_tenant_user";
+    public static final String TENANT_EMAIL_CONSTRAINT = "uk_customers_tenant_email";
 
     //TODO: split customer types specific fields into separate entities if needed
 
@@ -28,9 +36,25 @@ public class CustomerEntity extends TenantScopedEntity<UUID> {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    //TODO: holds the creator today, so an advisor's client points at the advisor; it must become the client (nullable)
+    /**
+     * The client's login, never the staff member who created the record. Null until the client holds the CUSTOMER role
+     * in this branch; the role assignment events keep it in step.
+     */
+    @Column
+    @Setter
+    private UUID userId;
+
+    /**
+     * The client's email, lowercase. It links the record to a login. Null only on records older than this field.
+     */
+    @Column
+    private String email;
+
+    /**
+     * The branch the customer belongs to, from the token that created it. Limits which advisors reach it.
+     */
     @Column(nullable = false)
-    private UUID userId;        // Reference to the user in the platform
+    private String branchCode;
 
     // Relationships
 

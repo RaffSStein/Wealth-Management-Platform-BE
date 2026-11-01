@@ -47,6 +47,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class RoleAssignmentServiceTest {
@@ -191,6 +192,41 @@ class RoleAssignmentServiceTest {
 
         verify(tokenRevocationService).revokeAllIssuedUpTo(TARGET.toString(), NOW.getEpochSecond());
         verify(eventPublisher).publishEvent(any(RoleAssignmentRevokedEvent.class));
+    }
+
+    @Test
+    void shouldGrantCustomerToAClientOfAnAdvisorWithoutACallerOrBankCheck() {
+        final KnownUserEntity client = KnownUserEntity.builder().userId(TARGET).email(TARGET_EMAIL).build();
+        when(assignmentRepository.findByUserIdAndBankCodeAndBranchCodeAndRole(TARGET, "BANK_A", "BR_01", "CUSTOMER"))
+                .thenReturn(Optional.empty());
+
+        service.grantCustomerToClient(client, "BANK_A", "BR_01", "advisor@bank.test");
+
+        final ArgumentCaptor<RoleAssignmentGrantedEvent> event = ArgumentCaptor.forClass(RoleAssignmentGrantedEvent.class);
+        verify(eventPublisher).publishEvent(event.capture());
+        assertEquals("CUSTOMER", event.getValue().getRole());
+        assertEquals("advisor@bank.test", event.getValue().getGrantedBy());
+        assertEquals("BR_01", event.getValue().getBranchCode());
+        verify(assignmentRepository).save(any());
+        verifyNoInteractions(bankBranchValidator);
+    }
+
+    @Test
+    void shouldAnnounceAgainARoleTheClientAlreadyHolds() {
+        final KnownUserEntity client = KnownUserEntity.builder().userId(TARGET).email(TARGET_EMAIL).build();
+        when(assignmentRepository.findByUserIdAndBankCodeAndBranchCodeAndRole(TARGET, "BANK_A", "BR_01", "CUSTOMER"))
+                .thenReturn(Optional.of(RoleAssignmentEntity.builder()
+                        .id(9L).userId(TARGET).userEmail(TARGET_EMAIL)
+                        .bankCode("BANK_A").branchCode("BR_01").role("CUSTOMER").grantedBy("bank-admin@bank.test")
+                        .build()));
+
+        service.grantCustomerToClient(client, "BANK_A", "BR_01", "advisor@bank.test");
+
+        final ArgumentCaptor<RoleAssignmentGrantedEvent> event = ArgumentCaptor.forClass(RoleAssignmentGrantedEvent.class);
+        verify(eventPublisher).publishEvent(event.capture());
+        assertEquals(9L, event.getValue().getAssignmentId());
+        assertEquals("bank-admin@bank.test", event.getValue().getGrantedBy());
+        verify(assignmentRepository, never()).save(any());
     }
 
     @Test

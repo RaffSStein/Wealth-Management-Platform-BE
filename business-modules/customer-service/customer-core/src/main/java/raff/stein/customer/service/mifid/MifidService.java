@@ -2,7 +2,7 @@ package raff.stein.customer.service.mifid;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openapitools.model.MifidFillingDTO;
+import io.openapiprocessor.openapi.model.MifidFillingDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import raff.stein.customer.controller.mapper.mifid.MifidFillingToMifidFillingDTOMapper;
@@ -73,14 +73,28 @@ public class MifidService {
     public MifidFilling handleFilling(
             MifidActionType actionType,
             UUID customerId,
-            MifidFillingDTO dto) {
+            MifidFillingDto dto) {
+        return handleFilling(actionType, customerId, null, dto);
+    }
+
+    /**
+     * Same as {@link #handleFilling(MifidActionType, UUID, MifidFillingDto)} on an existing filling: the id in the path
+     * wins over the body.
+     */
+    @Transactional
+    public MifidFilling handleFilling(
+            MifidActionType actionType,
+            UUID customerId,
+            Long fillingId,
+            MifidFillingDto dto) {
         if (actionType == null) {
             throw new IllegalArgumentException("Action type must not be null");
         }
-        return mifidWorkflowDispatcher.dispatch(
-                actionType,
-                customerId,
-                mifidFillingToMifidFillingDTOMapper.toMifidFilling(dto));
+        final MifidFilling filling = mifidFillingToMifidFillingDTOMapper.toMifidFilling(dto);
+        if (fillingId != null) {
+            filling.setFillingId(fillingId);
+        }
+        return mifidWorkflowDispatcher.dispatch(actionType, customerId, filling);
     }
 
 }

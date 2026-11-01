@@ -36,6 +36,10 @@ public class JwtTokenIssuer {
     @Value("${security.jwt.password-setup-expiration-seconds:900}") // 15 minutes default
     private long passwordSetupExpirationSeconds;
 
+    // a client an advisor created may read the email much later than someone who has just signed up
+    @Value("${security.jwt.client-setup-expiration-seconds:259200}") // 72 hours default
+    private long clientSetupExpirationSeconds;
+
     private RSAPrivateKey loadPrivateKey() {
         try (InputStream is = privateKeyResource.getInputStream()) {
             String keyPem = new String(is.readAllBytes(), StandardCharsets.UTF_8)
@@ -54,11 +58,19 @@ public class JwtTokenIssuer {
     }
 
     public String issuePasswordSetupToken(String userId, String email) {
+        return issueSetupToken(userId, email, passwordSetupExpirationSeconds);
+    }
+
+    public String issueClientSetupToken(String userId, String email) {
+        return issueSetupToken(userId, email, clientSetupExpirationSeconds);
+    }
+
+    private String issueSetupToken(String userId, String email, long ttlSeconds) {
         Map<String, Object> extra = new HashMap<>();
         extra.put(WmpJwtClaims.EMAIL, email);
         extra.put(WmpJwtClaims.PURPOSE, WmpJwtClaims.PURPOSE_PASSWORD_SETUP);
         // no roles for this token
-        return buildJwt(userId, extra, passwordSetupExpirationSeconds);
+        return buildJwt(userId, extra, ttlSeconds);
     }
 
     public String issueToken(String subject, String email, List<String> roles, Map<String, Object> extraClaims) {

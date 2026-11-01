@@ -1,9 +1,9 @@
 package raff.stein.customer.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.openapitools.api.MifidApi;
-import org.openapitools.model.MifidFillingDTO;
-import org.openapitools.model.MifidQuestionnaireConfigDTO;
+import io.openapiprocessor.openapi.api.MifidApi;
+import io.openapiprocessor.openapi.model.MifidFillingDto;
+import io.openapiprocessor.openapi.model.MifidQuestionnaireConfigDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import raff.stein.customer.controller.mapper.mifid.MifidConfigDTOToMifidConfig;
@@ -27,69 +27,69 @@ public class MifidController implements MifidApi {
     private static final MifidFillingToMifidFillingDTOMapper mifidFillingToMifidFillingDTOMapper = MifidFillingToMifidFillingDTOMapper.MAPPER;
 
     @Override
-    public ResponseEntity<MifidQuestionnaireConfigDTO> getLatestValidMifidQuestionnaireConfig() {
+    public ResponseEntity<MifidQuestionnaireConfigDto> getLatestValidMifidQuestionnaireConfig() {
         MifidQuestionnaireConfig mifidConfig = mifidService.getLatestValidMifidQuestionnaireConfig();
-        MifidQuestionnaireConfigDTO mifidQuestionnaireConfigDTO = mifidConfigDTOToMifidConfig.toMifidConfigDTO(mifidConfig);
+        MifidQuestionnaireConfigDto mifidQuestionnaireConfigDTO = mifidConfigDTOToMifidConfig.toMifidConfigDTO(mifidConfig);
         return ResponseEntity.ok(mifidQuestionnaireConfigDTO);
     }
 
     @CustomerAccess(CustomerAccessLevel.READ)
     @Override
-    public ResponseEntity<MifidFillingDTO> getMifidFillingForCustomer(
+    public ResponseEntity<MifidFillingDto> getMifidFillingForCustomer(
             UUID customerId,
             Long fillingId) {
         final MifidFilling mifidFilling = mifidService.getMifidFilling(customerId, fillingId);
-        final MifidFillingDTO outputDTO = mifidFillingToMifidFillingDTOMapper.toMifidFillingDTO(mifidFilling);
+        final MifidFillingDto outputDTO = mifidFillingToMifidFillingDTOMapper.toMifidFillingDTO(mifidFilling);
         return ResponseEntity.ok(outputDTO);
     }
 
     @CustomerAccess(CustomerAccessLevel.READ)
     @Override
-    public ResponseEntity<MifidFillingDTO> getCurrentMifidFillingForCustomer(UUID customerId) {
+    public ResponseEntity<MifidFillingDto> getCurrentMifidFillingForCustomer(UUID customerId) {
         final MifidFilling mifidFilling = mifidService.getCurrentSubmittedMifidFilling(customerId);
-        final MifidFillingDTO outputDTO = mifidFillingToMifidFillingDTOMapper.toMifidFillingDTO(mifidFilling);
+        final MifidFillingDto outputDTO = mifidFillingToMifidFillingDTOMapper.toMifidFillingDTO(mifidFilling);
         return ResponseEntity.ok(outputDTO);
     }
 
     @CustomerAccess(CustomerAccessLevel.WRITE)
     @Override
-    public ResponseEntity<MifidFillingDTO> saveMifidFillingForCustomer(
+    public ResponseEntity<MifidFillingDto> saveMifidFillingForCustomer(
             UUID customerId,
-            MifidFillingDTO mifidFillingDTO) {
+            MifidFillingDto mifidFillingDTO) {
         final MifidFilling mifidFilling = mifidService.handleFilling(
                 MifidActionType.SAVE,
                 customerId,
                 mifidFillingDTO);
-        final MifidFillingDTO outputDTO = mifidFillingToMifidFillingDTOMapper.toMifidFillingDTO(mifidFilling);
+        final MifidFillingDto outputDTO = mifidFillingToMifidFillingDTOMapper.toMifidFillingDTO(mifidFilling);
         return ResponseEntity.ok(outputDTO);
     }
 
     @CustomerAccess(CustomerAccessLevel.WRITE)
     @Override
-    public ResponseEntity<MifidFillingDTO> updateMifidFillingForCustomer(
+    public ResponseEntity<MifidFillingDto> updateMifidFillingForCustomer(
             UUID customerId,
             Long fillingId,
-            MifidFillingDTO mifidFillingDTO) {
+            MifidFillingDto mifidFillingDTO) {
         // the path is authoritative over any fillingId sent in the body
-        mifidFillingDTO.setFillingId(fillingId);
         final MifidFilling mifidFilling = mifidService.handleFilling(
                 MifidActionType.UPDATE,
                 customerId,
+                fillingId,
                 mifidFillingDTO);
-        final MifidFillingDTO outputDTO = mifidFillingToMifidFillingDTOMapper.toMifidFillingDTO(mifidFilling);
+        final MifidFillingDto outputDTO = mifidFillingToMifidFillingDTOMapper.toMifidFillingDTO(mifidFilling);
         return ResponseEntity.ok(outputDTO);
     }
 
     @CustomerAccess(CustomerAccessLevel.WRITE)
     @Override
-    public ResponseEntity<MifidFillingDTO> submitQuestionnaire(
+    public ResponseEntity<MifidFillingDto> submitQuestionnaire(
             UUID customerId,
-            MifidFillingDTO mifidFillingDTO) {
+            MifidFillingDto mifidFillingDTO) {
         final MifidFilling mifidFilling = mifidService.handleFilling(
                 MifidActionType.SUBMIT,
                 customerId,
                 mifidFillingDTO);
-        final MifidFillingDTO outputDTO = mifidFillingToMifidFillingDTOMapper.toMifidFillingDTO(mifidFilling);
+        final MifidFillingDto outputDTO = mifidFillingToMifidFillingDTOMapper.toMifidFillingDTO(mifidFilling);
         return ResponseEntity.ok(outputDTO);
     }
 }

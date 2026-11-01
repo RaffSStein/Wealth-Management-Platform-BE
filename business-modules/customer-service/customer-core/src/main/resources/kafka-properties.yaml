@@ -18,6 +18,22 @@ kafka:
         consuming-enabled: true
         name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.customer-service.domain}.customer-rejected"
         groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${spring.application.name}.customer-rejected.sa.${kafka.broker.serviceAccount}"
+    user-service:
+      domain: user-service
+      # produced topics: a command to user-service, when an advisor creates a client
+      create-user:
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.user-service.domain}.create-user"
+    profiler-service:
+      domain: profiler-service
+      # consumed topics: the CUSTOMER role assignments link and unlink customer records
+      role-assignment-granted:
+        enabled: true
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.profiler-service.domain}.role-assignment-granted"
+        groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${spring.application.name}.role-assignment-granted.sa.${kafka.broker.serviceAccount}"
+      role-assignment-revoked:
+        enabled: true
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.profiler-service.domain}.role-assignment-revoked"
+        groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${spring.application.name}.role-assignment-revoked.sa.${kafka.broker.serviceAccount}"
     # consumed topics
     document:
       domain: document-service

@@ -1,11 +1,10 @@
 package raff.stein.customer.controller;
 
 import org.junit.jupiter.api.Test;
-import org.openapitools.api.CustomerApi;
-import org.openapitools.api.MifidApi;
-import org.openapitools.api.OnboardingApi;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import io.openapiprocessor.openapi.api.CustomerApi;
+import io.openapiprocessor.openapi.api.MifidApi;
+import io.openapiprocessor.openapi.api.OnboardingApi;
+import org.springframework.web.bind.annotation.GetMapping;
 import raff.stein.customer.controller.access.CustomerAccess;
 import raff.stein.customer.controller.access.CustomerAccessLevel;
 
@@ -33,6 +32,25 @@ class CustomerEndpointsAccessTest {
         assertEquals(13, checked);
     }
 
+    @Test
+    void shouldScopeTheListEndpoints() throws Exception {
+        int checked = 0;
+        for (final Method method : CustomerController.class.getDeclaredMethods()) {
+            if (method.isSynthetic()) {
+                continue;
+            }
+            if (method.getName().equals("getCustomers")) {
+                assertEquals(CustomerAccessLevel.LIST, method.getAnnotation(CustomerAccess.class).value());
+                checked++;
+            }
+            if (method.getName().equals("getAdvisorDashboardStatistics")) {
+                assertEquals(CustomerAccessLevel.ADVISOR_DASHBOARD, method.getAnnotation(CustomerAccess.class).value());
+                checked++;
+            }
+        }
+        assertEquals(2, checked);
+    }
+
     private static int checkAll(Class<?> api, Class<?> controller) throws Exception {
         int checked = 0;
         for (final Method apiMethod : api.getMethods()) {
@@ -54,9 +72,8 @@ class CustomerEndpointsAccessTest {
         if (apiMethod.getName().equals("getCustomersByUserId")) {
             return CustomerAccessLevel.LIST_BY_USER;
         }
-        final RequestMapping mapping = apiMethod.getAnnotation(RequestMapping.class);
-        assertNotNull(mapping, apiMethod.getName() + " has no @RequestMapping");
-        return Arrays.asList(mapping.method()).contains(RequestMethod.GET)
+        // the processor generates @GetMapping, @PostMapping...
+        return apiMethod.isAnnotationPresent(GetMapping.class)
                 ? CustomerAccessLevel.READ
                 : CustomerAccessLevel.WRITE;
     }

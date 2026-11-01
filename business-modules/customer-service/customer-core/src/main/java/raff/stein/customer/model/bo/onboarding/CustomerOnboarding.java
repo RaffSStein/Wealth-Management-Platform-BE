@@ -2,7 +2,6 @@ package raff.stein.customer.model.bo.onboarding;
 
 import lombok.Builder;
 import lombok.Data;
-import org.openapitools.model.OnboardingStatus;
 
 import java.util.List;
 import java.util.UUID;
@@ -13,7 +12,7 @@ public class CustomerOnboarding {
 
     private Long id;
     private UUID customerId;
-    private OnboardingStatus onboardingStatus;
+    private String onboardingStatus;
     private String reason;
     private Boolean valid;
     private List<CustomerOnboardingStep> steps;

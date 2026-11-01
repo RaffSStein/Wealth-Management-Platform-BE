@@ -10,6 +10,10 @@ kafka:
     # consumed topics
     user-service:
       domain: user-service
+      customer-user-resolved:
+        enabled: true
+        name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.user-service.domain}.customer-user-resolved"
+        groupId: "${kafka.broker.environment}.${kafka.broker.tenant}.t.${spring.application.name}.customer-user-resolved.sa.${kafka.broker.serviceAccount}"
       user-created:
         enabled: true
         name: "${kafka.broker.environment}.${kafka.broker.tenant}.${kafka.topics.user-service.domain}.user-created"
