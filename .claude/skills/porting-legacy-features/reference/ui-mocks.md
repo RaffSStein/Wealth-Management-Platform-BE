@@ -21,13 +21,19 @@ Mocks live on the existing Design canvas **"Wealth Platform Visual Identities"**
    Follow them for every write. They are needed only for drawing, not for planning.
 2. Read `project/canvas.json` (board list, `order`, existing `n<Area>` notes) and `project/CHANGELOG.md`
    (what the FE already built and what the BE already promised).
-3. Find the closest existing artboard (`C-*` built screens, `F-*` future screens) and extend it, rather than
-   adding a near-duplicate. The same goes for notes: if an `n<Area>` note already covers the screen, extend it.
+3. Find the closest existing artboard and extend it, rather than adding a near-duplicate: a `J*` built screen, an
+   `F-J*` concept, or an older `F-<Feature>` board (`F-Investments`, `F-Orders`, `F-Markets`, `F-Account`, `F-Advisor`,
+   `F-Instrument`). `J0-Map` gives the overview of the journeys. The same goes for notes: if an `n<Area>` note already
+   covers the screen, extend it. When drawing from an approved port spec, extend the matching `F-J` board and its note.
 
 ## Conventions on the canvas
 - Visual identity is **Ledger Pro**: dark, data-dense, IBM Plex Sans / Mono, 6px control radius.
   No new tokens, fonts or components unless the user asks.
-- New screens are `F-<Feature>.dc.html`. They become `C-*` only when the FE has built them.
+- One file per screen: `F-J<journey>-<step>[branch letter]-<Name>.dc.html` (e.g. `F-J12-05a-NotSuitable.dc.html`).
+  It becomes `J...` only when the FE has built it.
+- Start from `T-AppPage`, `T-PublicPage` or `T-OnboardingStep`, and reuse parts of `T-Components`.
+- A row is one journey, and states or branches stack under their step. Add a new journey to `J0-Map`.
+- `F-J8` to `F-J23` are exploratory, drawn ahead of port specs: their endpoints are proposals, not contracts.
 - Navigation: Account · Investments · Markets top nav with a per-section sidebar. Advisor is a role-based section.
 - Every card fed by data the BE doesn't serve yet carries a `SAMPLE DATA` badge. Screens the BE can't support yet use a
   `COMING SOON` card (dashed border, icon, one line).

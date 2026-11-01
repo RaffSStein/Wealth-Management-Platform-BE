@@ -9,7 +9,7 @@
       "Reads 00-index.md and 01-product-catalogue.md in full; from other domain files only the grep-scoped REQ sections listed under Spans (e.g. the 08 shelf), never whole files",
       "Places the feature in product-service and plans its migration to the api-data / event-data / core split as step 0",
       "Produces a port spec from the template, cites every in-scope REQ id, and waits for approval before writing code",
-      "Plans an F-<Feature> artboard on the existing Design canvas (no new canvas) with an n<Area> endpoint note"
+      "Plans an F-J<journey>-<step>-<Name> artboard on the existing Design canvas (no new canvas) with an n<Area> endpoint note"
     ]
   },
   {
