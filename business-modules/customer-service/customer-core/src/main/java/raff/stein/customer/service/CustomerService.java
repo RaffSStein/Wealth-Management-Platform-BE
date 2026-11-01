@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import raff.stein.customer.exception.CustomerNotFoundException;
 import raff.stein.customer.model.bo.customer.Customer;
 import raff.stein.customer.model.entity.customer.CustomerEntity;
+import raff.stein.customer.model.entity.customer.enumeration.CustomerStatus;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
 import raff.stein.customer.model.entity.customer.mapper.CustomerToCustomerEntityMapper;
 import raff.stein.customer.repository.customer.CustomerRepository;
@@ -42,6 +43,9 @@ public class CustomerService {
         if (customerAccessPolicy.isLimitedToOneRecord() && customerRepository.existsByUserId(ownerId)) {
             throw ResourceConflictException.of(ErrorCode.CUSTOMER_ALREADY_EXISTS, ownerId);
         }
+        // the status only moves through the onboarding steps: a client must not be able to start as ACTIVE and skip them
+        customer.setCustomerStatus(CustomerStatus.DRAFT.name());
+        customer.setOnboardingDate(null);
         // Save the customer entity to the database
         CustomerEntity savedCustomerEntity = customerRepository.save(customerToCustomerEntityMapper.toCustomerEntity(customer));
         // Initiate the onboarding process for the saved customer

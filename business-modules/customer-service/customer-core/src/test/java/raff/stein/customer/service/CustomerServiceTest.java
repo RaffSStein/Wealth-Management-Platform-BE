@@ -16,12 +16,14 @@ import raff.stein.platformcore.exception.types.forbidden.AccessDeniedException;
 import raff.stein.platformcore.security.context.SecurityContextHolder;
 import raff.stein.platformcore.security.context.WMPContext;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -80,6 +82,22 @@ class CustomerServiceTest {
         final Customer created = customerService.initCustomer(customerFor(null));
 
         assertEquals(CALLER_ID, created.getUserId());
+    }
+
+    @Test
+    void shouldAlwaysStartAsDraftWhateverTheBodySays() {
+        for (final String role : List.of("CUSTOMER", "ADVISOR")) {
+            signInAs(role);
+            stubSave();
+            final Customer input = customerFor(CALLER_ID);
+            input.setCustomerStatus("ACTIVE");
+            input.setOnboardingDate(LocalDate.of(2020, 1, 1));
+
+            final Customer created = customerService.initCustomer(input);
+
+            assertEquals("DRAFT", created.getCustomerStatus(), role);
+            assertNull(created.getOnboardingDate(), role);
+        }
     }
 
     @Test
