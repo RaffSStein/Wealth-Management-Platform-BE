@@ -9,7 +9,7 @@ Wealth Management Platform (WMP): an event-driven, Spring Boot microservices bac
 
 - Java 21, Spring Boot 4.0.x, Maven multi-module (root `pom.xml` is the parent of everything).
 - Kafka (CloudEvents envelope) for inter-service communication; PostgreSQL with one database per service.
-- JSON logs to `./logs`, shipped to Splunk via a Universal Forwarder.
+- JSON logs to `./logs`. Shipping them to Splunk via a Universal Forwarder is not wired yet.
 
 ## Build & run
 
@@ -22,10 +22,13 @@ docker compose -f docker-compose.yml up -d                               # local
 
 - CI (`.github/workflows/maven.yml`) runs `clean install` then `test` on JDK 21 Temurin for pushes/PRs to `main`. Keep it green.
 - The build regenerates OpenAPI code; a broken YAML spec breaks every dependent module.
-- Local infra (`docker-compose.yml` + `.env`): Kafka + Kafka Connect + Kafbat UI, one `postgres-<service>` container per service
-  (user/pass `test`/`test`), Splunk + forwarder, MinIO and fake-GCS (document storage), MailHog (SMTP `1025`, UI `8025`),
+- Local infra (`docker-compose.yml` + `.env`): Kafka + Kafbat UI, one `postgres-<service>` container per service with a datasource
+  (user/pass `test`/`test`), MinIO and fake-GCS (document storage), MailHog (SMTP `1025`, UI `8025`),
   Redis (`6379`, shared JWT revocation store: services answer 503 to authenticated calls while it's down),
   WireMock external-provider stubs (`8094`, mappings in `integration/wiremock/mappings`, one path prefix per provider).
+  Off by default, enabled with `--profile`: `logging` (Splunk + forwarder) and `skeleton-services` (Postgres for the
+  services with no datasource yet: order, advisor, notification, portfolio, product, reporting). When a service gets a
+  datasource, remove the profile from its Postgres container.
 - Each service has its own HTTP port, context path `/<service-name>` and DB port. Check the service's `application.yaml`
   and `docker-compose.yml` before choosing a new port, so ports don't collide.
 
