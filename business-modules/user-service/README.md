@@ -58,6 +58,8 @@ Technical overview and developer notes for the user-service module. This documen
   - `security.jwt.publicKeyPath` (platform-core)
   - `security.jwt.private-key-path` (user-service, for token issuance when applicable)
 - CORS/CSRF: configured for stateless APIs in platform-core, inherited by user-core.
+- Outbox: `platform.outbox.enabled: true`. `user-created` and `customer-user-resolved` are stored in the same transaction as
+  the user and sent at least once by a relay; the `create-user` consumer runs in one transaction.
 
 ## Authentication, role assignments and tenants
 user-service is the **identity provider**: signup, password, login and tokens. Who holds which role where is decided

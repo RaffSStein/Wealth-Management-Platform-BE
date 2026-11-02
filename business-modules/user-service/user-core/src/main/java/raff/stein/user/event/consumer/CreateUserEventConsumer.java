@@ -9,6 +9,7 @@ import org.openapitools.model.CustomerUserResolvedEvent;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
 import raff.stein.platformcore.messaging.consumer.WMPBaseEventConsumer;
 import raff.stein.user.event.consumer.mapper.CreateUserEventToUserMapper;
 import raff.stein.user.event.producer.CustomerUserResolvedEventPublisher;
@@ -33,6 +34,7 @@ public class CreateUserEventConsumer extends WMPBaseEventConsumer {
     private final UserCreatedEventPublisher userCreatedEventPublisher;
     private final CustomerUserResolvedEventPublisher customerUserResolvedEventPublisher;
     private final JwtTokenIssuer jwtTokenIssuer;
+    private final TransactionTemplate transactionTemplate;
 
     @KafkaListener(
             topics = "${kafka.topics.user-service.create-user.name}",
@@ -43,7 +45,9 @@ public class CreateUserEventConsumer extends WMPBaseEventConsumer {
         if(eventData.isEmpty()) {
             log.warn("Received empty payload from create-user topic for eventId: [{}]", cloudEvent.getId());
         }
-        eventData.ifPresent(e -> processCreateUserEvent(e, cloudEvent.getId()));
+        // one transaction: the user and the events about it are stored together, so a crash in between can't leave
+        // a user nobody was told about. A redelivery then finds the user, or finds nothing and starts over
+        eventData.ifPresent(e -> transactionTemplate.executeWithoutResult(status -> processCreateUserEvent(e, cloudEvent.getId())));
     }
 
 

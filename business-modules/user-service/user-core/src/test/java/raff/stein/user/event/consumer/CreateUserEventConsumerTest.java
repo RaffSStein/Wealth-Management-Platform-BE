@@ -7,6 +7,8 @@ import org.mockito.ArgumentCaptor;
 import org.openapitools.model.CreateUserEvent;
 import org.openapitools.model.CustomerUserResolvedEvent;
 import org.openapitools.model.User;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import raff.stein.user.event.producer.CustomerUserResolvedEventPublisher;
 import raff.stein.user.event.producer.UserCreatedEventPublisher;
 import raff.stein.user.model.entity.UserEntity;
@@ -45,7 +47,8 @@ class CreateUserEventConsumerTest {
                 .email(call.<UserEntity>getArgument(0).getEmail())
                 .build());
         // the payload parsing is the base class's job, covered in platform-core: only the handling is tested here
-        consumer = new CreateUserEventConsumer(userRepository, userCreatedEventPublisher, resolvedEventPublisher, jwtTokenIssuer) {
+        consumer = new CreateUserEventConsumer(userRepository, userCreatedEventPublisher, resolvedEventPublisher, jwtTokenIssuer,
+                new TransactionTemplate(mock(PlatformTransactionManager.class))) {
             @Override
             @SuppressWarnings("unchecked")
             public <T> Optional<T> getEventPayload(CloudEvent cloudEvent, Class<T> eventType) {

@@ -31,6 +31,11 @@ security:
     issuer: user-service
     expiration-seconds: 3600
 
+platform:
+  outbox:
+    # events are stored with the business write and sent by the relay, so a crash or a broker outage can't lose them
+    enabled: true
+
 wmp:
   bootstrap:
     # first platform run: users created at startup if missing; profiler-service makes them PLATFORM_ADMIN.
