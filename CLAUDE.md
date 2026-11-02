@@ -89,6 +89,9 @@ docs/domain/                   functional docs: process/ (markdown) + assets/ (d
 ### Events (Kafka)
 - Publishers are `@Component`s in `event/producer`, named `<EventName>EventPublisher`. They map to the generated event class,
   wrap it in `new EventData(payload)` and call `WMPBaseEventPublisher.publishCloudEvent(topic, eventData)`.
+- With `platform.outbox.enabled: true` (set per service) that call stores the event in the `event_outbox` table and a relay
+  sends it. Call it inside the transaction that writes the data, or from an `@EventPublishingListener` method (not a plain
+  `@TransactionalEventListener(AFTER_COMMIT)`). Delivery is at least once, so consumers must tolerate a replay.
 - Consumers are in `event/consumer`, named `<EventName>EventConsumer`. They extend `WMPBaseEventConsumer`, are gated with
   `@ConditionalOnProperty(name = "kafka.topics...enabled", havingValue = "true")`, use
   `@KafkaListener(topics = "${...name}", groupId = "${...groupId}", containerFactory = "kafkaListenerFactory")` and read the

@@ -200,7 +200,7 @@ sequenceDiagram
     alt CUSTOMER
         PS->>PS: save role assignment
         PS-->>A: 201 {outcome: ASSIGNED, assignment}
-        PS->>K: role-assignment-granted (after commit)
+        PS->>K: role-assignment-granted (outbox, same transaction)
         K-->>US: copy into branch_users
     else ADVISOR / BANK_ADMIN
         PS->>PS: save request PENDING
@@ -250,7 +250,7 @@ flowchart TB
     B -- no --> X["403"]
     B -- yes --> C["delete the assignment"]
     C --> D["Redis: user-revoked-before:{userId} = now<br/>every token of the user issued until now is rejected"]
-    D --> F["204, then role-assignment-revoked (after commit)"]
+    D --> F["204, then role-assignment-revoked (outbox, same transaction)"]
     F --> G["user-service removes it from branch_users"]
     D -.->|Redis down| Y["503, nothing changed"]
 ```
@@ -402,8 +402,8 @@ Finding users (user-service, base URL `http://localhost:8083/user-service`):
 | `<env>.<tenant>.profiler-service.role-assignment-revoked` | profiler | user-service | `assignmentId, userId, email, bankCode, branchCode, role, revokedBy` |
 | `<env>.<tenant>.user-service.user-created` | user-service | profiler (`known_users`, bootstrap), email-service | user, onboarding token |
 
-Profiler publishes **after the transaction commits** (`@TransactionalEventListener(AFTER_COMMIT)`): a rolled-back
-assignment is never announced. Schemas: `profiler-event-data.yaml`, `user-event-data.yaml`.
+Profiler stores the event **in the same transaction** through the outbox (`@EventPublishingListener`): a rolled-back
+assignment is never announced, and a committed one is not lost. Schemas: `profiler-event-data.yaml`, `user-event-data.yaml`.
 
 ## 12. Data model
 

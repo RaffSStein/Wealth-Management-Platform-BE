@@ -205,6 +205,11 @@ the **same transaction as the business write**, and a relay delivers it to Kafka
   `status = 'PENDING'` and `attempts = 0` to send it again.
 - **Consumers must tolerate replays.** A crash after the broker's ack and before the delete sends the event again with the same
   CloudEvent id. Make handlers idempotent, or skip an id you have already handled.
+  Replay-safe today: the role-assignment consumers (user, customer, profiler), `create-user`, profiler `user-created` and
+  `customer-user-resolved` (upserts and existence checks), and the customer onboarding steps (upsert; `FINALIZE` runs only while
+  in progress). Not deduplicated: email-service sends a second onboarding mail, and a replayed `customer-onboarded` runs the
+  AML check again (calling the providers again), adds a second verification row and sends a second `customer-created` or
+  `customer-rejected`, which the onboarding ignores once it is closed but a new consumer of those topics would see twice.
 - **Payloads are stored.** Events such as `UserCreatedEvent` carry secrets (a setup token). The row is deleted once delivered, but
   a `FAILED` row keeps its payload.
 

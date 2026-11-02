@@ -38,7 +38,7 @@ sequenceDiagram
     participant PS as profiler-service
     A->>CS: POST /customer/init {..., email}
     CS-->>A: 200, userId null
-    CS->>US: create-user {user, bankCode, branchCode, requestedBy}, after the commit
+    CS->>US: create-user {user, bankCode, branchCode, requestedBy}, stored in the outbox with the record
     alt no login with this email
         US->>US: create the login, issue a setup token (72 hours, works once)
         US->>ES: user-created
@@ -64,8 +64,9 @@ sequenceDiagram
 - **Revoking the CUSTOMER role** clears `user_id`. The email stays, so granting the role again links the record again. A bank
   admin granting CUSTOMER by hand also links a waiting record.
 - **Known limits:** those required name fields mean a legal entity can't be created by an advisor yet. A wrong address that matches an existing account gives that person the role and the record, and the email
-  can't be corrected yet (revoke the role to undo it). An existing account isn't notified. There's no outbox yet, so a crash
-  between the commit and the send leaves a record unlinked with no email.
+  can't be corrected yet (revoke the role to undo it). An existing account isn't notified. The login request goes through the
+  transactional outbox, so a crash between the commit and the send doesn't lose it: the relay sends it after the restart.
+  Delivery is at least once, and user-service ignores a request for an email that already has an account.
 
 ---
 

@@ -31,8 +31,8 @@
   `...-completed` event with the totals. Consumers stage the chunks and promote the snapshot only on completion.
   If a single run is too large even for chunks, publish a claim-check (a reference to the staged data) instead.
 - A state change and its event are published together: if the transaction rolls back, nothing is published.
-  Use the platform-core transactional outbox once it exists. Which ports need it is defined in SKILL.md Phase 0. Other
-  ports publish directly and note the risk in the port spec.
+  Use the platform-core transactional outbox (`platform.outbox.enabled: true` in the service). Which ports need it is
+  defined in SKILL.md Phase 0. Consumers must tolerate a replay of the same CloudEvent id.
 
 ## Layering and patterns
 - DTO → controller mapper → BO → service → entity mapper → entity → repository. No DTOs in services.

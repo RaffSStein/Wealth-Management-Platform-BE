@@ -30,7 +30,7 @@ Ports **behaviour**, never code. The legacy system is the functional reference. 
 |---|---|
 | ✓ **Built.** Multi-tenancy in platform-core: new business entities extend `TenantScopedEntity` (see `core/platform-core/README.md`, "Multi-tenancy") | **every** domain port |
 | Per-bank settings: typed values in `bank-service` tables (not files), feature flags in `profiler-service`, cached reader in platform-core | any port with `[TENANT-POLICY]` items |
-| Transactional outbox in platform-core | ports whose events create, execute or change orders or holdings (proposal, order, the order-side suitability re-check). Derived snapshots fed by files (AUM, valuations) don't need it: a failed run is simply re-run. |
+| ✓ **Built.** Transactional outbox in platform-core: set `platform.outbox.enabled: true` in the service, publish inside a transaction (`@EventPublishingListener` for event listeners). Consumers must tolerate replays (see `core/platform-core/README.md`, "Transactional outbox") | ports whose events create, execute or change orders or holdings (proposal, order, the order-side suitability re-check). Derived snapshots fed by files (AUM, valuations) don't need it: a failed run is simply re-run. |
 | Scheduled-job support in platform-core (single runner across instances; the lock library is a new dependency the user must approve) | any port with a scheduled job (feeds, expiry, end-of-day) |
 
 While a prerequisite is missing, steps 1–4 still run: analyse and write the spec, designing as if the prerequisite
