@@ -8,8 +8,8 @@ Each module represents a business domain and is implemented as an independent Sp
 ## Architecture
 - **Event-based**: Services communicate primarily via asynchronous events using Apache Kafka as the event broker.
 - **Database**: Each service uses PostgreSQL as its persistent storage. Each microservice has its own database instance, following the microservices best practice of database per service, even if all use PostgreSQL.
-- **Local Development**: Docker containers are provided for all infrastructure components (Kafka, Kafka UI, PostgreSQL, Splunk, Splunk Forwarder, etc.) to simplify local development and testing. Each service and infrastructure component is configured to avoid port conflicts.
-- **Logging & Monitoring**: All microservices log in JSON format to files under `/logs`, with log patterns including correlation IDs and user context. Logs are collected by a Splunk Universal Forwarder and made available in Splunk for centralized analysis. Logback configuration is shared and parametrized via Spring properties.
+- **Local Development**: Docker containers are provided for the infrastructure components (Kafka, Kafka UI, PostgreSQL, Redis, etc.) to simplify local development and testing. Splunk and the databases of services with no datasource yet are off by default (see How to Run). Each service and infrastructure component is configured to avoid port conflicts.
+- **Logging & Monitoring**: All microservices log in JSON format to files under `/logs`, with log patterns including correlation IDs and user context. Shipping them to Splunk through a Universal Forwarder is not wired yet. Logback configuration is shared and parametrized via Spring properties.
 - **Shared Core**: Common logic, logging, and security are centralized in the `platform-core` module and imported as a dependency by all business modules.
 
 ## Modules
@@ -50,6 +50,12 @@ Each business module may contain submodules for API data models (OpenAPI-generat
      docker compose -f docker-compose.yml up -d
      ```
      Requires Docker Desktop (or equivalent) with WSL2 backend.
+
+   Two groups of containers stay off to save memory. Add them when you need them:
+   - `--profile logging`: Splunk and its forwarder.
+   - `--profile skeleton-services`: Postgres for order, advisor, notification, portfolio, product and reporting, which have no datasource yet.
+
+   For example: `docker compose -f docker-compose.yml --profile logging up -d`.
 
 3. Build all modules using the Maven Wrapper (recommended):
 > Prerequisites for building and running the microservices:
@@ -94,7 +100,7 @@ All business events (e.g., proposal created, order executed) are published to Ka
 ## Logging & Observability
 - All microservices use a shared Logback configuration (in `platform-core`) that logs in JSON format, including correlation IDs, user IDs, and company context (populated via HandlerInterceptor and MDC).
 - Log file names are parametrized per application via Spring properties.
-- Splunk Universal Forwarder monitors all `.json` log files under `/logs` and forwards them to Splunk for centralized analysis.
+- Splunk Universal Forwarder is meant to monitor all `.json` log files under `/logs` and forward them to Splunk. This is not wired yet, so both containers sit behind the `logging` Compose profile.
 - Timezone and log pattern are standardized across all modules.
 
 ## Security

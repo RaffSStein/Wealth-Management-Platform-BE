@@ -51,7 +51,7 @@ Who owns what:
 
 ## 2. Prerequisites
 
-1. **Infrastructure**: `docker compose -f docker-compose.yml up -d` (Kafka, one Postgres per service, Redis, MailHog,
+1. **Infrastructure**: `docker compose -f docker-compose.yml up -d` (Kafka, one Postgres per service with a datasource, Redis, MailHog,
    WireMock...).
 2. **Seed data**, once per fresh database (the tables are created by Hibernate when each service starts for the first time, so start the
    service once before seeding; see CLAUDE.md, "Configuration"):
