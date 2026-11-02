@@ -2,6 +2,11 @@ server:
   port: 8091
   servlet:
     context-path: /document-service
+platform:
+  outbox:
+    # events are stored with the business write and sent by the relay, so a crash or a broker outage can't lose them
+    enabled: true
+
 spring:
   application:
     name: document-service

@@ -70,6 +70,11 @@ The service is event-driven and interacts with the following Kafka topics:
 
 Event payloads follow the schemas defined in `document-event-data`.
 
+Events go through the platform-core transactional outbox (`platform.outbox.enabled: true`). `file-validated` is stored with
+the validation result. `document-uploaded` is stored with the document rows, after the file reached the storage, so a failed
+save can leave a stored file with no row and no `document-uploaded`. `file-validated` is committed before the upload, so the
+same failure leaves a "valid" `file-validated` event with no document, and the client's retry sends another.
+
 ---
 
 ## Key Processes

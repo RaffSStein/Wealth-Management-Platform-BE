@@ -3,6 +3,7 @@ package raff.stein.document.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import raff.stein.document.event.producer.FileValidatedEventPublisher;
 import raff.stein.document.model.DocumentType;
 import raff.stein.document.model.File;
@@ -29,7 +30,9 @@ public class FileValidationService {
         return fileValidationResult.isValid();
     }
 
-    // validate the file and publish an event to notify other services about the validation result
+    // validate the file and publish an event to notify other services about the validation result.
+    // The result row and its event commit together, whatever the outcome: an invalid file is still reported
+    @Transactional
     public Boolean validateUploadedFileAndPublish(File fileInput, DocumentType documentType) {
         FileValidationResult fileValidationResult = getUploadedFileValidationResult(fileInput, documentType);
         // Save the validation result to the database

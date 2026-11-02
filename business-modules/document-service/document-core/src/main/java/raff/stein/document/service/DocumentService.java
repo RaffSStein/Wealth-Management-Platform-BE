@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import raff.stein.document.event.producer.DocumentUploadedEventPublisher;
 import raff.stein.document.exception.FileValidationException;
 import raff.stein.document.model.Document;
@@ -29,6 +30,7 @@ public class DocumentService {
     private final CloudStorageService cloudStorageService;
 
     private final DocumentUploadedEventPublisher documentUploadedEventPublisher;
+    private final TransactionTemplate transactionTemplate;
 
     private final DocumentRepository documentRepository;
     private final DocumentAccessLogRepository documentAccessLogRepository;
@@ -52,13 +54,17 @@ public class DocumentService {
         if(Boolean.TRUE.equals(isValid)) {
             // upload file to storage (e.g., S3, local file system, etc.)
             final Document uploadedDocument = cloudStorageService.uploadFile(fileInput);
-            // save document and related metadata to the database
-            final DocumentEntity savedDocument = buildDocumentEntityAndRelatedEntities(uploadedDocument, documentTypeEntity);
-            // publish an event to notify other services for upload and validation
-            final Document uploadedDocumentWithMetadata = documentEntityToDocumentMapper.toDocument(savedDocument);
-            documentUploadedEventPublisher.publishDocumentUploadedEvent(uploadedDocumentWithMetadata);
-            // return the uploaded document with metadata
-            return uploadedDocumentWithMetadata;
+            // the storage can't join a database transaction, so only the rows and the event are one unit: the
+            // event exists if and only if the document row does. A failed save leaves a stored file with no row
+            return transactionTemplate.execute(status -> {
+                // save document and related metadata to the database
+                final DocumentEntity savedDocument = buildDocumentEntityAndRelatedEntities(uploadedDocument, documentTypeEntity);
+                // publish an event to notify other services for upload and validation
+                final Document uploadedDocumentWithMetadata = documentEntityToDocumentMapper.toDocument(savedDocument);
+                documentUploadedEventPublisher.publishDocumentUploadedEvent(uploadedDocumentWithMetadata);
+                // return the uploaded document with metadata
+                return uploadedDocumentWithMetadata;
+            });
         } else {
             throw FileValidationException.with(fileInput.getCustomerId().toString()).get();
         }
