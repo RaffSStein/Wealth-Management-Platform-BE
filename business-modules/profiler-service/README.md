@@ -61,8 +61,10 @@ explicitly.
 | `...profiler-service.role-assignment-granted` | produced | user-service updates its read model; customer-service links a waiting record |
 | `...profiler-service.role-assignment-revoked` | produced | user-service removes it from its read model |
 
-Events are sent after the transaction commits. There is no transactional outbox yet: a crash between commit and send
-loses the event (Phase 0 follow-up).
+Events go through the platform-core transactional outbox (`platform.outbox.enabled: true`): each one is stored in the
+`event_outbox` table in the same transaction as the assignment, and the relay sends it to Kafka at least once. A crash or a
+broker outage delays an event but doesn't lose it, and a rolled-back assignment is never announced. Consumers may see an event
+twice.
 
 ## Key Processes
 - Assign → `role-assignment-granted` → user-service read model → the user gets the role (and its permissions) at the

@@ -24,6 +24,11 @@ spring:
       - classpath:platform-shared-properties.yaml
       - classpath:kafka-properties.yaml
 
+platform:
+  outbox:
+    # role grants and revocations are stored with the assignment and sent by the relay, so a crash can't lose them
+    enabled: true
+
 wmp:
   clients:
     bank-service:

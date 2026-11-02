@@ -4,14 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.RoleAssignmentGrantedEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
+import raff.stein.platformcore.messaging.publisher.EventPublishingListener;
 import raff.stein.platformcore.messaging.publisher.WMPBaseEventPublisher;
 import raff.stein.platformcore.messaging.publisher.model.EventData;
 
 /**
- * The service raises the event inside its transaction; it goes to Kafka only after the commit, so a rolled-back
- * assignment is never announced. No outbox yet: a crash between commit and send loses the event.
+ * The service raises the event inside its transaction. A rolled-back assignment is never announced, and with the outbox
+ * on (see platform-core) a committed one is never lost.
  */
 @Slf4j
 @Component
@@ -27,10 +26,10 @@ public class RoleAssignmentGrantedEventPublisher {
         this.topic = topic;
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    @EventPublishingListener
     public void publish(RoleAssignmentGrantedEvent event) {
         wmpBaseEventPublisher.publishCloudEvent(topic, new EventData(event));
-        log.info("Published RoleAssignmentGrantedEvent for assignmentId: [{}], role: [{}]",
+        log.info("Handed over RoleAssignmentGrantedEvent for assignmentId: [{}], role: [{}]",
                 event.getAssignmentId(), event.getRole());
     }
 }

@@ -487,9 +487,10 @@ erDiagram
   explicitly, in the policies.
 - **Eventual consistency.** A new role reaches the token after the event is applied, usually well under a second, and
   only at the next login or branch switch. Revocation does not wait for events: sessions end immediately via Redis.
-- **No outbox yet.** A crash between commit and publish loses the event: user-service would miss a grant or a
-  revocation. Phase 0 adds a transactional outbox. Until then, re-assigning repairs a missed grant, and a missed
-  revocation is still enforced for sessions by Redis.
+- **Transactional outbox.** Grant and revoke events are stored in profiler-service's `event_outbox` table in the same
+  transaction as the assignment, and a relay sends them to Kafka at least once. A crash or a broker outage delays them but
+  doesn't lose them. user-service can receive an event twice, so applying a grant or a revocation must stay idempotent.
+  An event that fails 10 times is marked `FAILED` in the table (and logged at error level) until someone resets it.
 - **Lazy expiry.** Pending requests expire only when someone tries to decide them (no scheduler yet).
 - **Admin permissions.** Only CUSTOMER and ADVISOR have feature permissions. The FE's admin area doesn't use the
   catalogue yet: admin roles get a section when it does.
