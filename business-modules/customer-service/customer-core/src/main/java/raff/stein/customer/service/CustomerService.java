@@ -112,7 +112,7 @@ public class CustomerService {
         }
     }
 
-    // sent after the commit by the publisher, so a rolled-back record never creates a login or an email
+    // stored in the outbox with the record, so a rolled-back record never creates a login or an email
     private void requestClientLogin(Customer customer) {
         final WMPContext caller = SecurityContextHolder.getContextOrThrow();
         applicationEventPublisher.publishEvent(new CreateUserEvent()

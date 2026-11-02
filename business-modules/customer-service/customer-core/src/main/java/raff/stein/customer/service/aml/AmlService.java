@@ -4,6 +4,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 import raff.stein.customer.event.producer.CustomerCreatedEventPublisher;
 import raff.stein.customer.event.producer.CustomerRejectedEventPublisher;
 import raff.stein.customer.exception.CustomerNotFoundException;
@@ -40,6 +41,7 @@ public class AmlService {
     private final CustomerCreatedEventPublisher customerCreatedEventPublisher;
     private final CustomerRejectedEventPublisher customerRejectedEventPublisher;
     private final CustomerRepository customerRepository;
+    private final TransactionTemplate transactionTemplate;
 
     private static final AmlVerificationToAmlVerificationEntityMapper amlVerificationMapper = AmlVerificationToAmlVerificationEntityMapper.MAPPER;
     private static final CustomerToCustomerEntityMapper customerMapper = CustomerToCustomerEntityMapper.MAPPER;
@@ -83,6 +85,13 @@ public class AmlService {
                 .amlResult(amlResult)
                 .build();
 
+        // the pipeline calls external providers, so it runs above, outside any transaction. What follows is one unit:
+        // the verification, the onboarding step and the outcome event are stored together or not at all
+        transactionTemplate.executeWithoutResult(status -> saveOutcomeAndPublish(amlVerification));
+    }
+
+    private void saveOutcomeAndPublish(final AmlVerification amlVerification) {
+        final Customer customer = amlVerification.getCustomer();
         final AmlVerificationEntity amlVerificationEntity = amlVerificationMapper.toAmlVerificationEntity(amlVerification);
         // the customer comes from the event payload: reference the persisted row by id instead of saving a copy of it
         amlVerificationEntity.setCustomer(customerRepository.getReferenceById(customer.getId()));
@@ -92,7 +101,7 @@ public class AmlService {
         onboardingService.proceedToStep(
                 OnboardingStep.AML,
                 OnboardingStepContext.builder()
-                        .customerId(amlVerification.getCustomer().getId())
+                        .customerId(customer.getId())
                         .metadata(Map.of(
                                 "amlCaseId", amlVerification.getAmlCaseId(),
                                 "AmlResult", amlVerification.getAmlResult()))
@@ -106,7 +115,6 @@ public class AmlService {
             log.warn("AML check did not pass for customer {}. Further action may be required.", customer.getId());
             customerRejectedEventPublisher.publishCustomerRejectedEvent(customer.getId());
         }
-
     }
 
 }

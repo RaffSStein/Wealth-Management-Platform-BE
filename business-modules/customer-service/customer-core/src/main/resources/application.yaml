@@ -35,6 +35,9 @@ spring:
 
 
 platform:
+  outbox:
+    # events are stored with the business write and sent by the relay, so a crash or a broker outage can't lose them
+    enabled: true
   tenant:
     # a PLATFORM_ADMIN reads every bank's customers; CustomerAccessPolicy keeps it read-only
     root-read-enabled: true

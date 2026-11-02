@@ -4,14 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.CreateUserEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
+import raff.stein.platformcore.messaging.publisher.EventPublishingListener;
 import raff.stein.platformcore.messaging.publisher.WMPBaseEventPublisher;
 import raff.stein.platformcore.messaging.publisher.model.EventData;
 
 /**
- * The service raises the event inside its transaction; it goes to Kafka only after the commit, so a rolled-back record
- * never creates a login. No outbox yet: a crash between commit and send loses the event.
+ * The service raises the event inside its transaction and the outbox stores it with the customer, so a rolled-back
+ * record never creates a login and a crash after the commit doesn't lose the event.
  */
 @Slf4j
 @Component
@@ -27,9 +26,9 @@ public class CreateUserEventPublisher {
         this.topic = topic;
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    @EventPublishingListener
     public void publish(CreateUserEvent event) {
         wmpBaseEventPublisher.publishCloudEvent(topic, new EventData(event));
-        log.info("Published CreateUserEvent for branch: [{}/{}]", event.getBankCode(), event.getBranchCode());
+        log.info("Handed over CreateUserEvent for branch: [{}/{}]", event.getBankCode(), event.getBranchCode());
     }
 }

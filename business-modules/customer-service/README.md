@@ -36,9 +36,13 @@ The full rules are in
 
 | Topic | Direction | Meaning |
 |---|---|---|
-| `...user-service.create-user` | produced | An advisor created a client, after the commit |
+| `...user-service.create-user` | produced | An advisor created a client; stored in the outbox with the customer record |
 | `...profiler-service.role-assignment-granted` | consumed | Links the record waiting for that email in that branch (CUSTOMER only) |
 | `...profiler-service.role-assignment-revoked` | consumed | Removes the link; the email stays (CUSTOMER only) |
+
+Events go through the platform-core transactional outbox (`platform.outbox.enabled: true`): they are stored in the same
+transaction as the data and sent at least once by a relay. The AML outcome events are stored with the verification; the
+onboarded event with the submitted MiFID filling.
 
 ## Miscellaneous
 
