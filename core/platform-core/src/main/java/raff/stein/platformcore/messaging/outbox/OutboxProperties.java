@@ -10,12 +10,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class OutboxProperties {
 
     /**
-     * Off by default: events go straight to Kafka as before. Turn it on per service, which then needs a datasource.
+     * Off by default: events go straight to Kafka. Turn it on per service, which then needs a datasource.
      */
     private boolean enabled = false;
 
     /**
-     * Delay between two polls of the outbox table. Delivery right after a commit doesn't wait for it.
+     * Delay between two polls of the outbox table.
      */
     private long pollIntervalMs = 1000L;
 

@@ -20,14 +20,14 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class OutboxEventWriter {
 
-    private final OutboxEventRepository repository;
-    private final OutboxRelay relay;
+    private final OutboxEventRepository outboxEventRepository;
+    private final OutboxRelay outboxRelay;
     private final Clock clock;
 
     @Transactional
     public void store(@NonNull final String topic, @NonNull final CloudEvent cloudEvent) {
         final Instant now = clock.instant();
-        repository.save(OutboxEventEntity.builder()
+        outboxEventRepository.save(OutboxEventEntity.builder()
                 .eventId(cloudEvent.getId())
                 .topic(topic)
                 .payload(OutboxPayloads.serialize(cloudEvent))
@@ -45,7 +45,7 @@ public class OutboxEventWriter {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    relay.wakeUp();
+                    outboxRelay.wakeUp();
                 }
             });
         }

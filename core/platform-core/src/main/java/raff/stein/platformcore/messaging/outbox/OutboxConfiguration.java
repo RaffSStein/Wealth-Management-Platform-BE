@@ -2,6 +2,7 @@ package raff.stein.platformcore.messaging.outbox;
 
 import io.cloudevents.CloudEvent;
 import org.apache.kafka.clients.producer.Producer;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -46,8 +47,8 @@ public class OutboxConfiguration {
     static class OutboxPackageRegistrar implements ImportBeanDefinitionRegistrar {
 
         @Override
-        public void registerBeanDefinitions(final AnnotationMetadata importingClassMetadata,
-                                            final BeanDefinitionRegistry registry) {
+        public void registerBeanDefinitions(final @NonNull AnnotationMetadata importingClassMetadata,
+                                            final @NonNull BeanDefinitionRegistry registry) {
             AutoConfigurationPackages.register(registry, OutboxEventEntity.class.getPackageName());
         }
     }
