@@ -24,8 +24,6 @@ end-to-end walkthrough: [first platform run](../../docs/domain/process/platform/
   ACCOUNT, INVESTMENTS, NEWS_MARKETS, WORKSPACE mirroring the FE navigation, in display order; their features;
   permission codes) and the role permissions. Run it after the service has started once (Hibernate creates the
   tables). Idempotent; it fails on a grant naming an unknown catalogue entry. Changes take effect immediately.
-- Existing databases with the old sample catalogue first run `sql/migrations/2026-10-31-align-catalogue-with-fe.sql`
-  (by hand, until Flyway exists; the header gives the order).
 - Calls bank-service (`wmp.clients.bank-service.url`, env `BANK_SERVICE_URL`) to check that a branch exists and is
   ACTIVE, forwarding the caller's token.
 - `wmp.role-assignment.bootstrap-platform-admins` (env `WMP_BOOTSTRAP_PLATFORM_ADMINS`): emails that become

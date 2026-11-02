@@ -59,7 +59,7 @@ Who owns what:
    | Database | Script |
    |---|---|
    | bankdb | `business-modules/bank-service/bank-core/src/main/resources/sql/insertBankBranches.sql` (includes the local test branches `BANK_A`/`BR_01` and `BANK_B`/`BR_09`) |
-   | profilerdb | `business-modules/profiler-service/profiler-core/src/main/resources/sql/populate_config_tables.sql`: the permission catalogue (sections, features, permission codes) and what each role may do. It takes effect at once, no restart needed. An **existing** profilerdb with the old catalogue first needs `sql/migrations/2026-10-31-align-catalogue-with-fe.sql` (same folder; its header gives the order) |
+   | profilerdb | `business-modules/profiler-service/profiler-core/src/main/resources/sql/populate_config_tables.sql`: the permission catalogue (sections, features, permission codes) and what each role may do. It takes effect at once, no restart needed. |
    | customerdb | `business-modules/customer-service/customer-core/src/main/resources/sql/financialAndGoalTypeInserts.sql`, `mifidConfigurationInserts.sql` (same folder) |
    | documentdb | `business-modules/document-service/document-core/src/main/resources/sql/initDocTypes.sql` |
 

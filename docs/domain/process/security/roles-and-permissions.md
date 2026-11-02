@@ -358,8 +358,6 @@ is the source a fresh database is built from.
 - **It's idempotent.** Re-running it adds what's missing and updates names and order.
 - **It refuses a grant that names an unknown section, feature or permission code** (the script fails and lists the
   bad rows). The foreign keys then guarantee that every stored grant points at real catalogue entries.
-- **Existing databases** get structural changes through a script in `sql/migrations/`, run by hand until the platform
-  adopts Flyway or Liquibase (see the script header for the order).
 
 ## 10. API reference
 
