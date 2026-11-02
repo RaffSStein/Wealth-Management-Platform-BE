@@ -372,5 +372,5 @@ Then call a service with it: `curl -H "Authorization: Bearer <token>" http://loc
 | Redis is a hard dependency of authenticated traffic | A Redis outage answers 503 on every authenticated call (fail closed, by design) | Run Redis highly available (replica + sentinel, or a managed service) outside local |
 | One static key pair, no `kid` header | Rotating the key invalidates every token at once | Publish keys with ids (JWKS) and add `kid` to the header |
 | Keys and `jwt_configuration.md` (which contains a private key) are in the repo | Fine for local development only | Load keys from a secret manager outside local profiles |
-| No root tenant | Group-level users can't see several banks at once | Comes with visibility scopes (Hibernate `isRoot`) |
+| Root tenant only for platform admin reads (opt-in per service, on only in customer-service) | Group-level users can't see several banks at once | Comes with visibility scopes |
 | The context is a `ThreadLocal` | `@Async` tasks and scheduled jobs have no tenant | Context-propagating executor and a "run as tenant" helper |

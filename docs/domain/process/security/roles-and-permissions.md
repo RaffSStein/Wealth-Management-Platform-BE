@@ -144,8 +144,8 @@ method runs. The **active** role in the token decides: a user who is a customer 
 another gets the rule of the membership it's signed in with.
 
 | Caller (active role) | Read customer, MiFID, onboarding | Change customer, MiFID | `GET /customer/disambiguation/{userId}` | `POST /customer/init` | `GET /customer` | `GET /customer/advisor-dashboard-statistics` |
-|---|---|---|---|---|
-| CUSTOMER | its own record, otherwise 404 | its own record, otherwise 404 | its own id (200, `[]` if none), otherwise 404 | `userId` comes from the token: a different one answers 403, a second record in the bank 409 |
+|---|---|---|---|---|---|---|
+| CUSTOMER | its own record, otherwise 404 | its own record, otherwise 404 | its own id (200, `[]` if none), otherwise 404 | `userId` comes from the token: a different one answers 403, a second record in the bank 409 | 403 | 403 |
 | ADVISOR | the branch in its token, otherwise 404 | the branch in its token, otherwise 404 | that user's records in the branch in its token | sends the client's email; `userId` is ignored | the branch in its token | the branch in its token |
 | BANK_ADMIN | any in its bank | 403 | any user in its bank | 403 | its bank | 403 |
 | PLATFORM_ADMIN | any in every bank | 403 | any user in every bank | 403 | every bank | 403 |
@@ -310,7 +310,7 @@ sequenceDiagram
 - **A change applies at once.** Granting or removing a permission is one row in `role_feature_permission`, with
   effect on the next request of every user holding that role. No restart, no rebuild.
 - BANK_ADMIN and PLATFORM_ADMIN have no rows yet. Their rights come from the role in the token (`@PreAuthorize`),
-  not from feature permissions. The FE has no admin section yet.
+  not from feature permissions. The FE's admin area isn't driven by the catalogue.
 
 ### The catalogue
 
@@ -493,5 +493,5 @@ erDiagram
   revocation. Phase 0 adds a transactional outbox. Until then, re-assigning repairs a missed grant, and a missed
   revocation is still enforced for sessions by Redis.
 - **Lazy expiry.** Pending requests expire only when someone tries to decide them (no scheduler yet).
-- **Admin permissions.** Only CUSTOMER and ADVISOR have feature permissions; admin roles get a section when the FE gets
-  admin screens.
+- **Admin permissions.** Only CUSTOMER and ADVISOR have feature permissions. The FE's admin area doesn't use the
+  catalogue yet: admin roles get a section when it does.
