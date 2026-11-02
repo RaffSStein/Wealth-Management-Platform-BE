@@ -35,6 +35,11 @@ public class KafkaProducerConfiguration {
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, CloudEventSerializer.class);
         props.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, 1000000); // 1 MB
+        // the outbox relay retries, so the broker must not store the same record twice when a send is retried
+        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+        props.put(ProducerConfig.ACKS_CONFIG, "all");
+        // send() waits this long for topic metadata when the broker is unreachable (60s by default)
+        props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 5000);
         return new DefaultKafkaProducerFactory<String, CloudEvent>(props).createProducer();
     }
 }

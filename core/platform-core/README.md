@@ -171,6 +171,52 @@ For Kafka consumers, `platform-core` offers a set of reusable components:
 
 Business microservices implement their own concrete consumers on top of these abstractions.
 
+### Transactional outbox
+
+Without the outbox, `WMPBaseEventPublisher` hands the event to the Kafka producer and only logs a failure. A broker outage, or a
+crash between the commit and the send, loses the event. With the outbox on, the event is stored in the service's own database in
+the **same transaction as the business write**, and a relay delivers it to Kafka afterwards, **at least once**.
+
+- **Turn it on per service** with `platform.outbox.enabled: true` in the service's `application.yaml`. The service needs a
+  datasource. It is off by default, and then events are sent straight to Kafka as before. Don't set `platform.outbox.*` in a
+  shared file: values from imported files win over the service's own `application.yaml`.
+- **Publishing doesn't change.** Keep calling `WMPBaseEventPublisher.publishCloudEvent(topic, new EventData(payload))`. It builds
+  the CloudEvent in the caller's thread, with the user, tenant, branch and correlation extensions from `WMPContext`, and stores it.
+  The relay runs without a security context, so everything it needs is inside the stored event.
+- **Call it inside the business transaction.** The store joins the caller's transaction. A caller without one gets a transaction
+  of its own: the event is still delivered, but it isn't atomic with the caller's writes. If the event must exist if and only if
+  the data does, put `@Transactional` on the service method.
+- **Publishers that react to an application event use `@EventPublishingListener`.** Put it on the method that calls
+  `publishCloudEvent`, instead of `@TransactionalEventListener`. It runs just before the commit, in the same transaction, in
+  both modes, so turning the outbox on or off for a service never touches its publishers. The mode is handled inside
+  `publishCloudEvent`: with the outbox on the event is stored; with it off, inside a transaction, the event is held and sent
+  after the commit (dropped on a rollback), as `AFTER_COMMIT` used to do. A phase can't be chosen from a property, and
+  `AFTER_COMMIT` can't be used with the outbox, because the transaction has already committed and the row would never be written.
+- **Table `event_outbox`**, created by `ddl-auto: update` like the other tables: `event_id` (the CloudEvent id, unique),
+  `topic`, `payload` (the CloudEvent as JSON text), `status`, `attempts`, `next_attempt_at`, `last_error`, `created_at`. It isn't
+  tenant-scoped, because the relay has no tenant.
+- **Relay.** After a commit it runs at once, and it also polls every second. It locks a batch with `SKIP LOCKED`, so several
+  instances never send the same event and no scheduler lock is needed. It deletes a row only after the broker acknowledged it.
+- **Kafka unreachable.** The producer waits at most 5 seconds for metadata (`max.block.ms`, 60s by default). The relay then stops
+  the round at the first send that fails at once, and leaves the rest of the batch untouched, so the database transaction
+  and the row locks are held for seconds, not minutes. Business writes never wait for Kafka: they only insert a row.
+- **Failures.** A failed event waits with a doubling delay (2s, up to 5 minutes), counted from the failure. After `max-attempts` (10) its status becomes
+  `FAILED`: it stays in the table with `last_error`, is logged at error level, and is not retried. Fix the cause, then set
+  `status = 'PENDING'` and `attempts = 0` to send it again.
+- **Consumers must tolerate replays.** A crash after the broker's ack and before the delete sends the event again with the same
+  CloudEvent id. Make handlers idempotent, or skip an id you have already handled.
+- **Payloads are stored.** Events such as `UserCreatedEvent` carry secrets (a setup token). The row is deleted once delivered, but
+  a `FAILED` row keeps its payload.
+
+| Property (`platform.outbox.*`) | Default | Meaning |
+|---|---|---|
+| `enabled` | `false` | Use the outbox |
+| `poll-interval-ms` | `1000` | Delay between polls |
+| `batch-size` | `50` | Events locked and sent per transaction |
+| `max-attempts` | `10` | Attempts before `FAILED` |
+| `send-timeout-ms` | `10000` | Wait for the broker's acks of one batch |
+| `initial-backoff-ms` / `max-backoff-ms` | `2000` / `300000` | First retry delay, and its cap |
+
 ## Shared configuration and properties
 
 ### `platform-shared-properties.yaml`
