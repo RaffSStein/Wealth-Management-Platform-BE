@@ -3,7 +3,7 @@
     "id": "product-catalogue-basic",
     "skills": ["porting-legacy-features"],
     "query": "Port the instrument search and product sheet requirements from the legacy product catalogue.",
-    "files": ["C:/Users/Raffaele/Desktop/WMP/legacy-wmp-requirements/01-product-catalogue.md"],
+    "files": ["docs/legacy-wmp-requirements/01-product-catalogue.md"],
     "expected_behavior": [
       "Checks Phase 0 prerequisites first and reports that tenancy is missing, instead of silently skipping it",
       "Reads 00-index.md and 01-product-catalogue.md in full; from other domain files only the grep-scoped REQ sections listed under Spans (e.g. the 08 shelf), never whole files",
@@ -16,7 +16,7 @@
     "id": "suitability-rules-hard",
     "skills": ["porting-legacy-features"],
     "query": "Port the suitability checks used by proposals, including re-checking a signed proposal before execution.",
-    "files": ["C:/Users/Raffaele/Desktop/WMP/legacy-wmp-requirements/03-proposal-advisory-suitability.md"],
+    "files": ["docs/legacy-wmp-requirements/03-proposal-advisory-suitability.md"],
     "expected_behavior": [
       "Places the rules and evidence in the new suitability-service, not in proposal-service",
       "Models each check (credit, market, concentration, complexity, ...) as its own rule component with its own test",
@@ -29,7 +29,7 @@
     "id": "data-feed-be-only",
     "skills": ["porting-legacy-features"],
     "query": "Port one of the legacy position feeds from the data-ingestion catalogue.",
-    "files": ["C:/Users/Raffaele/Desktop/WMP/legacy-wmp-requirements/11-data-ingestion-dq-dashboard.md"],
+    "files": ["docs/legacy-wmp-requirements/11-data-ingestion-dq-dashboard.md"],
     "expected_behavior": [
       "Places the feed in data-ingestion-service and asks before creating that new module (new services need approval to be scaffolded)",
       "Puts the vendor format behind an adapter in integration/ and translates it into domain events consumed by portfolio-service",

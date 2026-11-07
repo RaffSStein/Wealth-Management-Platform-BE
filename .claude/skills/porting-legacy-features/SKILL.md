@@ -10,7 +10,7 @@ Ports **behaviour**, never code. The legacy system is the functional reference. 
 
 ## Inputs
 
-- Requirements: `C:/Users/Raffaele/Desktop/WMP/legacy-wmp-requirements/` (`00-index.md` plus one file per domain).
+- Requirements: `docs/legacy-wmp-requirements/` (`00-index.md` plus one file per domain).
   Read `00-index.md` and the domain file in scope. Load another domain file only to follow a REQ id that the
   in-scope requirements, or the domain map's "Spans" column, point to. Grep for that REQ id and read just its section.
 - More depth (algorithms, state rules, field lists):
