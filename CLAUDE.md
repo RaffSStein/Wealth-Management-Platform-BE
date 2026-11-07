@@ -146,8 +146,13 @@ docs/domain/                   functional docs: process/ (markdown) + assets/ (d
 ## Testing
 - JUnit 5 + Spring Boot Test. Good examples are in `platform-core/src/test` (plain unit tests with `assertEquals`/`assertThrows`,
   method names like `shouldRetryAndSucceedWithinMaxAttempts`).
-- Service tests are plain unit tests; there are no Spring context (`@SpringBootTest`) tests yet. When changing behavior, add tests covering
-  the happy path and at least one edge case. Mock Kafka, external clients and the security context, and keep tests deterministic.
+- Service tests are plain unit tests. When changing behavior, add tests covering the happy path and at least one edge
+  case. Mock Kafka, external clients and the security context, and keep tests deterministic.
+- The only Spring context tests are the startup smoke tests: each mature service has one `<Service>ApplicationSmokeTest`
+  extending `AbstractServiceSmokeTest` (`core/platform-test`). It starts the app against Postgres, Kafka and Redis
+  containers and checks that `/actuator/health` is UP. A service that becomes mature adds one. The smoke tests need
+  Docker: locally they are skipped without it, but in CI (`CI=true`) they always run, so a missing Docker fails the build. Put service-specific overrides on the subclass, never in a
+  `src/test/resources/application.yaml`, because that file would shadow the main one.
 
 ## Git workflow
 - Conventional commits: `type(scope): imperative subject` with types `feat|fix|docs|refactor|test|chore`. The scope is the module
