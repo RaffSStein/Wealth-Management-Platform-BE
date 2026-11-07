@@ -45,6 +45,7 @@ public class UserDirectoryService {
     private final UserRepository userRepository;
     private final UserVisibilityPolicy visibilityPolicy;
 
+    private static final String EMAIL = "email";
     private static final UserToUserEntityMapper userMapper = UserToUserEntityMapper.MAPPER;
     private static final BranchUserToBranchUserEntity assignmentMapper = BranchUserToBranchUserEntity.MAPPER;
 
@@ -52,13 +53,13 @@ public class UserDirectoryService {
     public UserSummary lookupByEmail(String email) {
         final WMPContext caller = SecurityContextHolder.getContextOrThrow();
         if (email == null || email.isBlank()) {
-            throw invalid("email", email);
+            throw invalid(EMAIL, email);
         }
         final UserEntity user = userRepository.findByEmailIgnoreCase(email.trim())
                 .filter(found -> visibilityPolicy.canSee(caller, found))
                 .orElseThrow(() -> {
                     log.info("User lookup by [{}]: no visible match", caller.getUserId());
-                    return GenericObjectNotFoundException.with("email").get();
+                    return GenericObjectNotFoundException.with(EMAIL).get();
                 });
         log.info("User lookup by [{}]: found [{}]", caller.getUserId(), user.getId());
         return toSummary(caller, user);
@@ -80,7 +81,7 @@ public class UserDirectoryService {
         }
         final Page<UserEntity> result = userRepository.findAll(
                 visibilityPolicy.scope(caller, linked).and(matching(query.trim())),
-                PageRequest.of(page, size, Sort.by("email")));
+                PageRequest.of(page, size, Sort.by(EMAIL)));
         log.info("User search by [{}]: [{}] results", caller.getUserId(), result.getTotalElements());
         return UserSummaryPage.builder()
                 .content(result.getContent().stream().map(user -> toSummary(caller, user)).toList())
@@ -127,7 +128,7 @@ public class UserDirectoryService {
         final String pattern = "%" + query.toLowerCase(Locale.ROOT)
                 .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
         return (root, cq, cb) -> cb.or(
-                cb.like(cb.lower(root.get("email")), pattern, '\\'),
+                cb.like(cb.lower(root.get(EMAIL)), pattern, '\\'),
                 cb.like(cb.lower(root.get("firstName")), pattern, '\\'),
                 cb.like(cb.lower(root.get("lastName")), pattern, '\\'));
     }

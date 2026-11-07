@@ -31,7 +31,7 @@ public class UserService {
     public User createUser(User user) {
         // roles come only from role assignments (profiler-service), never from a create request
         user.setBranchRoles(List.of());
-        final User savedUser = createUserEntity(user);
+        final User savedUser = saveNewUser(user);
         // TODO: generate onboarding token for user creation request that comes from an advisor
         publishUser(savedUser, null);
         return savedUser;
@@ -39,6 +39,11 @@ public class UserService {
 
     @Transactional
     public User createUserEntity(User user) {
+        return saveNewUser(user);
+    }
+
+    // shared by createUser and createUserEntity, so createUser doesn't call a @Transactional method through "this"
+    private User saveNewUser(User user) {
         log.debug("Creating user entity: [{}]", user);
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new IllegalArgumentException("User with email already exists: " + user.getEmail());
