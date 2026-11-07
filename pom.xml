@@ -19,8 +19,8 @@
         <spring.boot.starter.version>4.0.1</spring.boot.starter.version>
         <spring.data.commons.version>4.0.1</spring.data.commons.version>
         <openapi.generator.version>7.18.0</openapi.generator.version>
-        <lombok.version>1.18.42</lombok.version>
-        <postgresql.version>42.7.8</postgresql.version>
+        <lombok.version>1.18.48</lombok.version>
+        <postgresql.version>42.7.14</postgresql.version>
         <spring.kafka.version>4.0.1</spring.kafka.version>
         <jakarta.validation.version>3.1.1</jakarta.validation.version>
         <jakarta.persistence.version>3.2.0</jakarta.persistence.version>
@@ -39,7 +39,7 @@
         <jjwt.version>0.13.0</jjwt.version>
         <spring.boot.cache.version>4.0.0</spring.boot.cache.version>
         <spring.cloud.version>2025.1.0</spring.cloud.version>
-        <jacoco.maven.plugin.version>0.8.13</jacoco.maven.plugin.version>
+        <jacoco.maven.plugin.version>0.8.16</jacoco.maven.plugin.version>
         <sonar.maven.plugin.version>5.1.0.4751</sonar.maven.plugin.version>
         <commons.io.version>2.20.0</commons.io.version>
 
