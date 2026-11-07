@@ -10,35 +10,23 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.0</version>
+        <version>4.0.9</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
     <properties>
         <java.version>21</java.version>
-        <spring.boot.starter.version>4.0.1</spring.boot.starter.version>
-        <spring.data.commons.version>4.0.1</spring.data.commons.version>
         <openapi.generator.version>7.18.0</openapi.generator.version>
-        <lombok.version>1.18.42</lombok.version>
-        <postgresql.version>42.7.8</postgresql.version>
-        <spring.kafka.version>4.0.1</spring.kafka.version>
-        <jakarta.validation.version>3.1.1</jakarta.validation.version>
-        <jakarta.persistence.version>3.2.0</jakarta.persistence.version>
         <org.mapstruct.version>1.6.3</org.mapstruct.version>
         <lombok.mapstruct.binding.version>0.2.0</lombok.mapstruct.binding.version>
         <jackson.databind.nullable.version>0.2.8</jackson.databind.nullable.version>
         <logstash.logback.encoder.version>9.0</logstash.logback.encoder.version>
         <cloudevent.version>4.0.1</cloudevent.version>
-        <hibernate.version>7.1.11.Final</hibernate.version>
-        <micrometer.version>1.16.1</micrometer.version>
-        <micrometer.tracing.version>1.6.1</micrometer.tracing.version>
-        <micrometer.tracing.bridge.brave.version>1.6.1</micrometer.tracing.bridge.brave.version>
         <openapi.generator.maven.plugin.version>2024.1</openapi.generator.maven.plugin.version>
-        <jackson.databind.version>3.0.3</jackson.databind.version>
         <spring.retry.version>2.0.12</spring.retry.version>
         <jjwt.version>0.13.0</jjwt.version>
-        <spring.boot.cache.version>4.0.0</spring.boot.cache.version>
-        <spring.cloud.version>2025.1.0</spring.cloud.version>
+        <!-- Must be a release train compatible with the Spring Boot parent version -->
+        <spring.cloud.version>2025.1.4</spring.cloud.version>
         <jacoco.maven.plugin.version>0.8.13</jacoco.maven.plugin.version>
         <sonar.maven.plugin.version>5.1.0.4751</sonar.maven.plugin.version>
         <commons.io.version>2.20.0</commons.io.version>
@@ -58,47 +46,6 @@
                 <version>${spring.cloud.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-web</artifactId>
-                <version>${spring.boot.starter.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.data</groupId>
-                <artifactId>spring-data-commons</artifactId>
-                <version>${spring.data.commons.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-test</artifactId>
-                <version>${spring.boot.starter.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-actuator</artifactId>
-                <version>${spring.boot.starter.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-data-jpa</artifactId>
-                <version>${spring.boot.starter.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-micrometer-tracing</artifactId>
-                <version>${spring.boot.starter.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-json</artifactId>
-                <version>${spring.boot.starter.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>tools.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.databind.version}</version>
             </dependency>
             <!-- Not a direct dependency: pins the transitive version. Without it, openapi-processor-maven-plugin
                  (bank, customer) brings in 2.11.0, which lacks classes Testcontainers needs (core/platform-test). -->
@@ -123,26 +70,6 @@
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
                 <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.postgresql</groupId>
-                <artifactId>postgresql</artifactId>
-                <version>${postgresql.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.kafka</groupId>
-                <artifactId>spring-kafka</artifactId>
-                <version>${spring.kafka.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>jakarta.validation</groupId>
-                <artifactId>jakarta.validation-api</artifactId>
-                <version>${jakarta.validation.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>jakarta.persistence</groupId>
-                <artifactId>jakarta.persistence-api</artifactId>
-                <version>${jakarta.persistence.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mapstruct</groupId>
@@ -185,26 +112,6 @@
                 <version>${cloudevent.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.hibernate.orm</groupId>
-                <artifactId>hibernate-core</artifactId>
-                <version>${hibernate.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.micrometer</groupId>
-                <artifactId>micrometer-observation</artifactId>
-                <version>${micrometer.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.micrometer</groupId>
-                <artifactId>micrometer-tracing</artifactId>
-                <version>${micrometer.tracing.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.micrometer</groupId>
-                <artifactId>micrometer-tracing-bridge-brave</artifactId>
-                <version>${micrometer.tracing.bridge.brave.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>io.openapiprocessor</groupId>
                 <artifactId>openapi-processor-maven-plugin</artifactId>
                 <version>${openapi.generator.maven.plugin.version}</version>
@@ -230,16 +137,6 @@
                 <artifactId>jjwt-jackson</artifactId>
                 <version>${jjwt.version}</version>
                 <scope>runtime</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-cache</artifactId>
-                <version>${spring.boot.cache.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-data-redis</artifactId>
-                <version>${spring.boot.cache.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -283,7 +180,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.1</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>

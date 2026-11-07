@@ -140,8 +140,10 @@ docs/domain/                   functional docs: process/ (markdown) + assets/ (d
 - English only for code, comments, docs and commit messages.
 - Use `final` for local variables, streams with `.toList()`, `Optional.orElseThrow(() -> ...)`, and Lombok over boilerplate.
 - Keep comments short and explain *why*. `//TODO:` notes are an accepted way to flag known follow-ups.
-- Don't add new dependencies unless justified. When adding one, declare its version as a property plus a
-  `dependencyManagement` entry in the root POM, and reference it without a version in the module POM.
+- Don't add new dependencies unless justified. If Spring Boot manages the library (Spring, Hibernate, Jackson, Micrometer,
+  Kafka, PostgreSQL, Lombok, Testcontainers, the starters...), declare it without a version anywhere: the Boot parent
+  version decides it. Otherwise declare its version as a property plus a `dependencyManagement` entry in the root POM,
+  and reference it without a version in the module POM. Spring Cloud's release train must match the Boot version.
 
 ## Testing
 - JUnit 5 + Spring Boot Test. Good examples are in `platform-core/src/test` (plain unit tests with `assertEquals`/`assertThrows`,

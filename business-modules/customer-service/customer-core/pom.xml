@@ -75,7 +75,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-client</artifactId>
-            <version>4.0.0</version>
         </dependency>
         <!-- ICU4J: CLDR-backed regions and locale data (avoid hardcoded EU/UK/US lists) -->
         <dependency>
