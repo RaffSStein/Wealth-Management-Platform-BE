@@ -86,9 +86,8 @@ class UserVisibilityPolicyTest {
     }
 
     private static UserEntity user(BranchUserEntity... assignments) {
-        final UserEntity user = UserEntity.builder()
+        return UserEntity.builder()
                 .id(UUID.randomUUID()).email("u@bank.test").bankBranchUsers(new HashSet<>(Set.of(assignments))).build();
-        return user;
     }
 
     private static BranchUserEntity assignment(String bankCode, String branchCode, String role) {

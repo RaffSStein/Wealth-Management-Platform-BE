@@ -19,9 +19,13 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class UserServiceTest {
@@ -30,11 +34,13 @@ class UserServiceTest {
 
     private UserService userService;
     private UserRepository userRepository;
+    private UserCreatedEventPublisher userCreatedEventPublisher;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
-        userService = new UserService(userRepository, mock(UserCreatedEventPublisher.class));
+        userCreatedEventPublisher = mock(UserCreatedEventPublisher.class);
+        userService = new UserService(userRepository, userCreatedEventPublisher);
         final UserEntity user = UserEntity.builder()
                 .id(UUID.randomUUID())
                 .email(EMAIL)
@@ -89,6 +95,17 @@ class UserServiceTest {
         final User created = userService.createUser(request);
 
         assertTrue(created.getBranchRoles() == null || created.getBranchRoles().isEmpty());
+        verify(userCreatedEventPublisher).publishUserCreatedEvent(created, null);
+    }
+
+    @Test
+    void shouldRefuseCreatingUserWithExistingEmail() {
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(true);
+        final User request = User.builder().email(EMAIL).firstName("Ada").lastName("Rossi").build();
+
+        assertThrows(IllegalArgumentException.class, () -> userService.createUser(request));
+        verify(userRepository, never()).save(any());
+        verifyNoInteractions(userCreatedEventPublisher);
     }
 
     private static BranchUserEntity assignment(Long id, String bankCode, String branchCode, String role) {

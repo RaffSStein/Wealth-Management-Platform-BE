@@ -51,7 +51,9 @@ class PasswordSetupTokenServiceTest {
     void shouldRejectTokenWithoutSetupPurpose() {
         final PasswordSetupTokenService service = service(new TokenRevocationService(new InMemoryTokenStore(), new TokenStoreProperties()));
 
-        assertThrows(JwtTokenException.class, () -> service.validateAndConsume(setupToken("OTHER")));
+        final String token = setupToken("OTHER");
+
+        assertThrows(JwtTokenException.class, () -> service.validateAndConsume(token));
     }
 
     @Test
@@ -61,8 +63,9 @@ class PasswordSetupTokenServiceTest {
                 .thenThrow(new TokenStoreUnavailableException("mark setup-used", new RuntimeException("down")));
         final PasswordSetupTokenService service = service(revocationService);
 
-        assertThrows(TokenStoreUnavailableException.class,
-                () -> service.validateAndConsume(setupToken(WmpJwtClaims.PURPOSE_PASSWORD_SETUP)));
+        final String token = setupToken(WmpJwtClaims.PURPOSE_PASSWORD_SETUP);
+
+        assertThrows(TokenStoreUnavailableException.class, () -> service.validateAndConsume(token));
     }
 
     private PasswordSetupTokenService service(TokenRevocationService revocationService) {
