@@ -35,7 +35,7 @@ jobs:
     name: Dependency review
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       # Fails when the PR adds a dependency with a known high or critical vulnerability
       - uses: actions/dependency-review-action@v4
         with:
