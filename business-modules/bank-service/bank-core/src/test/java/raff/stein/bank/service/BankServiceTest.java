@@ -1,5 +1,8 @@
 package raff.stein.bank.service;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +30,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.RETURNS_MOCKS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -98,6 +103,51 @@ class BankServiceTest {
         verify(repository).findAll(any(Specification.class), pageable.capture());
         assertEquals(BankService.MAX_PAGE_SIZE, pageable.getValue().getPageSize());
         assertEquals(0, page.getTotalElements());
+    }
+
+    @Test
+    void platformAdminSearchShouldNotRestrictTheBank() {
+        givenCaller("PLATFORM_ADMIN", "PLATFORM");
+
+        final CriteriaBuilder cb = evaluateSearchScope();
+
+        verify(cb).conjunction();
+        verify(cb, never()).disjunction();
+        verify(cb, never()).equal(any(), any(Object.class));
+    }
+
+    @Test
+    void bankAdminSearchShouldBeLimitedToItsBank() {
+        givenCaller("BANK_ADMIN", "BANK_A");
+
+        final CriteriaBuilder cb = evaluateSearchScope();
+
+        verify(cb).equal(any(), eq("BANK_A"));
+        verify(cb, never()).conjunction();
+        verify(cb, never()).disjunction();
+    }
+
+    @Test
+    void searchWithoutBankShouldMatchNothing() {
+        givenCaller("CUSTOMER", null);
+
+        final CriteriaBuilder cb = evaluateSearchScope();
+
+        verify(cb).disjunction();
+        verify(cb, never()).conjunction();
+    }
+
+    // runs the specification passed to the repository against mocks, to see which scope predicate it builds
+    @SuppressWarnings("unchecked")
+    private CriteriaBuilder evaluateSearchScope() {
+        when(repository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenAnswer(invocation -> new PageImpl<>(List.<BankBranchEntity>of(), invocation.getArgument(1), 0));
+        service.findBankBranches(BankSearchRequest.builder().pageable(PageRequest.of(0, 10)).build());
+        final ArgumentCaptor<Specification<BankBranchEntity>> spec = ArgumentCaptor.forClass(Specification.class);
+        verify(repository).findAll(spec.capture(), any(Pageable.class));
+        final CriteriaBuilder cb = mock(CriteriaBuilder.class, RETURNS_MOCKS);
+        spec.getValue().toPredicate(mock(Root.class, RETURNS_MOCKS), mock(CriteriaQuery.class), cb);
+        return cb;
     }
 
     private static void givenCaller(String role, String bankCode) {

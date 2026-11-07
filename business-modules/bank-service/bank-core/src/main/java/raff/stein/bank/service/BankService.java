@@ -68,9 +68,15 @@ public class BankService {
 
     // a caller limited to one bank gets that bank's rows only, whatever bankCode filter it sent
     private static Specification<BankBranchEntity> inScope(BankScope scope) {
-        return (root, query, cb) -> scope.all()
-                ? cb.conjunction()
-                : scope.isNone() ? cb.disjunction() : cb.equal(root.get("bankCode"), scope.bankCode());
+        return (root, query, cb) -> {
+            if (scope.all()) {
+                return cb.conjunction();
+            }
+            if (scope.isNone()) {
+                return cb.disjunction();
+            }
+            return cb.equal(root.get("bankCode"), scope.bankCode());
+        };
     }
 
     private static Pageable limit(Pageable requested) {
