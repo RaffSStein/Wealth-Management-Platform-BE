@@ -41,6 +41,7 @@
         <spring.cloud.version>2025.1.0</spring.cloud.version>
         <jacoco.maven.plugin.version>0.8.13</jacoco.maven.plugin.version>
         <sonar.maven.plugin.version>5.1.0.4751</sonar.maven.plugin.version>
+        <commons.io.version>2.20.0</commons.io.version>
 
         <!-- SonarQube Cloud (run by .github/workflows/maven.yml when the SONAR_TOKEN secret is set) -->
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -98,6 +99,13 @@
                 <groupId>tools.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${jackson.databind.version}</version>
+            </dependency>
+            <!-- Not a direct dependency: pins the transitive version. Without it, openapi-processor-maven-plugin
+                 (bank, customer) brings in 2.11.0, which lacks classes Testcontainers needs (core/platform-test). -->
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons.io.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.openapitools</groupId>
@@ -316,5 +324,6 @@
         <module>business-modules/email-service</module>
         <module>business-modules/document-service</module>
         <module>core/platform-core</module>
+        <module>core/platform-test</module>
     </modules>
 </project>

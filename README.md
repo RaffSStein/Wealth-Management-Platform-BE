@@ -27,6 +27,7 @@ Each module represents a business domain and is implemented as an independent Sp
 - [email-service](business-modules/email-service/README.md)
 - [document-service](business-modules/document-service/README.md)
 - [core/platform-core](core/platform-core/README.md) (shared core logic)
+- [core/platform-test](core/platform-test/README.md) (test support: container-backed service smoke tests)
 - [integration](integration/README.md) (external service integrations)
 
 Each business module may contain submodules for API data models (OpenAPI-generated), event data models, and core logic.
