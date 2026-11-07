@@ -61,7 +61,8 @@ Cover happy path and at least one edge case. Prefer deterministic tests; mock ex
   - `feat(platform-core): add shared async task executor`
   - `fix(customer-service): handle missing customer profile`
 - Prefer including the module/service in the scope when relevant (for example, `platform-core`, `customer-service`, `proposal-service`).
-- In PR descriptions: include rationale, risk, testing notes; link to related docs or tickets.
+- PR descriptions follow the PR template: Summary, What has been done, Testing, Notes, and Breaking changes when
+  there are any. Link related issues with `Closes #NN`.
 
 ## CI & PRs
 A PR into `main` must pass these checks:
@@ -73,14 +74,15 @@ A PR into `main` must pass these checks:
 | Build, tests, quality gate | `maven.yml` | `./mvnw clean install` fails, or the SonarQube Cloud quality gate fails |
 
 - CodeQL code scanning also runs (repository default setup). Address what it reports.
-- Use the PR template sections: Rationale, Risk, Testing.
+- Use the PR template (`.github/pull_request_template.md`): Summary, What has been done, Testing, Notes, Breaking changes.
 
 ## Releases
 Merging a PR into `main` releases automatically (`release.yml`): the build and tests run on the merge commit, then
 the PR title decides the next version and a GitHub release is created with its tag. GitHub generates the notes from
 the PRs merged since the previous release, so the [releases page](https://github.com/RaffSStein/Wealth-Management-Platform-BE/releases) is the changelog.
 
-- Bump: `feat` -> minor, any other type -> patch, `!` after the scope or `BREAKING CHANGE` in the PR body -> major.
+- Bump: `feat` -> minor, any other type -> patch, `!` after the scope or the `breaking-change` label -> major.
+  Describe what breaks in the template's *Breaking changes* section (the text alone does not bump the version).
   The first release is `v0.1.0`.
 - No release for PRs labelled `release:skip` or `dependencies` (Dependabot). They show up in the next release's notes.
 - Versions live in git tags only. The POMs stay at `1.0-SNAPSHOT`.

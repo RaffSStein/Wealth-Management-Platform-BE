@@ -155,7 +155,8 @@ docs/domain/                   functional docs: process/ (markdown) + assets/ (d
 - Keep commits small and atomic, and update OpenAPI specs, mappers, tests and READMEs in the same change as the behavior they describe.
 - Commit and push only when asked. Commits are authored with the user's own git identity.
   **Never add `Co-Authored-By` trailers or any Claude/AI attribution to commits or PRs.**
-- PR descriptions include rationale, risk and testing notes.
+- PR descriptions follow `.github/pull_request_template.md`: Summary, What has been done, Testing, Notes, and
+  Breaking changes (only when there are any: then also `!` in the title or the `breaking-change` label).
 
 ## Documentation
 - When adding endpoints, events or config, update the service `README.md`. Its section order follows `document-service`/`email-service`:

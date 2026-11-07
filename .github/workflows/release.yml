@@ -1,7 +1,8 @@
 name: Release
 
 # PR merged into main -> build and tests pass on the merge commit -> GitHub release with a new tag.
-# The PR title sets the bump: "!" after the scope (or BREAKING CHANGE in the body) -> major, feat -> minor, else patch.
+# The PR title sets the bump: "!" after the scope (or the "breaking-change" label) -> major, feat -> minor, else patch.
+# The body is not used: the PR template mentions breaking changes, so matching its text would bump every release to major.
 # GitHub generates the notes from the PRs merged since the previous release: the releases page is the changelog.
 # PRs labeled "dependencies" (Dependabot) or "release:skip" don't release; they appear in the next release's notes.
 
@@ -35,13 +36,13 @@ jobs:
     permissions:
       contents: write   # create the tag and the release
     steps:
-      # Title and body go through env vars, never inlined in the script, so they can't inject shell
+      # The title goes through an env var, never inlined in the script, so it can't inject shell
       - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TITLE: ${{ github.event.pull_request.title }}
-          BODY: ${{ github.event.pull_request.body }}
+          LABELED_BREAKING: ${{ contains(github.event.pull_request.labels.*.name, 'breaking-change') }}
           SHA: ${{ github.event.pull_request.merge_commit_sha }}
         run: |
           last=$(gh release view --json tagName --jq .tagName 2>/dev/null || true)
@@ -50,7 +51,7 @@ jobs:
             next=v0.1.0
           else
             IFS=. read -r major minor patch <<< "${last#v}"
-            if [[ "$TITLE" =~ $breaking || "$BODY" == *"BREAKING CHANGE"* ]]; then
+            if [[ "$TITLE" =~ $breaking || "$LABELED_BREAKING" == "true" ]]; then
               next="v$((major + 1)).0.0"
             elif [[ "$TITLE" == feat* ]]; then
               next="v$major.$((minor + 1)).0"
