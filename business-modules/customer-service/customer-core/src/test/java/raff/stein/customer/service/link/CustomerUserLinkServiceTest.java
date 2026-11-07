@@ -28,13 +28,13 @@ class CustomerUserLinkServiceTest {
         service = new CustomerUserLinkService(customerRepository);
     }
 
-    private static CustomerEntity record(UUID userId, String branchCode) {
+    private static CustomerEntity customerRecord(UUID userId, String branchCode) {
         return CustomerEntity.builder().id(UUID.randomUUID()).userId(userId).email(EMAIL).branchCode(branchCode).build();
     }
 
     @Test
     void shouldLinkTheWaitingRecordWhateverTheEmailCase() {
-        final CustomerEntity waiting = record(null, "BR_01");
+        final CustomerEntity waiting = customerRecord(null, "BR_01");
         when(customerRepository.findByEmail(EMAIL)).thenReturn(Optional.of(waiting));
 
         service.linkOnRoleGranted(USER_ID, "Client@Bank.TEST", "BR_01");
@@ -54,7 +54,7 @@ class CustomerUserLinkServiceTest {
 
     @Test
     void shouldNotLinkARecordOfAnotherBranch() {
-        final CustomerEntity otherBranch = record(null, "BR_02");
+        final CustomerEntity otherBranch = customerRecord(null, "BR_02");
         when(customerRepository.findByEmail(EMAIL)).thenReturn(Optional.of(otherBranch));
 
         service.linkOnRoleGranted(USER_ID, EMAIL, "BR_01");
@@ -64,7 +64,7 @@ class CustomerUserLinkServiceTest {
 
     @Test
     void shouldChangeNothingOnAReplay() {
-        final CustomerEntity linked = record(USER_ID, "BR_01");
+        final CustomerEntity linked = customerRecord(USER_ID, "BR_01");
         when(customerRepository.findByEmail(EMAIL)).thenReturn(Optional.of(linked));
 
         service.linkOnRoleGranted(USER_ID, EMAIL, "BR_01");
@@ -75,7 +75,7 @@ class CustomerUserLinkServiceTest {
     @Test
     void shouldNotTakeARecordLinkedToSomeoneElse() {
         final UUID someoneElse = UUID.randomUUID();
-        final CustomerEntity linked = record(someoneElse, "BR_01");
+        final CustomerEntity linked = customerRecord(someoneElse, "BR_01");
         when(customerRepository.findByEmail(EMAIL)).thenReturn(Optional.of(linked));
 
         service.linkOnRoleGranted(USER_ID, EMAIL, "BR_01");
@@ -85,7 +85,7 @@ class CustomerUserLinkServiceTest {
 
     @Test
     void shouldLeaveTheRecordUnlinkedWhenTheUserAlreadyHasOne() {
-        final CustomerEntity waiting = record(null, "BR_01");
+        final CustomerEntity waiting = customerRecord(null, "BR_01");
         when(customerRepository.findByEmail(EMAIL)).thenReturn(Optional.of(waiting));
         when(customerRepository.existsByUserId(USER_ID)).thenReturn(true);
 
@@ -96,7 +96,7 @@ class CustomerUserLinkServiceTest {
 
     @Test
     void shouldUnlinkWhenTheRoleIsRevokedAndKeepTheEmail() {
-        final CustomerEntity linked = record(USER_ID, "BR_01");
+        final CustomerEntity linked = customerRecord(USER_ID, "BR_01");
         when(customerRepository.findByUserIdAndBranchCode(USER_ID, "BR_01")).thenReturn(List.of(linked));
 
         service.unlinkOnRoleRevoked(USER_ID, "BR_01");

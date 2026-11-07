@@ -87,7 +87,9 @@ class CustomerGoalsVisitorTest {
     void shouldRejectGoalIdNotOwnedByCustomer() {
         final List<CustomerGoals> payload = List.of(goal(99L, "HOUSE", "1"));
 
-        assertThrows(RequestValidationException.class, () -> visitor.visit(customer(), payload));
+        final Customer customer = customer();
+
+        assertThrows(RequestValidationException.class, () -> visitor.visit(customer, payload));
 
         assertEquals(2, storedGoals.size());
         verify(customerGoalsRepository, never()).saveAll(any());
@@ -99,7 +101,9 @@ class CustomerGoalsVisitorTest {
                 goal(20L, "RETIREMENT", "1"),
                 goal(20L, "RETIREMENT", "2"));
 
-        assertThrows(RequestValidationException.class, () -> visitor.visit(customer(), payload));
+        final Customer customer = customer();
+
+        assertThrows(RequestValidationException.class, () -> visitor.visit(customer, payload));
 
         assertEquals(2, storedGoals.size());
         verify(customerGoalsRepository, never()).saveAll(any());

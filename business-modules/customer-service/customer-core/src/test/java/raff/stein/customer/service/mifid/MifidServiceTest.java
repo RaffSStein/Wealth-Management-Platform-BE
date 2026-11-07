@@ -9,6 +9,7 @@ import raff.stein.customer.model.entity.mifid.MifidQuestionnaireEntity;
 import raff.stein.customer.model.entity.mifid.enumeration.MifidFillingStatus;
 import raff.stein.customer.repository.mifid.MifidFillingRepository;
 import raff.stein.customer.repository.mifid.MifidQuestionnaireRepository;
+import raff.stein.customer.service.mifid.enumeration.MifidActionType;
 import raff.stein.customer.service.mifid.workflow.MifidWorkflowDispatcher;
 import raff.stein.platformcore.exception.types.notfound.GenericObjectNotFoundException;
 
@@ -19,8 +20,10 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class MifidServiceTest {
@@ -60,6 +63,27 @@ class MifidServiceTest {
         when(mifidQuestionnaireRepository.findValidQuestionnaire(any(LocalDate.class))).thenReturn(Optional.empty());
 
         assertThrows(GenericObjectNotFoundException.class, () -> mifidService.getLatestValidMifidQuestionnaireConfig());
+    }
+
+    @Test
+    void shouldDispatchNewFillingWithoutId() {
+        final MifidWorkflowDispatcher dispatcher = mock(MifidWorkflowDispatcher.class);
+        final MifidFilling dispatched = MifidFilling.builder().fillingId(3L).build();
+        when(dispatcher.dispatch(MifidActionType.SAVE, CUSTOMER_ID, null)).thenReturn(dispatched);
+        final MifidService service = new MifidService(dispatcher, mifidQuestionnaireRepository, mifidFillingRepository);
+
+        assertSame(dispatched, service.handleFilling(MifidActionType.SAVE, CUSTOMER_ID, null));
+        verify(dispatcher).dispatch(MifidActionType.SAVE, CUSTOMER_ID, null);
+    }
+
+    @Test
+    void shouldRejectMissingActionTypeForNewFilling() {
+        assertThrows(IllegalArgumentException.class, () -> mifidService.handleFilling(null, CUSTOMER_ID, null));
+    }
+
+    @Test
+    void shouldRejectMissingActionTypeForExistingFilling() {
+        assertThrows(IllegalArgumentException.class, () -> mifidService.handleFilling(null, CUSTOMER_ID, 3L, null));
     }
 
     @Test

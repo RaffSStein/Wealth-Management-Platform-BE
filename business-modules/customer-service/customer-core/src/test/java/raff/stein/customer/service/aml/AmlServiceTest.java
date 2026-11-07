@@ -120,7 +120,9 @@ class AmlServiceTest {
         doThrow(new IllegalStateException("outbox write failed"))
                 .when(customerCreatedEventPublisher).publishCustomerCreatedEvent(CUSTOMER_ID);
 
-        assertThrows(IllegalStateException.class, () -> amlService.triggerAmlCheck(customerFromEvent()));
+        final Customer customer = customerFromEvent();
+
+        assertThrows(IllegalStateException.class, () -> amlService.triggerAmlCheck(customer));
 
         // the verification and the onboarding step are undone with the event, so a redelivery starts clean
         verify(transactionManager).rollback(any());
