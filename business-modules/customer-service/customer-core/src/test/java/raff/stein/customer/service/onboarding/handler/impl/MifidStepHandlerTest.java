@@ -3,6 +3,8 @@ package raff.stein.customer.service.onboarding.handler.impl;
 import org.junit.jupiter.api.Test;
 import raff.stein.customer.exception.CustomerException;
 import raff.stein.customer.model.entity.mifid.enumeration.MifidFillingStatus;
+import raff.stein.customer.repository.onboarding.CustomerOnboardingRepository;
+import raff.stein.customer.repository.onboarding.CustomerOnboardingStepRepository;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
 
 import java.util.Map;
@@ -10,10 +12,13 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
 class MifidStepHandlerTest {
 
-    private final MifidStepHandler mifidStepHandler = new MifidStepHandler();
+    private final MifidStepHandler mifidStepHandler = new MifidStepHandler(
+            mock(CustomerOnboardingRepository.class),
+            mock(CustomerOnboardingStepRepository.class));
 
     @Test
     void shouldBuildInitiatedReasonForDraftFilling() {

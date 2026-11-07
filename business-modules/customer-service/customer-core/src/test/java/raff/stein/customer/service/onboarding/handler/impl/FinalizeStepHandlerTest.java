@@ -7,6 +7,8 @@ import raff.stein.customer.model.entity.customer.enumeration.CustomerStatus;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStatus;
 import raff.stein.customer.model.entity.onboarding.CustomerOnboardingEntity;
 import raff.stein.customer.repository.customer.CustomerRepository;
+import raff.stein.customer.repository.onboarding.CustomerOnboardingRepository;
+import raff.stein.customer.repository.onboarding.CustomerOnboardingStepRepository;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
 
 import java.util.Map;
@@ -31,7 +33,10 @@ class FinalizeStepHandlerTest {
         customer = CustomerEntity.builder().id(CUSTOMER_ID).customerStatus(CustomerStatus.PENDING_VERIFICATION).build();
         when(customerRepository.findById(CUSTOMER_ID)).thenReturn(Optional.of(customer));
         onboarding = CustomerOnboardingEntity.builder().customerId(CUSTOMER_ID).onboardingStatus(OnboardingStatus.IN_PROGRESS).build();
-        finalizeStepHandler = new FinalizeStepHandler(customerRepository);
+        finalizeStepHandler = new FinalizeStepHandler(
+                mock(CustomerOnboardingRepository.class),
+                mock(CustomerOnboardingStepRepository.class),
+                customerRepository);
     }
 
     @Test

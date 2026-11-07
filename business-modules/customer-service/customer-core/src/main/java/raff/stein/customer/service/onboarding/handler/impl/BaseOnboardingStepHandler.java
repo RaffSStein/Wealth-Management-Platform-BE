@@ -2,7 +2,6 @@ package raff.stein.customer.service.onboarding.handler.impl;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import raff.stein.customer.exception.CustomerException;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStatus;
 import raff.stein.customer.model.entity.onboarding.CustomerOnboardingEntity;
@@ -22,10 +21,15 @@ import java.util.UUID;
 @Slf4j
 public abstract class BaseOnboardingStepHandler implements OnboardingStepHandler {
 
-    @Autowired
-    protected CustomerOnboardingRepository customerOnboardingRepository;
-    @Autowired
-    protected CustomerOnboardingStepRepository customerOnboardingStepRepository;
+    protected final CustomerOnboardingRepository customerOnboardingRepository;
+    protected final CustomerOnboardingStepRepository customerOnboardingStepRepository;
+
+    protected BaseOnboardingStepHandler(
+            CustomerOnboardingRepository customerOnboardingRepository,
+            CustomerOnboardingStepRepository customerOnboardingStepRepository) {
+        this.customerOnboardingRepository = customerOnboardingRepository;
+        this.customerOnboardingStepRepository = customerOnboardingStepRepository;
+    }
 
     /**
      * This method should return the step reason built based on the context.

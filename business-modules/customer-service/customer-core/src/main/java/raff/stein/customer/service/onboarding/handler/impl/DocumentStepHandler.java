@@ -5,6 +5,8 @@ import org.springframework.stereotype.Component;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStatus;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
 import raff.stein.customer.model.entity.onboarding.CustomerOnboardingEntity;
+import raff.stein.customer.repository.onboarding.CustomerOnboardingRepository;
+import raff.stein.customer.repository.onboarding.CustomerOnboardingStepRepository;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
 
 import java.util.UUID;
@@ -12,6 +14,12 @@ import java.util.UUID;
 @Component
 @Slf4j
 public class DocumentStepHandler extends BaseOnboardingStepHandler {
+
+    public DocumentStepHandler(
+            CustomerOnboardingRepository customerOnboardingRepository,
+            CustomerOnboardingStepRepository customerOnboardingStepRepository) {
+        super(customerOnboardingRepository, customerOnboardingStepRepository);
+    }
 
     @Override
     public OnboardingStep getHandledStep() {
@@ -23,8 +31,8 @@ public class DocumentStepHandler extends BaseOnboardingStepHandler {
         final UUID fileId = (UUID) context.getMetadata("fileId");
         final Boolean isValid = (Boolean) context.getMetadata("isValid");
         return Boolean.TRUE.equals(isValid) ?
-                String.format("File with ID: [%s] has been validated successfully.", fileId.toString()) :
-                String.format("File with ID: [%s] has been rejected.", fileId.toString());
+                String.format("File with ID: [%s] has been validated successfully.", fileId) :
+                String.format("File with ID: [%s] has been rejected.", fileId);
     }
 
     @Override

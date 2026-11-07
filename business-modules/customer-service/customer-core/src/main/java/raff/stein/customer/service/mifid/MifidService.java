@@ -20,6 +20,7 @@ import raff.stein.platformcore.exception.ErrorCode;
 import raff.stein.platformcore.exception.types.notfound.GenericObjectNotFoundException;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Service
@@ -42,7 +43,7 @@ public class MifidService {
     @Transactional(readOnly = true)
     public MifidQuestionnaireConfig getLatestValidMifidQuestionnaireConfig() {
         log.info("Fetching latest valid Mifid questionnaire configuration");
-        final LocalDate today = LocalDate.now();
+        final LocalDate today = LocalDate.now(ZoneId.systemDefault());
         MifidQuestionnaireEntity mifidQuestionnaireEntity = mifidQuestionnaireRepository.findValidQuestionnaire(today)
                 .orElseThrow(() -> new GenericObjectNotFoundException(
                         ErrorCode.OBJECT_NOT_FOUND,
