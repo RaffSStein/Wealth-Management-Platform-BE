@@ -118,5 +118,10 @@ The data model for the Wealth Management Platform is designed to support both in
 
 > _This section will be expanded with detailed entity diagrams and further explanations as the data model evolves._
 
+## CI & Releases
+Every PR into `main` is checked for a conventional title, vulnerable new dependencies, a green Maven build and tests,
+and the SonarQube Cloud quality gate. Each merge then releases automatically: the PR title sets the semver bump, and
+the [GitHub releases](https://github.com/RaffSStein/Wealth-Management-Platform-BE/releases) carry the notes. Details are in [CONTRIBUTING.md](CONTRIBUTING.md#ci--prs).
+
 ## Work in Progress
 This repository is actively evolving. Features, modules, and documentation are subject to change as the platform matures. Please refer to the individual module [README](business-modules/proposal-service/README.md), [README](business-modules/portfolio-service/README.md), etc. for more details on each domain.

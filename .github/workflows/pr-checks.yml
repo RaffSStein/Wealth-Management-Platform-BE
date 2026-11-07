@@ -1,0 +1,42 @@
+# Workflow rules a PR into main must follow. The Maven build, tests and quality gate run in maven.yml.
+# The PR title becomes the release note and decides the version bump (see release.yml).
+
+name: PR checks
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    types: [ opened, edited, synchronize, reopened ]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-title:
+    name: Conventional PR title
+    runs-on: ubuntu-latest
+    steps:
+      # The title goes through an env var, never inlined in the script, so it can't inject shell
+      - name: Check the title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # type(scope): subject  -- scope required, kebab-case; "!" marks a breaking change
+          # TODO: restrict the scope to the module names and agreed areas
+          pattern='^(feat|fix|docs|refactor|test|chore)\([a-z0-9]+(-[a-z0-9]+)*\)!?: [^ ].*$'
+          if [[ "$TITLE" =~ $pattern ]]; then
+            echo "OK: $TITLE"
+          else
+            echo "::error::PR title must look like 'type(scope): imperative subject', with type one of feat|fix|docs|refactor|test|chore and a kebab-case scope (e.g. 'feat(customer-service): add customer search'). Got: '$TITLE'"
+            exit 1
+          fi
+
+  dependency-review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      # Fails when the PR adds a dependency with a known high or critical vulnerability
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high

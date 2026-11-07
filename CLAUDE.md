@@ -20,7 +20,10 @@ Wealth Management Platform (WMP): an event-driven, Spring Boot microservices bac
 docker compose -f docker-compose.yml up -d                               # local infrastructure
 ```
 
-- CI (`.github/workflows/maven.yml`) runs `clean install` then `test` on JDK 21 Temurin for pushes/PRs to `main`. Keep it green.
+- CI (`.github/workflows/maven.yml`) runs `clean install` (tests + JaCoCo) on JDK 21 Temurin, then the SonarQube Cloud
+  quality gate, for pushes/PRs to `main`. `pr-checks.yml` checks the PR title (`type(scope): subject`) and new
+  dependencies. Merging releases automatically (`release.yml`): the PR title sets the semver bump and GitHub generates
+  the notes. Keep it all green; see `CONTRIBUTING.md`.
 - The build regenerates OpenAPI code; a broken YAML spec breaks every dependent module.
 - Local infra (`docker-compose.yml` + `.env`): Kafka + Kafbat UI, one `postgres-<service>` container per service with a datasource
   (user/pass `test`/`test`), MinIO and fake-GCS (document storage), MailHog (SMTP `1025`, UI `8025`),
@@ -152,7 +155,8 @@ docs/domain/                   functional docs: process/ (markdown) + assets/ (d
 - Keep commits small and atomic, and update OpenAPI specs, mappers, tests and READMEs in the same change as the behavior they describe.
 - Commit and push only when asked. Commits are authored with the user's own git identity.
   **Never add `Co-Authored-By` trailers or any Claude/AI attribution to commits or PRs.**
-- PR descriptions include rationale, risk and testing notes.
+- PR descriptions follow `.github/pull_request_template.md`: Summary, What has been done, Testing, Notes, and
+  Breaking changes (only when there are any: then also `!` in the title or the `breaking-change` label).
 
 ## Documentation
 - When adding endpoints, events or config, update the service `README.md`. Its section order follows `document-service`/`email-service`:

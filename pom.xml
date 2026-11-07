@@ -39,6 +39,13 @@
         <jjwt.version>0.13.0</jjwt.version>
         <spring.boot.cache.version>4.0.0</spring.boot.cache.version>
         <spring.cloud.version>2025.1.0</spring.cloud.version>
+        <jacoco.maven.plugin.version>0.8.13</jacoco.maven.plugin.version>
+        <sonar.maven.plugin.version>5.1.0.4751</sonar.maven.plugin.version>
+
+        <!-- SonarQube Cloud (run by .github/workflows/maven.yml when the SONAR_TOKEN secret is set) -->
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.organization>raffsstein</sonar.organization>
+        <sonar.projectKey>RaffSStein_Wealth-Management-Platform-BE</sonar.projectKey>
     </properties>
 
     <dependencyManagement>
@@ -230,7 +237,41 @@
     </dependencyManagement>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.maven.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>${sonar.maven.plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
+            <!-- Test coverage for every module: target/site/jacoco/jacoco.xml, read by SonarQube Cloud -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
