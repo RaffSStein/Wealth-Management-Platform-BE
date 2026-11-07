@@ -17,6 +17,7 @@ import raff.stein.profiler.client.bank.BankBranchValidator;
 import raff.stein.profiler.model.assignment.AssignRoleCommand;
 import raff.stein.profiler.model.assignment.AssignmentResult;
 import raff.stein.profiler.model.assignment.RoleAssignment;
+import raff.stein.profiler.model.assignment.RoleAssignmentRequest;
 import raff.stein.profiler.model.entity.KnownUserEntity;
 import raff.stein.profiler.model.entity.RoleAssignmentEntity;
 import raff.stein.profiler.model.entity.RoleAssignmentRequestEntity;
@@ -43,7 +44,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -109,7 +109,9 @@ class RoleAssignmentServiceTest {
     void shouldRefuseAssigningARoleToYourself() {
         givenCaller(TARGET.toString(), "BANK_ADMIN", "BANK_A", "BR_01");
 
-        assertThrows(AccessDeniedException.class, () -> service.assign(command("CUSTOMER", "BR_01", null)));
+        final AssignRoleCommand command = command("CUSTOMER", "BR_01", null);
+
+        assertThrows(AccessDeniedException.class, () -> service.assign(command));
         verify(assignmentRepository, never()).save(any());
     }
 
@@ -117,7 +119,9 @@ class RoleAssignmentServiceTest {
     void shouldRefuseAssigningPlatformAdmin() {
         givenCaller("pa-1", "PLATFORM_ADMIN", "PLATFORM", "PLATFORM");
 
-        assertThrows(AccessDeniedException.class, () -> service.assign(command("PLATFORM_ADMIN", "BR_01", "BANK_A")));
+        final AssignRoleCommand command = command("PLATFORM_ADMIN", "BR_01", "BANK_A");
+
+        assertThrows(AccessDeniedException.class, () -> service.assign(command));
     }
 
     @Test
@@ -139,7 +143,9 @@ class RoleAssignmentServiceTest {
         when(assignmentRepository.existsByUserIdAndBankCodeAndBranchCodeAndRole(TARGET, "BANK_A", "BR_01", "CUSTOMER"))
                 .thenReturn(true);
 
-        assertThrows(ResourceConflictException.class, () -> service.assign(command("CUSTOMER", "BR_01", null)));
+        final AssignRoleCommand command = command("CUSTOMER", "BR_01", null);
+
+        assertThrows(ResourceConflictException.class, () -> service.assign(command));
     }
 
     @Test
@@ -227,6 +233,53 @@ class RoleAssignmentServiceTest {
         assertEquals(9L, event.getValue().getAssignmentId());
         assertEquals("bank-admin@bank.test", event.getValue().getGrantedBy());
         verify(assignmentRepository, never()).save(any());
+    }
+
+    @Test
+    void platformAdminShouldListRequestsOfEveryBank() {
+        givenCaller("pa-1", "PLATFORM_ADMIN", "PLATFORM", "PLATFORM");
+        final RoleAssignmentRequestEntity request = givenPendingRequest("ba-1", NOW);
+        when(requestRepository.findAllByOrderByRequestedAtDesc()).thenReturn(List.of(request));
+
+        assertEquals(List.of(1L), service.listRequests(null).stream().map(RoleAssignmentRequest::getId).toList());
+        verify(requestRepository, never()).findByStatusOrderByRequestedAtDesc(any());
+    }
+
+    @Test
+    void platformAdminShouldFilterRequestsByStatus() {
+        givenCaller("pa-1", "PLATFORM_ADMIN", "PLATFORM", "PLATFORM");
+        when(requestRepository.findByStatusOrderByRequestedAtDesc(RoleAssignmentRequestStatus.PENDING)).thenReturn(List.of());
+
+        assertEquals(List.of(), service.listRequests(RoleAssignmentRequestStatus.PENDING));
+        verify(requestRepository, never()).findAllByOrderByRequestedAtDesc();
+    }
+
+    @Test
+    void bankAdminShouldListOnlyItsBankRequests() {
+        givenCaller("ba-1", "BANK_ADMIN", "BANK_A", "BR_01");
+        when(requestRepository.findByBankCodeOrderByRequestedAtDesc("BANK_A")).thenReturn(List.of());
+
+        assertEquals(List.of(), service.listRequests(null));
+        verify(requestRepository).findByBankCodeOrderByRequestedAtDesc("BANK_A");
+        verify(requestRepository, never()).findAllByOrderByRequestedAtDesc();
+    }
+
+    @Test
+    void bankAdminShouldFilterItsBankRequestsByStatus() {
+        givenCaller("ba-1", "BANK_ADMIN", "BANK_A", "BR_01");
+        when(requestRepository.findByBankCodeAndStatusOrderByRequestedAtDesc("BANK_A", RoleAssignmentRequestStatus.APPROVED))
+                .thenReturn(List.of());
+
+        assertEquals(List.of(), service.listRequests(RoleAssignmentRequestStatus.APPROVED));
+        verify(requestRepository).findByBankCodeAndStatusOrderByRequestedAtDesc("BANK_A", RoleAssignmentRequestStatus.APPROVED);
+    }
+
+    @Test
+    void advisorShouldNotListRequests() {
+        givenCaller("advisor-1", "ADVISOR", "BANK_A", "BR_01");
+
+        assertThrows(AccessDeniedException.class, () -> service.listRequests(null));
+        verifyNoInteractions(requestRepository);
     }
 
     @Test
