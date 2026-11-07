@@ -5,11 +5,45 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(dependencies): "
     labels:
       - "dependencies"
+    # Libraries that are released together get one PR, so main never mixes their versions
+    # (e.g. one Spring Boot starter on 4.0.4 and the others on 4.0.2).
+    # Only minor and patch updates are grouped: a major update gets its own PR, to be reviewed by hand.
+    # A dependency goes into the first group it matches.
+    groups:
+      spring-boot:
+        patterns:
+          - "org.springframework.boot*"
+        update-types: [ "minor", "patch" ]
+      spring:
+        patterns:
+          - "org.springframework*"
+          - "io.micrometer*"
+        update-types: [ "minor", "patch" ]
+      jackson:
+        patterns:
+          - "tools.jackson*"
+          - "com.fasterxml.jackson*"
+        update-types: [ "minor", "patch" ]
+      hibernate:
+        patterns:
+          - "org.hibernate*"
+        update-types: [ "minor", "patch" ]
+      # Code generators: a new version can change the generated API/model classes in every module
+      openapi:
+        patterns:
+          - "org.openapitools*"
+          - "io.openapiprocessor*"
+        update-types: [ "minor", "patch" ]
+      # Everything else: all patch updates in one PR
+      other-patch:
+        patterns:
+          - "*"
+        update-types: [ "patch" ]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -21,3 +55,8 @@ updates:
       prefix: "chore(actions): "
     labels:
       - "dependencies"
+    groups:
+      actions-minor-patch:
+        patterns:
+          - "*"
+        update-types: [ "minor", "patch" ]
