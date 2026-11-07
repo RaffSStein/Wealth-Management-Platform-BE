@@ -53,10 +53,10 @@ public class GCSConfig {
                 .build();
         Storage storage = storageOptions.getService();
         log.info("Local GCS Storage initialized successfully.");
-        Bucket bucket = storage.get(bucketName);
+        final Bucket bucket = storage.get(bucketName);
         if (bucket == null) {
             log.info("Creating bucket: {}", bucketName);
-            bucket = storage.create(BucketInfo.newBuilder(bucketName).build());
+            storage.create(BucketInfo.newBuilder(bucketName).build());
             log.info("Bucket {} created successfully.", bucketName);
         }
         return storage;
