@@ -10,28 +10,18 @@ updates:
       prefix: "chore(dependencies): "
     labels:
       - "dependencies"
-    # Libraries that are released together get one PR, so main never mixes their versions
-    # (e.g. one Spring Boot starter on 4.0.4 and the others on 4.0.2).
+    # Libraries that are released together get one PR, so main never mixes their versions.
     # Only minor and patch updates are grouped: a major update gets its own PR, to be reviewed by hand.
     # A dependency goes into the first group it matches.
     groups:
+      # Spring, Hibernate, Jackson, Micrometer, Kafka, PostgreSQL... are not pinned in the root POM: they follow the
+      # Spring Boot parent, so bumping the parent moves them all. Spring Cloud is in the same group because each
+      # release train supports only some Boot versions and fails at startup otherwise (the smoke tests catch it).
+      # A Boot minor whose Spring Cloud train is not released yet stays red: that is the signal to wait.
       spring-boot:
         patterns:
           - "org.springframework.boot*"
-        update-types: [ "minor", "patch" ]
-      spring:
-        patterns:
-          - "org.springframework*"
-          - "io.micrometer*"
-        update-types: [ "minor", "patch" ]
-      jackson:
-        patterns:
-          - "tools.jackson*"
-          - "com.fasterxml.jackson*"
-        update-types: [ "minor", "patch" ]
-      hibernate:
-        patterns:
-          - "org.hibernate*"
+          - "org.springframework.cloud*"
         update-types: [ "minor", "patch" ]
       # Code generators: a new version can change the generated API/model classes in every module
       openapi:
