@@ -1,5 +1,6 @@
 package raff.stein.platformcore.security.context;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import raff.stein.platformcore.exception.ErrorCode;
 import raff.stein.platformcore.exception.types.unauthorized.JwtTokenException;
@@ -16,6 +17,7 @@ public class RecentAuthenticationGuard {
 
     private final Clock clock;
 
+    @Autowired
     public RecentAuthenticationGuard() {
         this(Clock.systemUTC());
     }
