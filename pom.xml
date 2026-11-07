@@ -23,7 +23,7 @@
         <logstash.logback.encoder.version>9.0</logstash.logback.encoder.version>
         <cloudevent.version>4.0.1</cloudevent.version>
         <openapi.generator.maven.plugin.version>2024.1</openapi.generator.maven.plugin.version>
-        <spring.retry.version>2.0.12</spring.retry.version>
+        <spring.retry.version>2.0.13</spring.retry.version>
         <jjwt.version>0.13.0</jjwt.version>
         <!-- Must be a release train compatible with the Spring Boot parent version -->
         <spring.cloud.version>2025.1.4</spring.cloud.version>
