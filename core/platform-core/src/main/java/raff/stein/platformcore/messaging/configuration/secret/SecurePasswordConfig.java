@@ -35,7 +35,7 @@ public class SecurePasswordConfig {
     private SecretKey aesKey;
 
     @PostConstruct
-    public SecurePasswordConfig initialize() throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
+    public SecurePasswordConfig initialize() throws NoSuchAlgorithmException, NoSuchPaddingException {
         // Fail at startup, as before, if the cipher is not available
         Cipher.getInstance(algorithm);
         final KeyGenerator keyGenerator = KeyGenerator.getInstance(keyAlgorithm);

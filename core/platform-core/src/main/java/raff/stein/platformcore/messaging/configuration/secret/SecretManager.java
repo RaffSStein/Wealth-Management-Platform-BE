@@ -9,7 +9,6 @@ import raff.stein.platformcore.messaging.configuration.kafka.KafkaAwsSecrets;
 import raff.stein.platformcore.messaging.configuration.kafka.KafkaBrokerConfiguration;
 
 import javax.crypto.NoSuchPaddingException;
-import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
@@ -28,7 +27,7 @@ public class SecretManager {
     public SecretManager(@NonNull KafkaBrokerConfiguration kafkaBrokerConfiguration) {
         try {
             securePasswordConfig.initialize();
-        } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException e) {
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
             throw new RuntimeException(e);
         }
         initBrokerAwsSecrets(kafkaBrokerConfiguration);
