@@ -146,7 +146,7 @@ docs/domain/                   functional docs: process/ (markdown) + assets/ (d
 ## Testing
 - JUnit 5 + Spring Boot Test. Good examples are in `platform-core/src/test` (plain unit tests with `assertEquals`/`assertThrows`,
   method names like `shouldRetryAndSucceedWithinMaxAttempts`).
-- Service test coverage is currently minimal (placeholder `@SpringBootTest` classes). When changing behavior, add tests covering
+- Service tests are plain unit tests; there are no Spring context (`@SpringBootTest`) tests yet. When changing behavior, add tests covering
   the happy path and at least one edge case. Mock Kafka, external clients and the security context, and keep tests deterministic.
 
 ## Git workflow

@@ -17,6 +17,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.InputStream;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 
 /**
  * Service implementation for Amazon S3 integration.
@@ -105,7 +106,7 @@ public class S3StorageService implements CloudStorageService {
                 .build();
         try (InputStream inputStream = multipartFile.getInputStream()) {
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, multipartFile.getSize()));
-            final OffsetDateTime uploadTime = OffsetDateTime.now();
+            final OffsetDateTime uploadTime = OffsetDateTime.now(ZoneId.systemDefault());
             return documentMapper.fileToNewDocument(
                     file,
                     uploadTime,

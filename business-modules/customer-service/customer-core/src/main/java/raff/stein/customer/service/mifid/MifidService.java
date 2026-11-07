@@ -20,6 +20,7 @@ import raff.stein.platformcore.exception.ErrorCode;
 import raff.stein.platformcore.exception.types.notfound.GenericObjectNotFoundException;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Service
@@ -42,7 +43,7 @@ public class MifidService {
     @Transactional(readOnly = true)
     public MifidQuestionnaireConfig getLatestValidMifidQuestionnaireConfig() {
         log.info("Fetching latest valid Mifid questionnaire configuration");
-        final LocalDate today = LocalDate.now();
+        final LocalDate today = LocalDate.now(ZoneId.systemDefault());
         MifidQuestionnaireEntity mifidQuestionnaireEntity = mifidQuestionnaireRepository.findValidQuestionnaire(today)
                 .orElseThrow(() -> new GenericObjectNotFoundException(
                         ErrorCode.OBJECT_NOT_FOUND,
@@ -74,7 +75,7 @@ public class MifidService {
             MifidActionType actionType,
             UUID customerId,
             MifidFillingDto dto) {
-        return handleFilling(actionType, customerId, null, dto);
+        return dispatchFilling(actionType, customerId, null, dto);
     }
 
     /**
@@ -83,6 +84,15 @@ public class MifidService {
      */
     @Transactional
     public MifidFilling handleFilling(
+            MifidActionType actionType,
+            UUID customerId,
+            Long fillingId,
+            MifidFillingDto dto) {
+        return dispatchFilling(actionType, customerId, fillingId, dto);
+    }
+
+    // shared by both handleFilling variants, so neither calls the other's @Transactional method through "this"
+    private MifidFilling dispatchFilling(
             MifidActionType actionType,
             UUID customerId,
             Long fillingId,

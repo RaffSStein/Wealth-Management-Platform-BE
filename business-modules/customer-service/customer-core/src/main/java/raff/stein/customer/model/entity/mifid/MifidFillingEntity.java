@@ -8,6 +8,7 @@ import raff.stein.customer.model.entity.mifid.enumeration.MifidFillingStatus;
 import raff.stein.platformcore.model.tenant.TenantScopedEntity;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Set;
 import java.util.UUID;
 
@@ -74,12 +75,12 @@ public class MifidFillingEntity extends TenantScopedEntity<Long> {
 
 
     public void initializeMifidFirstSave() {
-        this.fillingDate = LocalDateTime.now();
+        this.fillingDate = LocalDateTime.now(ZoneId.systemDefault());
         this.status = MifidFillingStatus.DRAFT;
     }
 
     public void updateMifidFields(MifidFillingStatus newStatus) {
-        this.fillingDate = LocalDateTime.now();
+        this.fillingDate = LocalDateTime.now(ZoneId.systemDefault());
         this.status = newStatus;
     }
 

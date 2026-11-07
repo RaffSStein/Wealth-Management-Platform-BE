@@ -24,25 +24,31 @@ class CustomerAccessInterceptorTest {
     private static final class Endpoints {
         @CustomerAccess(CustomerAccessLevel.READ)
         public void read() {
+            // endpoint stub: the interceptor only reads its annotation
         }
 
         @CustomerAccess(CustomerAccessLevel.WRITE)
         public void write() {
+            // endpoint stub: the interceptor only reads its annotation
         }
 
         @CustomerAccess(CustomerAccessLevel.LIST_BY_USER)
         public void list() {
+            // endpoint stub: the interceptor only reads its annotation
         }
 
         @CustomerAccess(CustomerAccessLevel.LIST)
         public void book() {
+            // endpoint stub: the interceptor only reads its annotation
         }
 
         @CustomerAccess(CustomerAccessLevel.ADVISOR_DASHBOARD)
         public void dashboard() {
+            // endpoint stub: the interceptor only reads its annotation
         }
 
         public void unannotated() {
+            // endpoint stub: the interceptor only reads its annotation
         }
     }
 
@@ -82,7 +88,9 @@ class CustomerAccessInterceptorTest {
 
     @Test
     void shouldRefuseCustomerEndpointWithoutAnnotation() {
-        assertThrows(AccessDeniedException.class, () -> call("unannotated", Map.of("customerId", ID.toString())));
+        final Map<String, String> pathVariables = Map.of("customerId", ID.toString());
+
+        assertThrows(AccessDeniedException.class, () -> call("unannotated", pathVariables));
     }
 
     @Test
@@ -98,7 +106,7 @@ class CustomerAccessInterceptorTest {
     }
 
     @Test
-    void shouldIgnoreHandlersThatAreNotControllerMethods() throws Exception {
+    void shouldIgnoreHandlersThatAreNotControllerMethods() {
         assertTrue(interceptor.preHandle(mock(HttpServletRequest.class), mock(HttpServletResponse.class), new Object()));
         verifyNoInteractions(policy);
     }

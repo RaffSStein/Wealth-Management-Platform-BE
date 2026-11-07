@@ -36,9 +36,13 @@ class AssignmentPolicyTest {
     void advisorShouldNotAssignStaffOrOtherBranchOrOtherBank() {
         final WMPContext caller = caller("ADVISOR", "BANK_A", "BR_01");
 
-        assertThrows(AccessDeniedException.class, () -> advisor.decideAssignment(caller, WmpRole.ADVISOR, command("BR_01", null)));
-        assertThrows(AccessDeniedException.class, () -> advisor.decideAssignment(caller, WmpRole.CUSTOMER, command("BR_02", null)));
-        assertThrows(AccessDeniedException.class, () -> advisor.decideAssignment(caller, WmpRole.CUSTOMER, command("BR_01", "BANK_B")));
+        final AssignRoleCommand ownBranch = command("BR_01", null);
+        final AssignRoleCommand otherBranch = command("BR_02", null);
+        final AssignRoleCommand otherBank = command("BR_01", "BANK_B");
+
+        assertThrows(AccessDeniedException.class, () -> advisor.decideAssignment(caller, WmpRole.ADVISOR, ownBranch));
+        assertThrows(AccessDeniedException.class, () -> advisor.decideAssignment(caller, WmpRole.CUSTOMER, otherBranch));
+        assertThrows(AccessDeniedException.class, () -> advisor.decideAssignment(caller, WmpRole.CUSTOMER, otherBank));
     }
 
     @Test
@@ -58,8 +62,11 @@ class AssignmentPolicyTest {
     void bankAdminShouldNotAssignBankAdminOrChooseTheBank() {
         final WMPContext caller = caller("BANK_ADMIN", "BANK_A", "BR_01");
 
-        assertThrows(AccessDeniedException.class, () -> bankAdmin.decideAssignment(caller, WmpRole.BANK_ADMIN, command("BR_01", null)));
-        assertThrows(AccessDeniedException.class, () -> bankAdmin.decideAssignment(caller, WmpRole.ADVISOR, command("BR_01", "BANK_B")));
+        final AssignRoleCommand ownBank = command("BR_01", null);
+        final AssignRoleCommand otherBank = command("BR_01", "BANK_B");
+
+        assertThrows(AccessDeniedException.class, () -> bankAdmin.decideAssignment(caller, WmpRole.BANK_ADMIN, ownBank));
+        assertThrows(AccessDeniedException.class, () -> bankAdmin.decideAssignment(caller, WmpRole.ADVISOR, otherBank));
     }
 
     @Test
@@ -76,9 +83,13 @@ class AssignmentPolicyTest {
     void platformAdminShouldOnlyAssignBankAdminInARealBank() {
         final WMPContext caller = caller("PLATFORM_ADMIN", "PLATFORM", "PLATFORM");
 
-        assertThrows(AccessDeniedException.class, () -> platformAdmin.decideAssignment(caller, WmpRole.ADVISOR, command("BR_01", "BANK_A")));
-        assertThrows(RequestValidationException.class, () -> platformAdmin.decideAssignment(caller, WmpRole.BANK_ADMIN, command("BR_01", null)));
-        assertThrows(RequestValidationException.class, () -> platformAdmin.decideAssignment(caller, WmpRole.BANK_ADMIN, command("PLATFORM", "PLATFORM")));
+        final AssignRoleCommand inBank = command("BR_01", "BANK_A");
+        final AssignRoleCommand withoutBank = command("BR_01", null);
+        final AssignRoleCommand platformBank = command("PLATFORM", "PLATFORM");
+
+        assertThrows(AccessDeniedException.class, () -> platformAdmin.decideAssignment(caller, WmpRole.ADVISOR, inBank));
+        assertThrows(RequestValidationException.class, () -> platformAdmin.decideAssignment(caller, WmpRole.BANK_ADMIN, withoutBank));
+        assertThrows(RequestValidationException.class, () -> platformAdmin.decideAssignment(caller, WmpRole.BANK_ADMIN, platformBank));
     }
 
     @Test
@@ -105,8 +116,11 @@ class AssignmentPolicyTest {
         final AssignmentPolicyDispatcher dispatcher = new AssignmentPolicyDispatcher(List.of(advisor, bankAdmin, platformAdmin));
 
         assertEquals(WmpRole.BANK_ADMIN, dispatcher.forCaller(caller(Set.of("ADVISOR", "BANK_ADMIN"))).callerRole());
-        assertThrows(AccessDeniedException.class, () -> dispatcher.forCaller(caller(Set.of("CUSTOMER"))));
-        assertThrows(AccessDeniedException.class, () -> dispatcher.forCaller(caller(Set.of("SOMETHING"))));
+        final WMPContext customer = caller(Set.of("CUSTOMER"));
+        final WMPContext unknownRole = caller(Set.of("SOMETHING"));
+
+        assertThrows(AccessDeniedException.class, () -> dispatcher.forCaller(customer));
+        assertThrows(AccessDeniedException.class, () -> dispatcher.forCaller(unknownRole));
     }
 
     private static WMPContext caller(String role, String bankCode, String branchCode) {

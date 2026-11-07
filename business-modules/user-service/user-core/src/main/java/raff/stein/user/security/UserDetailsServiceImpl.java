@@ -29,10 +29,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         UserEntity entity = userRepository.findByEmailIgnoreCase(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
-        // TODO: re-enable when user enable/disable is implemented
-//        if (!entity.isEnabled()) {
-//            throw new UsernameNotFoundException("User disabled: " + username);
-//        }
+        // TODO: once user enable/disable is implemented, reject disabled users with a UsernameNotFoundException
         Set<WmpRole> wmpRoles = resolvePlatformRoles(entity);
         Collection<? extends GrantedAuthority> authorities = wmpRoles.stream()
                 .map(r -> new SimpleGrantedAuthority("ROLE_" + r.name()))

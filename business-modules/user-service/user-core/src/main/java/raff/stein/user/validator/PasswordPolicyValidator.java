@@ -18,12 +18,14 @@ import java.util.regex.Pattern;
 public class PasswordPolicyValidator {
 
     private static final int MIN_LENGTH = 8;
-    private static final Pattern UPPER = Pattern.compile(".*[A-Z].*");
-    private static final Pattern LOWER = Pattern.compile(".*[a-z].*");
-    private static final Pattern DIGIT = Pattern.compile(".*\\d.*");
+    // Single-character classes used with find(): ".*X.*" with matches() backtracks super-linearly
+    private static final Pattern UPPER = Pattern.compile("[A-Z]");
+    private static final Pattern LOWER = Pattern.compile("[a-z]");
+    private static final Pattern DIGIT = Pattern.compile("\\d");
     // Properly escaped character class for common specials
-    private static final Pattern SPECIAL = Pattern.compile(".*[!@#$%^&*()_\\-+=\\[\\]{};:'\"|\\\\,<.>/?].*");
-    private static final Pattern WHITESPACE = Pattern.compile(".*\\s.*");
+    private static final Pattern SPECIAL = Pattern.compile("[!@#$%^&*()_\\-+=\\[\\]{};:'\"|\\\\,<.>/?]");
+    // Includes the Unicode line separators that \s misses: the old ".*X.*" patterns rejected them, since "." doesn't match them
+    private static final Pattern WHITESPACE = Pattern.compile("[\\s\\u0085\\u2028\\u2029]");
 
     /**
      * Returns a list of violations. Empty list means valid.
@@ -45,19 +47,19 @@ public class PasswordPolicyValidator {
         if (password.length() < MIN_LENGTH) {
             violations.add("Password must be at least " + MIN_LENGTH + " characters long");
         }
-        if (!UPPER.matcher(password).matches()) {
+        if (!UPPER.matcher(password).find()) {
             violations.add("Password must contain at least one uppercase letter");
         }
-        if (!LOWER.matcher(password).matches()) {
+        if (!LOWER.matcher(password).find()) {
             violations.add("Password must contain at least one lowercase letter");
         }
-        if (!DIGIT.matcher(password).matches()) {
+        if (!DIGIT.matcher(password).find()) {
             violations.add("Password must contain at least one digit");
         }
-        if (!SPECIAL.matcher(password).matches()) {
+        if (!SPECIAL.matcher(password).find()) {
             violations.add("Password must contain at least one special character");
         }
-        if (WHITESPACE.matcher(password).matches()) {
+        if (WHITESPACE.matcher(password).find()) {
             violations.add("Password must not contain whitespace");
         }
     }

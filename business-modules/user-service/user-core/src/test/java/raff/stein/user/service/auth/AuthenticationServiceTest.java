@@ -118,7 +118,9 @@ class AuthenticationServiceTest {
     void shouldDenyLoginToBranchWithoutAssignment() {
         givenUser(assignment(1L, "BANK_A", "BR_01", "ADVISOR"));
 
-        assertThrows(AccessDeniedException.class, () -> authenticationService.login(loginRequest(null, "BR_99")));
+        final LoginRequest request = loginRequest(null, "BR_99");
+
+        assertThrows(AccessDeniedException.class, () -> authenticationService.login(request));
     }
 
     @Test

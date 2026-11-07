@@ -133,7 +133,9 @@ class UserDirectoryServiceTest {
 
         assertEquals(1, visible.getBranchRoles().size());
         assertEquals("BANK_A", visible.getBranchRoles().getFirst().getBankCode());
-        assertThrows(GenericObjectNotFoundException.class, () -> service.getVisibleUser(advisorBankB.getId()));
+        final UUID userId = advisorBankB.getId();
+
+        assertThrows(GenericObjectNotFoundException.class, () -> service.getVisibleUser(userId));
     }
 
     private static void givenCaller(String role) {

@@ -153,8 +153,8 @@ public class CustomerEntity extends TenantScopedEntity<UUID> {
     @Column
     private LocalDate onboardingDate;
 
-    // latest submitted MiFID result, denormalized for customer reads (dashboards, advisor lists);
-    // the full history stays on the MiFID fillings
+    // latest submitted MiFID result, denormalized for customer reads such as dashboards and advisor lists.
+    // The full history stays on the MiFID fillings
     @Column(length = 100)
     @Setter
     private String riskProfile;

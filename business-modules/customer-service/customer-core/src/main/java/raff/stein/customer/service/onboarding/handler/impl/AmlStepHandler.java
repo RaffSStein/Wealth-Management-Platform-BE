@@ -1,11 +1,12 @@
 package raff.stein.customer.service.onboarding.handler.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStatus;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
 import raff.stein.customer.model.entity.onboarding.CustomerOnboardingEntity;
+import raff.stein.customer.repository.onboarding.CustomerOnboardingRepository;
+import raff.stein.customer.repository.onboarding.CustomerOnboardingStepRepository;
 import raff.stein.customer.service.aml.pipeline.AmlResult;
 import raff.stein.customer.service.aml.pipeline.step.AmlStepResult;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
@@ -13,9 +14,16 @@ import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class AmlStepHandler extends BaseOnboardingStepHandler {
+
+    public static final String AML_RESULT_METADATA_KEY = "AmlResult";
+
+    public AmlStepHandler(
+            CustomerOnboardingRepository customerOnboardingRepository,
+            CustomerOnboardingStepRepository customerOnboardingStepRepository) {
+        super(customerOnboardingRepository, customerOnboardingStepRepository);
+    }
 
     @Override
     public OnboardingStep getHandledStep() {
@@ -24,7 +32,7 @@ public class AmlStepHandler extends BaseOnboardingStepHandler {
 
     @Override
     public String buildStepReason(OnboardingStepContext context) {
-        final AmlResult amlResult = (AmlResult) context.getMetadata("AmlResult");
+        final AmlResult amlResult = (AmlResult) context.getMetadata(AML_RESULT_METADATA_KEY);
         if (amlResult != null) {
             return String.format("AML check completed with status: [%s]", amlResult.overallStatus());
         }
@@ -33,7 +41,7 @@ public class AmlStepHandler extends BaseOnboardingStepHandler {
 
     @Override
     public String buildStepStatus(OnboardingStepContext context) {
-        final AmlResult amlResult = (AmlResult) context.getMetadata("AmlResult");
+        final AmlResult amlResult = (AmlResult) context.getMetadata(AML_RESULT_METADATA_KEY);
         if (amlResult != null) {
             return amlResult.overallStatus().equals(AmlStepResult.StepStatus.PASSED) ? "DONE" : "REJECTED";
         }
@@ -43,7 +51,7 @@ public class AmlStepHandler extends BaseOnboardingStepHandler {
     @Override
     public void updateCustomerOnboardingStatus(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
         final UUID customerId = context.getCustomerId();
-        final AmlResult amlResult = (AmlResult) context.getMetadata("AmlResult");
+        final AmlResult amlResult = (AmlResult) context.getMetadata(AML_RESULT_METADATA_KEY);
         if (amlResult != null) {
             if (amlResult.overallStatus().equals(AmlStepResult.StepStatus.PASSED)) {
                 log.info("AML check passed for customer ID: [{}]. Proceeding to next onboarding step.", customerId);
@@ -65,7 +73,7 @@ public class AmlStepHandler extends BaseOnboardingStepHandler {
 
     @Override
     public void updateCustomerOnboardingReason(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
-        final AmlResult amlResult = (AmlResult) context.getMetadata("AmlResult");
+        final AmlResult amlResult = (AmlResult) context.getMetadata(AML_RESULT_METADATA_KEY);
         if (amlResult != null) {
             if (amlResult.overallStatus().equals(AmlStepResult.StepStatus.PASSED)) {
                 customerOnboarding.setReason("AML check passed successfully");

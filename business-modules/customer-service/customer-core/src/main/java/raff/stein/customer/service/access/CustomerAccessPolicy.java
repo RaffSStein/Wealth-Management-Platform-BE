@@ -35,6 +35,8 @@ import java.util.UUID;
 @Slf4j
 public class CustomerAccessPolicy {
 
+    private static final String CUSTOMER_RECORD = "a customer record";
+
     private final CustomerRepository customerRepository;
 
     public void assertCanRead(UUID customerId) {
@@ -84,7 +86,7 @@ public class CustomerAccessPolicy {
      * The branch of a new customer record: always the one in the token.
      */
     public String resolveInitBranchCode() {
-        return callerBranch().orElseThrow(() -> denied("a customer record"));
+        return callerBranch().orElseThrow(() -> denied(CUSTOMER_RECORD));
     }
 
     public void assertCanListByUser(UUID userId) {
@@ -100,14 +102,14 @@ public class CustomerAccessPolicy {
     public UUID resolveInitUserId(UUID requestedUserId) {
         return switch (callerRole()) {
             case CUSTOMER -> {
-                final UUID ownId = callerUserId().orElseThrow(() -> denied("a customer record"));
+                final UUID ownId = callerUserId().orElseThrow(() -> denied(CUSTOMER_RECORD));
                 if (requestedUserId != null && !requestedUserId.equals(ownId)) {
                     throw denied(requestedUserId);
                 }
                 yield ownId;
             }
             case ADVISOR -> null;
-            case BANK_ADMIN, PLATFORM_ADMIN -> throw denied("a customer record");
+            case BANK_ADMIN, PLATFORM_ADMIN -> throw denied(CUSTOMER_RECORD);
         };
     }
 
@@ -118,7 +120,7 @@ public class CustomerAccessPolicy {
     public String resolveInitEmail(String requestedEmail) {
         final String callerEmail = callerEmail().orElse(null);
         if (callerRole() != WmpRole.ADVISOR) {
-            return Optional.ofNullable(callerEmail).orElseThrow(() -> denied("a customer record"));
+            return Optional.ofNullable(callerEmail).orElseThrow(() -> denied(CUSTOMER_RECORD));
         }
         if (requestedEmail == null || requestedEmail.isBlank()) {
             RequestValidationException.of(ErrorCode.REQUEST_VALIDATION_ERROR, "email", String.valueOf(requestedEmail));

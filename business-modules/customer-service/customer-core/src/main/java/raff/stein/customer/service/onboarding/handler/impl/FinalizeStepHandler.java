@@ -1,6 +1,5 @@
 package raff.stein.customer.service.onboarding.handler.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import raff.stein.customer.exception.CustomerNotFoundException;
@@ -10,6 +9,8 @@ import raff.stein.customer.model.entity.customer.enumeration.OnboardingStatus;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
 import raff.stein.customer.model.entity.onboarding.CustomerOnboardingEntity;
 import raff.stein.customer.repository.customer.CustomerRepository;
+import raff.stein.customer.repository.onboarding.CustomerOnboardingRepository;
+import raff.stein.customer.repository.onboarding.CustomerOnboardingStepRepository;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
 
 /**
@@ -17,13 +18,20 @@ import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
  * AML passed -> customer ACTIVE, onboarding DONE; AML failed -> customer REJECTED, onboarding FAILED.
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class FinalizeStepHandler extends BaseOnboardingStepHandler {
 
     public static final String AML_PASSED_METADATA_KEY = "amlPassed";
 
     private final CustomerRepository customerRepository;
+
+    public FinalizeStepHandler(
+            CustomerOnboardingRepository customerOnboardingRepository,
+            CustomerOnboardingStepRepository customerOnboardingStepRepository,
+            CustomerRepository customerRepository) {
+        super(customerOnboardingRepository, customerOnboardingStepRepository);
+        this.customerRepository = customerRepository;
+    }
 
     @Override
     public String buildStepReason(OnboardingStepContext context) {

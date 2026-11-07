@@ -10,8 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class InMemoryTokenStore implements TokenStore {
 
-    private final Map<String, Long> entries = new ConcurrentHashMap<>(); // namespace:jti -> expEpochSeconds
-    private final Map<String, long[]> values = new ConcurrentHashMap<>(); // namespace:key -> {value, expEpochSeconds}
+    private final Map<String, Long> entries = new ConcurrentHashMap<>(); // key "namespace:jti", value: expiry in epoch seconds
+    private final Map<String, long[]> values = new ConcurrentHashMap<>(); // key "namespace:key", value: the stored value and its expiry in epoch seconds
 
     @Override
     public boolean markIfAbsent(String namespace, String jti, long expEpochSeconds) {

@@ -5,6 +5,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import raff.stein.customer.model.bo.mifid.config.MifidAnswerOption;
 import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
 import raff.stein.customer.model.bo.mifid.filling.MifidResponse;
 import raff.stein.customer.model.entity.mifid.MifidAnswerOptionEntity;
@@ -92,7 +93,7 @@ public class UpdateMifidCommand implements MifidCommand {
                 .findByIdIn(responsesFromFE.stream()
                         .map(MifidResponse::getAnswerOption)
                         .filter(Objects::nonNull)
-                        .map(answerOption -> answerOption.getId())
+                        .map(MifidAnswerOption::getId)
                         .filter(Objects::nonNull)
                         .distinct()
                         .toList())

@@ -127,7 +127,9 @@ class CustomerServiceTest {
     void shouldRefuseAnotherUsersRecordWhenCustomerInits() {
         signInAs("CUSTOMER");
 
-        assertThrows(AccessDeniedException.class, () -> customerService.initCustomer(customerFor(UUID.randomUUID())));
+        final Customer customer = customerFor(UUID.randomUUID());
+
+        assertThrows(AccessDeniedException.class, () -> customerService.initCustomer(customer));
         verify(customerRepository, never()).saveAndFlush(any());
     }
 
@@ -136,9 +138,10 @@ class CustomerServiceTest {
         signInAs("CUSTOMER");
         when(customerRepository.existsByUserId(CALLER_ID)).thenReturn(true);
 
+        final Customer customer = customerFor(CALLER_ID);
         final ResourceConflictException ex = assertThrows(
                 ResourceConflictException.class,
-                () -> customerService.initCustomer(customerFor(CALLER_ID)));
+                () -> customerService.initCustomer(customer));
 
         assertEquals(ErrorCode.CUSTOMER_ALREADY_EXISTS, ex.getErrorCode());
         verify(customerRepository, never()).saveAndFlush(any());
@@ -163,9 +166,10 @@ class CustomerServiceTest {
         when(customerRepository.saveAndFlush(any(CustomerEntity.class))).thenThrow(new DataIntegrityViolationException(
                 "duplicate", new RuntimeException("violates " + CustomerEntity.TENANT_USER_CONSTRAINT)));
 
+        final Customer customer = customerFor(CALLER_ID);
         final ResourceConflictException ex = assertThrows(
                 ResourceConflictException.class,
-                () -> customerService.initCustomer(customerFor(CALLER_ID)));
+                () -> customerService.initCustomer(customer));
 
         assertEquals(ErrorCode.CUSTOMER_ALREADY_EXISTS, ex.getErrorCode());
     }
@@ -176,7 +180,9 @@ class CustomerServiceTest {
         when(customerRepository.saveAndFlush(any(CustomerEntity.class))).thenThrow(new DataIntegrityViolationException(
                 "other", new RuntimeException("null value in column tax_id")));
 
-        assertThrows(DataIntegrityViolationException.class, () -> customerService.initCustomer(customerFor(CALLER_ID)));
+        final Customer customer = customerFor(CALLER_ID);
+
+        assertThrows(DataIntegrityViolationException.class, () -> customerService.initCustomer(customer));
     }
 
     @Test
@@ -249,9 +255,10 @@ class CustomerServiceTest {
         when(customerRepository.findByEmail(CLIENT_EMAIL))
                 .thenReturn(Optional.of(customerEntity(UUID.randomUUID(), null, "BR_02")));
 
+        final Customer customer = customerFor(null);
         final ResourceConflictException ex = assertThrows(
                 ResourceConflictException.class,
-                () -> customerService.initCustomer(customerFor(null)));
+                () -> customerService.initCustomer(customer));
 
         assertEquals(ErrorCode.CUSTOMER_ALREADY_EXISTS, ex.getErrorCode());
         verify(customerRepository, never()).saveAndFlush(any());
@@ -279,7 +286,9 @@ class CustomerServiceTest {
         when(customerRepository.findByEmail(CALLER_EMAIL))
                 .thenReturn(Optional.of(customerEntity(UUID.randomUUID(), null, "BR_02")));
 
-        assertThrows(ResourceConflictException.class, () -> customerService.initCustomer(customerFor(null)));
+        final Customer customer = customerFor(null);
+
+        assertThrows(ResourceConflictException.class, () -> customerService.initCustomer(customer));
         verify(customerRepository, never()).saveAndFlush(any());
     }
 
@@ -287,8 +296,10 @@ class CustomerServiceTest {
     void shouldRefuseUnknownStatusInTheList() {
         signInAs("ADVISOR");
 
-        assertThrows(RequestValidationException.class,
-                () -> customerService.findCustomers(null, List.of("BOGUS"), PageRequest.of(0, 10)));
+        final List<String> statuses = List.of("BOGUS");
+        final Pageable pageable = PageRequest.of(0, 10);
+
+        assertThrows(RequestValidationException.class, () -> customerService.findCustomers(null, statuses, pageable));
     }
 
     @Test

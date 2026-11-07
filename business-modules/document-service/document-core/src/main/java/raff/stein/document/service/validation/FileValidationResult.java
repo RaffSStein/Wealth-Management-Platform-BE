@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class FileValidationResult {
     }
 
     public void finalizeValidation() {
-        this.validatedAt = OffsetDateTime.now();
+        this.validatedAt = OffsetDateTime.now(ZoneId.systemDefault());
     }
 
 

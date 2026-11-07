@@ -157,7 +157,7 @@ public class SecurityConfig {
      * Expose AuthenticationManager built from the configured AuthenticationProviders.
      */
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) {
         return configuration.getAuthenticationManager();
     }
 

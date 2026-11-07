@@ -3,6 +3,7 @@ package raff.stein.document.utils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 
 @Slf4j
 public final class DocumentFileNameUtils {
@@ -21,7 +22,7 @@ public final class DocumentFileNameUtils {
         if (originalFileName == null) {
             return null;
         }
-        final OffsetDateTime offsetDateTime = OffsetDateTime.now();
+        final OffsetDateTime offsetDateTime = OffsetDateTime.now(ZoneId.systemDefault());
         final String timestamp = offsetDateTime.toInstant().toString().replace(":", "-");
         return timestamp + "_" + originalFileName;
     }

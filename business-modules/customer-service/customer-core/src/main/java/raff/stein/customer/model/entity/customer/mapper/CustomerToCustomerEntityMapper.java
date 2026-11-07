@@ -34,7 +34,7 @@ public interface CustomerToCustomerEntityMapper {
     @Mapping(target = "riskProfile", source = "customerEntity", qualifiedByName = "toCustomerRiskProfile")
     CustomerSummary toCustomerSummary(CustomerEntity customerEntity);
 
-    // null when no MiFID filling was submitted yet, so the DTO keeps riskProfile empty instead of {profile: null}
+    // null when no MiFID filling was submitted yet, so the DTO leaves riskProfile out instead of sending a profile object with a null value
     @Named("toCustomerRiskProfile")
     default CustomerRiskProfile toCustomerRiskProfile(CustomerEntity customerEntity) {
         if (customerEntity == null || customerEntity.getRiskProfile() == null) {

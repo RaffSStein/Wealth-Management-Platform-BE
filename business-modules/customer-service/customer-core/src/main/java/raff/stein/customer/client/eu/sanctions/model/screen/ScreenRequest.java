@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 /**
@@ -145,7 +146,7 @@ public class ScreenRequest {
 
     /** Client-side timestamp of the request. */
     @Builder.Default
-    private OffsetDateTime requestedAt = OffsetDateTime.now();
+    private OffsetDateTime requestedAt = OffsetDateTime.now(ZoneId.systemDefault());
 
     /** Free-form notes to support manual review. */
     @Size(max = 1000)

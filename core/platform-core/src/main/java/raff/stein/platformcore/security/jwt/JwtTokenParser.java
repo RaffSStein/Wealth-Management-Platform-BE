@@ -88,6 +88,7 @@ public class JwtTokenParser {
                         .collect(Collectors.toUnmodifiableSet());
             }
             default -> {
+                // any other type falls through to the warning below
             }
         }
         log.warn("Unexpected type for roles claim: {}", raw.getClass().getName());

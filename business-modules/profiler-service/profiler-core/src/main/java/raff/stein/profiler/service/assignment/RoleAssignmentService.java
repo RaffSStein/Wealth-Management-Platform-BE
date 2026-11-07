@@ -197,18 +197,16 @@ public class RoleAssignmentService {
     public List<RoleAssignmentRequest> listRequests(RoleAssignmentRequestStatus status) {
         final WMPContext caller = SecurityContextHolder.getContextOrThrow();
         final WmpRole callerRole = policyDispatcher.forCaller(caller).callerRole();
-        final List<RoleAssignmentRequestEntity> requests;
-        if (callerRole == WmpRole.PLATFORM_ADMIN) {
-            requests = status == null
+        final List<RoleAssignmentRequestEntity> requests = switch (callerRole) {
+            case PLATFORM_ADMIN -> status == null
                     ? requestRepository.findAllByOrderByRequestedAtDesc()
                     : requestRepository.findByStatusOrderByRequestedAtDesc(status);
-        } else if (callerRole == WmpRole.BANK_ADMIN) {
-            requests = status == null
+            case BANK_ADMIN -> status == null
                     ? requestRepository.findByBankCodeOrderByRequestedAtDesc(caller.getTenantId())
                     : requestRepository.findByBankCodeAndStatusOrderByRequestedAtDesc(caller.getTenantId(), status);
-        } else {
-            throw AssignmentDenied.because("only BANK_ADMIN and PLATFORM_ADMIN can list requests");
-        }
+            // "case null" keeps the if/else behavior: no role is denied, not an NPE
+            case null, default -> throw AssignmentDenied.because("only BANK_ADMIN and PLATFORM_ADMIN can list requests");
+        };
         return requests.stream().map(mapper::toRoleAssignmentRequest).toList();
     }
 

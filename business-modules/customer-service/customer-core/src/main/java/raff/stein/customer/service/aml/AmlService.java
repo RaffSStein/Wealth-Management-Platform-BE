@@ -24,6 +24,7 @@ import raff.stein.customer.service.aml.pipeline.step.AmlStepResult;
 import raff.stein.customer.service.aml.utils.JurisdictionUtils;
 import raff.stein.customer.service.onboarding.OnboardingService;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
+import raff.stein.customer.service.onboarding.handler.impl.AmlStepHandler;
 
 import java.time.ZoneOffset;
 import java.util.Locale;
@@ -104,7 +105,7 @@ public class AmlService {
                         .customerId(customer.getId())
                         .metadata(Map.of(
                                 "amlCaseId", amlVerification.getAmlCaseId(),
-                                "AmlResult", amlVerification.getAmlResult()))
+                                AmlStepHandler.AML_RESULT_METADATA_KEY, amlVerification.getAmlResult()))
                         .build());
 
         // if AML verification is passed, publish CustomerCreatedEvent, otherwise publish CustomerRejectedEvent

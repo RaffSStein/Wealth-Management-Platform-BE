@@ -1,20 +1,26 @@
 package raff.stein.customer.service.onboarding.handler.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import raff.stein.customer.exception.CustomerException;
 import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
 import raff.stein.customer.model.entity.mifid.enumeration.MifidFillingStatus;
 import raff.stein.customer.model.entity.onboarding.CustomerOnboardingEntity;
+import raff.stein.customer.repository.onboarding.CustomerOnboardingRepository;
+import raff.stein.customer.repository.onboarding.CustomerOnboardingStepRepository;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
 
 import java.util.Optional;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class MifidStepHandler extends BaseOnboardingStepHandler {
+
+    public MifidStepHandler(
+            CustomerOnboardingRepository customerOnboardingRepository,
+            CustomerOnboardingStepRepository customerOnboardingStepRepository) {
+        super(customerOnboardingRepository, customerOnboardingStepRepository);
+    }
 
     @Override
     public OnboardingStep getHandledStep() {

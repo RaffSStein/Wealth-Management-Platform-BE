@@ -96,7 +96,9 @@ class CustomerFinancialsVisitorTest {
                 financial(10L, "SALARY", "2000"),
                 financial(99L, "SALARY", "1"));
 
-        assertThrows(RequestValidationException.class, () -> visitor.visit(customer(), payload));
+        final Customer customer = customer();
+
+        assertThrows(RequestValidationException.class, () -> visitor.visit(customer, payload));
 
         assertEquals(2, storedFinancials.size());
         assertTrue(storedFinancials.stream().allMatch(e -> e.getAmount().compareTo(new BigDecimal("2000")) != 0));
@@ -109,7 +111,9 @@ class CustomerFinancialsVisitorTest {
                 financial(10L, "SALARY", "2000"),
                 financial(10L, "SALARY", "3000"));
 
-        assertThrows(RequestValidationException.class, () -> visitor.visit(customer(), payload));
+        final Customer customer = customer();
+
+        assertThrows(RequestValidationException.class, () -> visitor.visit(customer, payload));
 
         assertEquals(2, storedFinancials.size());
         verify(customerFinancialsRepository, never()).saveAll(any());
