@@ -17,11 +17,11 @@
     <properties>
         <java.version>21</java.version>
         <spring.boot.starter.version>4.0.1</spring.boot.starter.version>
-        <spring.data.commons.version>4.0.1</spring.data.commons.version>
+        <spring.data.commons.version>4.1.2</spring.data.commons.version>
         <openapi.generator.version>7.18.0</openapi.generator.version>
         <lombok.version>1.18.42</lombok.version>
         <postgresql.version>42.7.8</postgresql.version>
-        <spring.kafka.version>4.0.1</spring.kafka.version>
+        <spring.kafka.version>4.1.2</spring.kafka.version>
         <jakarta.validation.version>3.1.1</jakarta.validation.version>
         <jakarta.persistence.version>3.2.0</jakarta.persistence.version>
         <org.mapstruct.version>1.6.3</org.mapstruct.version>
@@ -30,15 +30,15 @@
         <logstash.logback.encoder.version>9.0</logstash.logback.encoder.version>
         <cloudevent.version>4.0.1</cloudevent.version>
         <hibernate.version>7.1.11.Final</hibernate.version>
-        <micrometer.version>1.16.1</micrometer.version>
-        <micrometer.tracing.version>1.6.1</micrometer.tracing.version>
-        <micrometer.tracing.bridge.brave.version>1.6.1</micrometer.tracing.bridge.brave.version>
+        <micrometer.version>1.17.2</micrometer.version>
+        <micrometer.tracing.version>1.7.2</micrometer.tracing.version>
+        <micrometer.tracing.bridge.brave.version>1.7.2</micrometer.tracing.bridge.brave.version>
         <openapi.generator.maven.plugin.version>2024.1</openapi.generator.maven.plugin.version>
         <jackson.databind.version>3.0.3</jackson.databind.version>
-        <spring.retry.version>2.0.12</spring.retry.version>
+        <spring.retry.version>2.0.13</spring.retry.version>
         <jjwt.version>0.13.0</jjwt.version>
         <spring.boot.cache.version>4.0.0</spring.boot.cache.version>
-        <spring.cloud.version>2025.1.0</spring.cloud.version>
+        <spring.cloud.version>2025.1.4</spring.cloud.version>
         <jacoco.maven.plugin.version>0.8.13</jacoco.maven.plugin.version>
         <sonar.maven.plugin.version>5.1.0.4751</sonar.maven.plugin.version>
         <commons.io.version>2.20.0</commons.io.version>
