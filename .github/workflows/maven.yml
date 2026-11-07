@@ -41,7 +41,7 @@ jobs:
 
       # The key changes with any pom.xml, so a dependency change starts from a fresh cache
       - name: Cache Maven dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
