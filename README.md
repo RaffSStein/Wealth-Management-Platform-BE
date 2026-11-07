@@ -33,7 +33,7 @@ Each module represents a business domain and is implemented as an independent Sp
 Each business module may contain submodules for API data models (OpenAPI-generated), event data models, and core logic.
 
 ## Maven Project Structure & POM Organization
-- The root `pom.xml` is the parent for all modules and manages common dependencies, plugin versions, and properties (using variables for all versions).
+- The root `pom.xml` is the parent for all modules and manages common dependencies, plugin versions, and properties. Its parent, `spring-boot-starter-parent`, decides the version of every library Spring Boot manages (Spring, Hibernate, Jackson, Micrometer, Kafka, PostgreSQL, Lombok, the starters...), which is never pinned. Other libraries get a version property.
 - Each business module (e.g., `proposal-service`) is a Maven module with its own `pom.xml` inheriting from the parent. 
 - Submodules (e.g., `proposal-api-data`, `proposal-event-data`, `proposal-core`) are defined as children in the parent module's POM and are used for API model generation, event payloads, and business logic.
 - Shared dependencies (Spring Boot, Lombok, Jakarta, OpenAPI, MapStruct, etc.) are declared in the parent POM and inherited by all modules. Only module-specific dependencies are added in child POMs.
