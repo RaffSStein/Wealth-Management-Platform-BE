@@ -91,12 +91,12 @@ Inbound feeds, functionally:
 
 Outbound feeds:
 - **To the risk engine**: security list, security breakdown, asset-class transcoding, instrument-type transcoding, managed-portfolio transcoding, IBIP transcoding, unit composition, model portfolios, customer↔model associations, shelf, in-group issuer list, advisory category, customer wealth data.
-- **To core banking / compliance**: suitability results, periodic suitability, customer MiFID info, MiFID profile changes, QMiFID by tenant, daily fees, fund data, the target-market report, the audit log and visibility.
+- **To core banking / compliance**: suitability results, periodic suitability, customer MiFID info, MiFID profile changes, MiFID questionnaire by tenant, daily fees, fund data, the target-market report, the audit log and visibility.
 
 Dataprocess (internal) jobs:
 - onboarding (massive)
 - product staging cleanup
-- customer MiFID info, QMiFID profile
+- customer MiFID info, MiFID questionnaire profile
 - the target-market report feeder
 - customer disclaimers for mergers/acquisitions, and their deactivation
 

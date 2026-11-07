@@ -120,7 +120,7 @@ Lookups with i18n:
 - personal product/property types, identity document types
 
 ## Async
-- **Feeds**: customer information (daily), MiFID data and answers history (daily), customer MiFID info outbound, MiFID profile change outbound, QMiFID by tenant outbound, visibility.
+- **Feeds**: customer information (daily), MiFID data and answers history (daily), customer MiFID info outbound, MiFID profile change outbound, MiFID questionnaire by tenant outbound, visibility.
 - **Events** (suggest checking that they exist): `customer-created`, `customer-updated`, `mifid-profile-completed`, `mifid-profile-changed` (risk/knowledge/ESG delta), `mifid-profile-expiring`, `mifid-profile-expired`, `aml-profile-updated`, `customer-leader-changed`.
 
 ## Regulatory drivers

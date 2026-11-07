@@ -1,6 +1,6 @@
 # Legacy WMP feature extraction: index and cross-cutting requirements
 
-Source: the legacy WMP backend (Java 8 / Spring Boot 2.2 / Oracle). It was built for a single Italian banking group made up of many member banks.
+Source: the legacy WMP backend (Java 8 / Spring Boot 2.2 / Oracle). It was built for a single banking group made up of several member banks.
 Purpose: a functional baseline for porting into the new bank-agnostic, event-driven WMP BE.
 Everything here describes **behaviour**. No code, URLs, hostnames, credentials or customer data were copied.
 
