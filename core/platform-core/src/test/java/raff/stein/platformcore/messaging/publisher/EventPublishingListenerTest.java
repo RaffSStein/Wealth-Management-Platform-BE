@@ -64,6 +64,7 @@ class EventPublishingListenerTest {
 
         @Override
         protected void doBegin(final Object transaction, final TransactionDefinition definition) {
+            // nothing to open: the test only needs the synchronization callbacks
         }
 
         @Override

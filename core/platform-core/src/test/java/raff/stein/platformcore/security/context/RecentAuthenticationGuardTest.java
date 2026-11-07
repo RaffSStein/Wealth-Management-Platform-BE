@@ -35,8 +35,9 @@ class RecentAuthenticationGuardTest {
     void shouldRequireReauthenticationForOldLogin() {
         givenTokenIssued(NOW.minusSeconds(601));
 
+        final Duration maxAge = Duration.ofMinutes(10);
         final JwtTokenException exception = assertThrows(JwtTokenException.class,
-                () -> guard.requireAuthenticatedWithin(Duration.ofMinutes(10)));
+                () -> guard.requireAuthenticatedWithin(maxAge));
         assertEquals(ErrorCode.REAUTHENTICATION_REQUIRED, exception.getErrorCode());
     }
 
@@ -44,7 +45,9 @@ class RecentAuthenticationGuardTest {
     void shouldRequireReauthenticationForUndatedToken() {
         SecurityContextHolder.setContext(WMPContext.builder().email("admin@bank.test").build());
 
-        assertThrows(JwtTokenException.class, () -> guard.requireAuthenticatedWithin(Duration.ofMinutes(10)));
+        final Duration maxAge = Duration.ofMinutes(10);
+
+        assertThrows(JwtTokenException.class, () -> guard.requireAuthenticatedWithin(maxAge));
     }
 
     private static void givenTokenIssued(Instant issuedAt) {

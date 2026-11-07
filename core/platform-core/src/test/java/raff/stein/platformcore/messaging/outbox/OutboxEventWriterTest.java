@@ -78,7 +78,8 @@ class OutboxEventWriterTest {
 
     @Test
     void shouldRejectMissingTopic() {
-        assertThrows(NullPointerException.class,
-                () -> writer.store(null, OutboxTestEvents.cloudEvent("event-1", "BANK_A")));
+        final CloudEvent event = OutboxTestEvents.cloudEvent("event-1", "BANK_A");
+
+        assertThrows(NullPointerException.class, () -> writer.store(null, event));
     }
 }

@@ -72,8 +72,9 @@ class RedisTokenStoreTest {
                 .thenThrow(new RedisConnectionFailureException("down"));
 
         assertThrows(TokenStoreUnavailableException.class, () -> store.contains("revoked", "jti-1"));
-        assertThrows(TokenStoreUnavailableException.class,
-                () -> store.markIfAbsent("setup-used", "jti-1", Instant.now().getEpochSecond() + 60));
+        final long expEpochSeconds = Instant.now().getEpochSecond() + 60;
+
+        assertThrows(TokenStoreUnavailableException.class, () -> store.markIfAbsent("setup-used", "jti-1", expEpochSeconds));
     }
 
     @Test
