@@ -18,6 +18,7 @@ import raff.stein.document.utils.DocumentFileNameUtils;
 
 import java.io.InputStream;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Base64;
 
 /**
@@ -94,7 +95,7 @@ public class GCSStorageService implements CloudStorageService {
             // Upload the file to GCS
             storage.createFrom(blobInfo, inputStream);
             log.info("File uploaded successfully to GCS: {}", fullFilePath);
-            final OffsetDateTime uploadTime = OffsetDateTime.now();
+            final OffsetDateTime uploadTime = OffsetDateTime.now(ZoneId.systemDefault());
 
             // Create and return a Document object with the uploaded file information
             return documentMapper.fileToNewDocument(
