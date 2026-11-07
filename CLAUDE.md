@@ -20,7 +20,10 @@ Wealth Management Platform (WMP): an event-driven, Spring Boot microservices bac
 docker compose -f docker-compose.yml up -d                               # local infrastructure
 ```
 
-- CI (`.github/workflows/maven.yml`) runs `clean install` then `test` on JDK 21 Temurin for pushes/PRs to `main`. Keep it green.
+- CI (`.github/workflows/maven.yml`) runs `clean install` (tests + JaCoCo) on JDK 21 Temurin, then the SonarQube Cloud
+  quality gate, for pushes/PRs to `main`. `pr-checks.yml` checks the PR title (`type(scope): subject`) and new
+  dependencies. Merging releases automatically (`release.yml`): the PR title sets the semver bump and GitHub generates
+  the notes. Keep it all green; see `CONTRIBUTING.md`.
 - The build regenerates OpenAPI code; a broken YAML spec breaks every dependent module.
 - Local infra (`docker-compose.yml` + `.env`): Kafka + Kafbat UI, one `postgres-<service>` container per service with a datasource
   (user/pass `test`/`test`), MinIO and fake-GCS (document storage), MailHog (SMTP `1025`, UI `8025`),

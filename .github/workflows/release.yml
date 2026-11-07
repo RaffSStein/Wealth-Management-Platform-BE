@@ -1,0 +1,58 @@
+name: Release
+
+# PR merged into main -> build and tests pass on the merge commit -> GitHub release with a new tag.
+# The PR title sets the bump: "!" after the scope (or BREAKING CHANGE in the body) -> major, feat -> minor, else patch.
+# GitHub generates the notes from the PRs merged since the previous release: the releases page is the changelog.
+# PRs labeled "dependencies" (Dependabot) or "release:skip" don't release; they appear in the next release's notes.
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+# One release at a time, so two quick merges can't compute the same version
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  test:
+    if: >-
+      github.event.pull_request.merged == true &&
+      !contains(github.event.pull_request.labels.*.name, 'dependencies') &&
+      !contains(github.event.pull_request.labels.*.name, 'release:skip')
+    uses: ./.github/workflows/maven.yml
+    with:
+      ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # create the tag and the release
+    steps:
+      # Title and body go through env vars, never inlined in the script, so they can't inject shell
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TITLE: ${{ github.event.pull_request.title }}
+          BODY: ${{ github.event.pull_request.body }}
+          SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          last=$(gh release view --json tagName --jq .tagName 2>/dev/null || true)
+          breaking='^[a-z]+(\([^)]*\))?!:'
+          if [ -z "$last" ]; then
+            next=v0.1.0
+          else
+            IFS=. read -r major minor patch <<< "${last#v}"
+            if [[ "$TITLE" =~ $breaking || "$BODY" == *"BREAKING CHANGE"* ]]; then
+              next="v$((major + 1)).0.0"
+            elif [[ "$TITLE" == feat* ]]; then
+              next="v$major.$((minor + 1)).0"
+            else
+              next="v$major.$minor.$((patch + 1))"
+            fi
+          fi
+          echo "Previous release: ${last:-none}, next: $next"
+          gh release create "$next" --target "$SHA" --title "$next" --generate-notes
