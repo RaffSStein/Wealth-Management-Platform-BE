@@ -11,6 +11,7 @@ import raff.stein.customer.model.entity.customer.enumeration.OnboardingStep;
 import raff.stein.customer.repository.customer.CustomerRepository;
 import raff.stein.customer.service.onboarding.OnboardingService;
 import raff.stein.customer.service.onboarding.handler.OnboardingStepContext;
+import raff.stein.customer.service.onboarding.handler.impl.DocumentStepHandler;
 import raff.stein.platformcore.messaging.consumer.WMPBaseEventConsumer;
 
 import java.util.Map;
@@ -68,8 +69,8 @@ public class FileValidatedEventConsumer extends WMPBaseEventConsumer {
                 OnboardingStepContext.builder()
                         .customerId(customerId)
                         .metadata(Map.of(
-                                "fileId", fileValidatedEvent.getFileId(),
-                                "isValid", isValid))
+                                DocumentStepHandler.FILE_ID_METADATA_KEY, fileValidatedEvent.getFileId(),
+                                DocumentStepHandler.IS_VALID_METADATA_KEY, isValid))
                         .build());
 
         log.info("FileValidatedEvent with eventId: [{}] processed successfully", eventId);

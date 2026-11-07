@@ -15,6 +15,9 @@ import java.util.UUID;
 @Slf4j
 public class DocumentStepHandler extends BaseOnboardingStepHandler {
 
+    public static final String FILE_ID_METADATA_KEY = "fileId";
+    public static final String IS_VALID_METADATA_KEY = "isValid";
+
     public DocumentStepHandler(
             CustomerOnboardingRepository customerOnboardingRepository,
             CustomerOnboardingStepRepository customerOnboardingStepRepository) {
@@ -28,16 +31,16 @@ public class DocumentStepHandler extends BaseOnboardingStepHandler {
 
     @Override
     public String buildStepReason(OnboardingStepContext context) {
-        final UUID fileId = (UUID) context.getMetadata("fileId");
-        final Boolean isValid = (Boolean) context.getMetadata("isValid");
-        return Boolean.TRUE.equals(isValid) ?
-                String.format("File with ID: [%s] has been validated successfully.", fileId) :
-                String.format("File with ID: [%s] has been rejected.", fileId);
+        final UUID fileId = (UUID) context.getMetadata(FILE_ID_METADATA_KEY);
+        final Boolean isValid = (Boolean) context.getMetadata(IS_VALID_METADATA_KEY);
+        return String.format(Boolean.TRUE.equals(isValid)
+                ? "File with ID: [%s] has been validated successfully."
+                : "File with ID: [%s] has been rejected.", fileId);
     }
 
     @Override
     public String buildStepStatus(OnboardingStepContext context) {
-        final Boolean isValid = (Boolean) context.getMetadata("isValid");
+        final Boolean isValid = (Boolean) context.getMetadata(IS_VALID_METADATA_KEY);
         return Boolean.TRUE.equals(isValid) ? "DONE" : "REJECTED";
     }
 
@@ -46,8 +49,8 @@ public class DocumentStepHandler extends BaseOnboardingStepHandler {
             CustomerOnboardingEntity customerOnboarding,
             OnboardingStepContext context) {
         final UUID customerId = context.getCustomerId();
-        final UUID fileId = (UUID) context.getMetadata("fileId");
-        final Boolean isValid = (Boolean) context.getMetadata("isValid");
+        final UUID fileId = (UUID) context.getMetadata(FILE_ID_METADATA_KEY);
+        final Boolean isValid = (Boolean) context.getMetadata(IS_VALID_METADATA_KEY);
 
         if (Boolean.TRUE.equals(isValid)) {
             log.info("File with ID: [{}] is valid. Proceeding to next onboarding step for customer ID: [{}].", fileId, customerId);
@@ -62,7 +65,7 @@ public class DocumentStepHandler extends BaseOnboardingStepHandler {
 
     @Override
     public void updateCustomerOnboardingReason(CustomerOnboardingEntity customerOnboarding, OnboardingStepContext context) {
-        final Boolean isValid = (Boolean) context.getMetadata("isValid");
+        final Boolean isValid = (Boolean) context.getMetadata(IS_VALID_METADATA_KEY);
         if (Boolean.TRUE.equals(isValid)) {
             customerOnboarding.setReason("Document validated successfully");
         } else {

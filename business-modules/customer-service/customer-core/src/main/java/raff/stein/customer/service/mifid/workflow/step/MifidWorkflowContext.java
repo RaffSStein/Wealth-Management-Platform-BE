@@ -2,7 +2,6 @@ package raff.stein.customer.service.mifid.workflow.step;
 
 import lombok.Builder;
 import lombok.Data;
-import lombok.Setter;
 import raff.stein.customer.model.bo.mifid.filling.MifidFilling;
 
 import java.util.UUID;

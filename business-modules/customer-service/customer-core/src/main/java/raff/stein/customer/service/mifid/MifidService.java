@@ -75,7 +75,7 @@ public class MifidService {
             MifidActionType actionType,
             UUID customerId,
             MifidFillingDto dto) {
-        return handleFilling(actionType, customerId, null, dto);
+        return dispatchFilling(actionType, customerId, null, dto);
     }
 
     /**
@@ -84,6 +84,15 @@ public class MifidService {
      */
     @Transactional
     public MifidFilling handleFilling(
+            MifidActionType actionType,
+            UUID customerId,
+            Long fillingId,
+            MifidFillingDto dto) {
+        return dispatchFilling(actionType, customerId, fillingId, dto);
+    }
+
+    // shared by both handleFilling variants, so neither calls the other's @Transactional method through "this"
+    private MifidFilling dispatchFilling(
             MifidActionType actionType,
             UUID customerId,
             Long fillingId,
